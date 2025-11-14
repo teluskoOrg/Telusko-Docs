@@ -43,7 +43,8 @@ export function LLMCopyButton({
 
             return content;
           }).catch((error)=>{
-            console.log(error)
+            console.log(error);
+            return '';
           }),
         }),
       ]);
