@@ -179,7 +179,6 @@ You can insert components directly:
 
 ```mdx
 <Video id="abcd123" />
-<MyImage src="/images/python.png" alt="Python Logo" />
 ```
 
 ---
@@ -198,21 +197,11 @@ This renders an embedded YouTube player.
 
 ---
 
-# Image Component
-
-Your custom `<MyImage />` component supports relative paths.
-
-### Example
-
+# Use Image like this
 ```mdx
-<MyImage src="/images/cpu.png" alt="CPU Diagram" />
+![Test](/images/python/p2.png)
 ```
 
-Ensure the image exists in:
-
-```
-public/images/cpu.png
-```
 
 ---
 

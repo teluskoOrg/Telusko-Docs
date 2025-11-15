@@ -5,15 +5,16 @@ import { File,Folder } from 'fumadocs-ui/components/files';
 import { Card, Cards } from 'fumadocs-ui/components/card';
 import { Step, Steps } from 'fumadocs-ui/components/steps';
 import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
-import MyImage from './components/ui/Image';
 import Image from 'next/image';
 import { ExternalLink } from 'lucide-react'
 
 import Video from './components/ui/Video';
+import { ImageZoom } from 'fumadocs-ui/components/image-zoom';
 
 export function getMDXComponents(components?: MDXComponents): MDXComponents {
   return {
     ...defaultMdxComponents,
+    img:(props) => <ImageZoom {...(props as any)}/>,
      Accordion,
     Accordions,
     File,
@@ -25,7 +26,6 @@ export function getMDXComponents(components?: MDXComponents): MDXComponents {
     Card,
     Cards,
     Video,
-    MyImage,
     ExternalLink,
     Image,
     ...components,
