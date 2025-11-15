@@ -2,6 +2,6 @@
     "root":false,
     "pages":[
         "getting-started.mdx",
-        "jdk-setup.mdx"
+        "JDK-setup.mdx"
     ]
 }

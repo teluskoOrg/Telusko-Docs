@@ -3,7 +3,7 @@
     "pages":[
         "index.mdx",
         "---[AlignStartVertical]Java---",
-        "Introduction-to-java",
+        "Introduction-to-Java",
         "---[AlignStartVertical]Python---",
         "Introduction-to-Python"
     ]
