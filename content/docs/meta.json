@@ -2,10 +2,10 @@
     "root":true,
     "pages":[
         "index.mdx",
-        "---Python---",
+        "---[AlignStartVertical]Python---",
         "Intoduction-To-Python",
         "OOPS in Python",
-        "---Java---",
+        "---[AlignStartVertical]Java---",
         "Introduction-To-Java"
     ]
 }

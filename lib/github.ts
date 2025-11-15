@@ -12,7 +12,6 @@ async function getOctokit(): Promise<Octokit> {
   const appId = process.env.GITHUB_APP_ID;
   let privateKey = process.env.GITHUB_APP_PRIVATE_KEY;
 
-  console.log(appId, privateKey, "checking env variables")
 
   if (!appId || !privateKey) {
     throw new Error(
