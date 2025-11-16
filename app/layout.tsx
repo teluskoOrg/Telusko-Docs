@@ -24,20 +24,22 @@ export default function Layout({ children }: LayoutProps<'/'>) {
     <html lang="en" className={inter.className} suppressHydrationWarning>
       <body className="flex flex-col min-h-screen">
         <Banner id="close" variant='rainbow' rainbowColors={[
-    'rgba(255,100,0, 0.7)',
-    'rgba(255,100,0, 0.7)',
+      'rgba(59, 91, 255, 0.6)',     // primary blue
+    'rgba(88, 116, 255, 0.7)', 
+    'transparent',   // lighter blue
+    'rgba(140, 170, 255, 0.3)',   // soft highlight
+    // 'rgba(59, 91, 255, 0.6)',
     'transparent',
-    'rgba(255,100,0, 0.7)',
-    'transparent',
-    'rgba(255,100,0, 0.7)',
+    'rgba(88, 116, 255, 0.7)',
+    // 'rgba(140, 170, 255, 0.3)',
     'transparent',
   ]} > <a 
-    href="https://go.telusko.com/AI-Eng-Live" 
+    href="https://courses.telusko.com/learn/ai-powered-devops-with-aws-live-course-v2" 
     target="_blank" 
     rel="noopener noreferrer" 
     className="flex items-center gap-2 justify-center no-underline hover:no-underline text-sm sm:text-base md:text-lg"
   >
-    Live AI Engineering with Java and Python
+    Live AI Powered DevOps with AWS
     <ExternalLink className="w-4 h-4" />
   </a></Banner>
         <RootProvider>{children}</RootProvider>
