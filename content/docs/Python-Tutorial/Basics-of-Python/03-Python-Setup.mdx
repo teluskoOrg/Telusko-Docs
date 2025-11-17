@@ -1,0 +1,203 @@
+---
+title: Python Setup
+---
+
+
+<Steps>
+<Video id="KcBd4fyHJvg" />
+
+---
+
+
+Working with Python begins with installing the **Python interpreter**, which is responsible for executing your code. Python runs on all major operating systems—Windows, macOS, and Linux, and can be easily downloaded from the official website.
+
+<Step>
+## Need for Python Installation
+
+To build software or applications using Python, two components are essential:
+
+### 1. Python Interpreter
+
+* The interpreter reads and executes Python code.
+* Without it, your computer cannot understand or run `.py` files.
+
+### 2. IDE (Integrated Development Environment)
+
+An IDE provides a user-friendly workspace where you can:
+
+* Write code
+* Test and debug programs
+* Run Python scripts efficiently
+
+#### Popular IDEs for Python
+
+* **Python IDLE** – comes pre-installed with Python
+* **PyCharm** (JetBrains) – most widely used and feature-rich IDE for Python
+* **VS Code** – lightweight and highly customizable
+* **Anaconda (Spyder / Jupyter)** – preferred for data science
+
+</Step>
+
+---
+
+<Step>
+## Installing Python
+
+### Step 1: Check if Python is Already Installed
+
+Open **Command Prompt (CMD)** and run:
+```bash
+python --version
+python3 --version
+```
+
+If you see an error like this, then Python is not installed:
+```bash
+Python was not found; run without arguments to install from the Microsoft Store...
+```
+
+### Step 2: Download Python
+
+1. Visit the official website: [https://www.python.org/downloads/](https://www.python.org/downloads/)
+2. Download the **latest stable Python version** (e.g., *Python 3.13.5*).
+3. Choose the correct installer:
+   
+   * Windows 64-bit → Recommended for most systems (Intel i5/i7, AMD Ryzen)
+   * ARM version → Only if your device specifically supports ARM
+
+> Check the option "Add Python.exe to PATH" during installation. This ensures Python commands work in the terminal.
+
+
+### Step 3: Verify Installation
+
+Open **Command Prompt / Terminal** and run:
+
+```
+python --version
+```
+
+or
+
+```
+python3 --version
+```
+
+If installed correctly, it will display something like:
+
+```
+Python 3.13.5
+```
+
+</Step>
+
+---
+
+<Step>
+## Running Python Code
+
+You can run Python programs in the following ways:
+
+
+### 1) Python Interactive Shell (REPL)
+
+Start Python directly in the terminal:
+
+```
+> python
+>>> print("Hello")
+Hello
+```
+
+This mode is great for testing small code snippets.
+
+
+
+### 2) Running Python Files (.py)
+
+For multi-line code:
+
+1. Open an editor or IDE
+2. Write your Python code
+3. Save the file with the **.py extension**, e.g., `Demo.py`
+
+Navigate to the folder in your terminal:
+
+```
+> cd path/to/folder
+> ls    # show files
+```
+
+Run the script:
+
+```
+> python Demo.py
+```
+
+Output:
+
+```
+Hello
+```
+
+</Step>
+
+---
+
+<Step>
+## Importance of the .py File Extension
+![Python IDE](/images/python/python_file.png)
+
+The `.py` extension plays a vital role in Python programming. It identifies a file as a Python script and ensures that tools, interpreters, and IDEs handle the file correctly. Without this extension, the Python interpreter and development tools cannot treat the file as executable Python code.
+
+
+### 1. Recognized as Python Source Code
+
+Files ending with `.py` are automatically understood by the Python interpreter as Python scripts.
+This allows commands like:
+
+```
+python script.py
+```
+
+to execute the file successfully.
+
+
+### 2. Full IDE Support (Syntax Highlighting, Debugging, Intellisense)
+
+IDEs such as PyCharm, VS Code, and IDLE depend on the `.py` extension to enable:
+
+* Syntax highlighting
+* Code suggestions
+* Error detection
+* Debugging tools
+
+A file saved as `.txt` will not receive these features because the IDE does not treat it as Python code.
+
+
+### 3. Modules and Imports Work Only With `.py` Files
+
+Python’s import system recognizes only `.py` files as modules.
+For example:
+
+```python
+import utils
+```
+
+will work only if the file is named:
+
+```
+utils.py
+```
+
+If it is `utils.txt`, Python cannot import it.
+
+
+| File Name      | Recognized as Python Code? | Executable? |
+| -------------- | -------------------------- | ----------- |
+| ✅ `script.py`  | Yes                        | Yes         |
+| ❌ `script.txt` | No                         | No          |
+
+</Step>
+</Steps>
+
+Written By: <a href="https://www.linkedin.com/in/muskangarg03/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer"> Muskan Garg <ExternalLink className="w-4 h-4" /></a>

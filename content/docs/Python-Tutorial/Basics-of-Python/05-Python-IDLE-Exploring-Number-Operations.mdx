@@ -1,0 +1,227 @@
+---
+title: Python IDLE and Exploring Number Operations
+---
+
+
+<Steps>
+<Video id="ji56CpaOFf4" />
+
+---
+
+
+When working with Python, you need an environment where your code can execute. Windows provides **Command Prompt** and **PowerShell**, each with different capabilities.
+
+* **Command Prompt (cmd):** Supports only built-in Windows commands.
+* **PowerShell:** More powerful; supports scripting, advanced commands, and works like Linux/macOS terminals.
+
+Both can run Python through the command:
+
+```
+python
+```
+
+This starts **Python IDLE (REPL mode)** — an interactive shell where Python executes your commands immediately.
+
+**Example:**
+
+```python
+>>> print("Hello")
+Hello
+```
+
+---
+
+<Step>
+## Airthmetic Operations
+Python supports the standard arithmetic operators. Below each operator is explained and illustrated with examples and expected output.
+
+### Addition `+`
+
+```python
+>>> 2 + 3
+5
+```
+
+*Adds two numbers.*
+
+### Subtraction `-`
+
+```python
+>>> 9 - 8
+1
+```
+
+*Subtracts the right-hand operand from the left-hand operand.*
+
+### Multiplication `*`
+
+```python
+>>> 4 * 6
+24
+```
+
+*Multiplies operands.*
+
+### True division `/` (returns `float`)
+
+* The division operator `/` always returns a float even if both operands are integers.
+
+```python
+>>> 8 / 4
+2.0
+>>> 5 / 2
+2.5
+```
+
+*This is useful because division can produce non-integer results; returning a float preserves precision.*
+
+### Floor (integer) division `//`
+
+* Use `//` if you want only the integer part (the quotient) and to discard any fractional remainder.
+
+```python
+>>> 10 // 3
+3
+>>> -7 // 3
+-3  # floor division rounds toward negative infinity
+```
+
+> Note: with negative numbers `//` performs floor division — results may look unintuitive if you expect truncation toward zero.*
+
+### Modulus `%` (remainder)
+
+```python
+>>> 10 % 3
+1
+```
+
+*Returns remainder of division.*
+
+### Exponentiation `**`
+
+```python
+>>> 2 ** 3
+8
+>>> 4 ** 0.5
+2.0  # square root
+```
+
+*Raises the left operand to the power of the right operand.*
+
+### Operator precedence and parentheses
+
+Python obeys the usual mathematical rules (BODMAS). Use parentheses to change order.
+
+![Python IDE](/images/python/bodmass.png)
+
+```python
+>>> 8 + 2 * 3
+14
+>>> (8 + 2) * 3
+30
+```
+
+> **Common pitfall:** incomplete expressions cause syntax errors:
+
+```python
+>>> 8 + 9 -
+SyntaxError: invalid syntax
+```
+
+</Step>
+
+---
+
+<Step>
+## Using the Underscore `_` in Python IDLE
+
+In Python, the underscore `_` is a special built-in name that automatically stores the **result of the last executed expression**.
+This allows you to reuse the previous output without retyping it, making calculations faster and more convenient.
+
+**Example1:**
+
+```python
+>>> 10 + 5
+15
+
+>>> _ * 2
+30
+```
+
+Explanation:
+
+* After evaluating `10 + 5`, Python stores the result (`15`) in `_`.
+* When you enter `_ * 2`, Python uses the stored value (`15`) and performs:
+  15 × 2 = 30
+
+**Example1:**
+
+```python
+>>> 50 // 3
+16
+
+>>> 1 + _
+17
+```
+
+Python automatically uses the last result (`16`) and adds `1`.
+
+</Step>
+
+---
+
+<Step>
+## **Variables in Python**
+
+A **variable** is a name used to store a value in memory.
+Python creates variables automatically when a value is assigned.
+
+### Example:
+
+```python
+x = 2
+print(x + 3)     # Output: 5
+
+y = 3
+print(x + y)     # Output: 5
+```
+
+### Variables are mutable
+
+Values of variables can be changed easily:
+
+```python
+x = 9
+print(x)        # 9
+print(x + y)    # 12
+```
+
+### Assigning expressions to variables
+
+When you assign a value, nothing is printed unless you use `print()`.
+
+```python
+num_one = 8**3
+# No output
+print(num_one)
+# 512
+```
+
+</Step>
+
+---
+
+<Step>
+## Summary
+
+- Python IDLE can be accessed by typing python in Command Prompt or PowerShell.
+- Python supports standard arithmetic operators: `+`, `-`, `*`, `/`, `//`, `%`, `**`.
+- `/` returns a float, while `//` gives the integer (floor) result.
+- Python follows BODMAS, and parentheses can override precedence.
+- In IDLE, `_` stores the result of the previous expression for reuse.
+- Variables store values for later use, and results appear only when using `print()` statement.
+
+</Step>
+</Steps>
+
+Written By: <a href="https://www.linkedin.com/in/muskangarg03/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer"> Muskan Garg <ExternalLink className="w-4 h-4" /></a>
