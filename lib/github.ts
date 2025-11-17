@@ -8,50 +8,6 @@ export const DocsCategory = 'Docs Feedback';
 let instance: Octokit | undefined;
 
 
-// async function getOctokit(): Promise<Octokit> {
-//   if (instance) return instance;
-
-//   const appId = process.env.GITHUB_APP_ID;
-
-//   let privateKey: string | undefined;
-
-//   // PRODUCTION: decode base64
-//   if (process.env.GITHUB_APP_PRIVATE_KEY_BASE64) {
-//     privateKey = Buffer.from(
-//       process.env.GITHUB_APP_PRIVATE_KEY_BASE64,
-//       "base64"
-//     ).toString("utf8");
-//   }
-
-//   // LOCAL: load regular PEM with escaped \n
-//   else if (process.env.GITHUB_APP_PRIVATE_KEY) {
-//     privateKey = process.env.GITHUB_APP_PRIVATE_KEY.replace(/\\n/g, "\n");
-//   }
-
-//   if (!appId || !privateKey) {
-//     throw new Error("Missing GitHub App credentials");
-//   }
-
-//   const app = new App({
-//     appId,
-//     privateKey,
-//   });
-
-//   const { data } = await app.octokit.request(
-//     "GET /repos/{owner}/{repo}/installation",
-//     {
-//       owner,
-//       repo,
-//       headers: {
-//         "X-GitHub-Api-Version": "2022-11-28",
-//       },
-//     }
-//   );
-
-//   instance = await app.getInstallationOctokit(data.id);
-//   return instance;
-// }
-
 
 async function getOctokit(): Promise<Octokit> {
   if (instance) return instance;
@@ -125,7 +81,6 @@ export async function onRateAction(
   url: string,
   feedback: Feedback,
 ): Promise<ActionResponse> {
-  'use server';
   const octokit = await getOctokit();
   const destination = await getFeedbackDestination();
   if (!octokit || !destination)

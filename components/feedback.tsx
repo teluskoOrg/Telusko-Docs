@@ -36,11 +36,7 @@ interface Result extends Feedback {
   response?: ActionResponse;
 }
 
-export function Feedback({
-  onRateAction,
-}: {
-  onRateAction: (url: string, feedback: Feedback) => Promise<ActionResponse>;
-}) {
+export function Feedback() {
   const url = usePathname();
   const [previous, setPrevious] = useState<Result | null>(null);
   const [opinion, setOpinion] = useState<'good' | 'bad' | null>(null);
@@ -74,20 +70,36 @@ export function Feedback({
 
       // console.log(feedback,'feedback')
 
-      void onRateAction(url, feedback).then((response) => {
-        // console.log(response,'feedback response')
+       try {
+        // Call the API route instead of the server action
+        const response = await fetch('/api/feedback', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            url,
+            feedback,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to submit feedback');
+        }
+
+        const data: ActionResponse = await response.json();
+
         setPrevious({
-          response,
+          response: data,
           ...feedback,
         });
 
         setMessage('');
         setOpinion(null);
-      }).catch((error)=>{
-         throw new Error(
-         'Error in Feedback',
-    );
-      });
+      } catch (error) {
+        console.error('Error submitting feedback:', error);
+        throw new Error('Error in Feedback');
+      }
     });
 
     e?.preventDefault();
