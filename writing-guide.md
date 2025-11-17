@@ -65,7 +65,7 @@ Use `#` to `######` for headings:
 
 ---
 
-## Markdown Images (works but use <MyImage /> preferred)
+## Markdown Images 
 
 ```md
 ![Alt text](/images/picture.png)
@@ -73,13 +73,6 @@ Use `#` to `######` for headings:
 
 ---
 
-## Blockquotes
-
-```md
-> This is a quote.
-```
-
----
 
 ## Horizontal Rule
 
@@ -97,13 +90,6 @@ Use `#` to `######` for headings:
 Use `print()` to output text.
 ```
 
-### Code block
-
-````md
-```python
-print("Hello World")
-```
-````
 
 ---
 
@@ -289,7 +275,6 @@ Used for important notices.
 </Callout>
 ```
 
-Sometimes called `<Alert />` depending on version.
 
 ---
 
@@ -298,21 +283,11 @@ Sometimes called `<Alert />` depending on version.
 For labeling versions or statuses.
 
 ```mdx
-<Badge color="green">Stable</Badge>
+<Badge>Stable</Badge>
 ```
 
 ---
 
-# CodeGroup / Code (For multi‑language code examples)
-
-```mdx
-<CodeGroup>
-  <Code lang="js">console.log("JS")</Code>
-  <Code lang="py">print("Python")</Code>
-</CodeGroup>
-```
-
----
 
 # Quote
 
@@ -369,7 +344,7 @@ Welcome to Python!
 <Video id="PqFKRqpHrjw" />
 
 ## CPU Diagram
-<MyImage src="/images/cpu.png" alt="CPU Diagram" />
+![Test](/images/python/p2.png)
 
 <Steps>
   <Step>

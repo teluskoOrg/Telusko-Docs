@@ -5,6 +5,8 @@ import { File,Folder } from 'fumadocs-ui/components/files';
 import { Card, Cards } from 'fumadocs-ui/components/card';
 import { Step, Steps } from 'fumadocs-ui/components/steps';
 import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
+import Quote from '@/components/ui/Quote';
+import Badge from '@/components/ui/Badge';
 import Image from 'next/image';
 import { ExternalLink } from 'lucide-react'
 
@@ -26,6 +28,8 @@ export function getMDXComponents(components?: MDXComponents): MDXComponents {
     Card,
     Cards,
     Video,
+    Quote,
+    Badge,
     ExternalLink,
     Image,
     ...components,
