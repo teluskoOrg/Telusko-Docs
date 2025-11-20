@@ -1,4 +1,5 @@
-{
+{   "title":"Python",
+    "icon":"AlignStartVertical",
     "pages":[
         "Introduction-to-Python",
         "Basics-of-Python",
