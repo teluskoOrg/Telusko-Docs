@@ -1,0 +1,133 @@
+---
+title: First Code in Java
+---
+
+<Video id="tSqNBjGacYk" />
+
+## Checking Installation in VS Code Terminal
+
+Before writing your first program, it’s important to verify that Java has been installed correctly and that VS Code can detect it.  
+Open the **VS Code integrated terminal** and run:
+
+```bash
+java -version
+javac -version
+```
+
+If everything is set up correctly, both commands will display version numbers.
+`java` refers to the Java Runtime, while `javac` refers to the Java Compiler.
+
+<Callout type="info">
+Both commands must work.  
+If <b>javac</b> fails, your JDK is not properly installed or JAVA_HOME is not configured.
+</Callout>
+
+
+## Creating Your First Java File
+
+Every Java program begins with a `.java` file.
+Create a new file named:
+
+**Hello.java**
+
+A few important rules:
+
+* Every Java source file must end with `.java`
+* If your file contains a **public class**, the filename must match that class name
+
+This is why we name the file **Hello.java** when our class is named `Hello`.
+
+<Callout type="info">
+In Java, the filename and the public class name must match.  
+This helps the compiler organize and locate your code.
+</Callout>
+
+
+## JShell (Interactive Mode)
+
+JShell is Java's **interactive REPL environment**, introduced in Java 9.
+It allows you to quickly test small code snippets without creating files, compiling, or running a full program.
+
+This makes JShell perfect for beginners experimenting with syntax or performing quick calculations.
+
+### Open JShell
+
+```bash
+jshell
+```
+
+### Try basic expressions
+
+```bash
+2 + 3            // Output: 5
+9 - 6            // Output: 3
+print(6)         // Error
+System.out.print(6)
+System.out.println("Hello World")
+```
+
+<Accordions>
+  <Accordion title="Why does print(6) give an error?">
+    Java does not have a global <code>print()</code> function.  
+    All printing must be done using the <code>System.out</code> object.
+  </Accordion>
+</Accordions>
+
+
+## Compiling and Running Code
+
+Inside JShell, you can enter single lines of Java code.
+But to write real programs, you must place your code inside a class and compile it.
+
+For example, this line works in JShell:
+
+```java
+System.out.println("Hello World");
+```
+
+But placing only this line into **Hello.java** will cause an error.
+
+<Callout type="warning">
+If <b>Hello.java</b> contains only a print statement, it will fail to compile.  
+Java requires all code to be inside a class.
+</Callout>
+
+### Compile the program
+
+```bash
+javac Hello.java
+```
+
+If the file is missing a class structure, the compiler will report errors and stop.
+
+
+## Minimal Working Java Program
+
+Here is the simplest valid Java program you can write:
+
+```java
+public class Hello {
+    public static void main(String[] args) {
+        System.out.println("Hello World");
+    }
+}
+```
+
+* `public class Hello` defines the class
+* `main()` is the entry point — the first method executed by the JVM
+* `System.out.println()` prints output to the screen
+
+### Compile and run:
+
+```bash
+javac Hello.java
+java Hello
+```
+
+If everything is correct, you should see:
+
+```
+Hello World
+```
+
+Congratulations — you have run your first Java program!

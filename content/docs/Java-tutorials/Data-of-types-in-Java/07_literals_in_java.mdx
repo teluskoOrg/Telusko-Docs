@@ -1,0 +1,144 @@
+---
+title: Literals in Java
+---
+<Video id="iZXLCM5bzRI" />
+
+
+Literals are one of the simplest yet most fundamental concepts in Java.  
+Every program works with values, and literals represent those values written **directly in the code**.  
+Understanding them is essential for correct variable assignment, readability, and writing clean Java programs.
+
+
+## What is a Literal?
+
+A **literal** is a fixed value assigned directly to a variable without computation.  
+Whenever you type a number, character, or boolean value directly into your program, you are using a literal.
+
+Example:
+
+```java
+int x = 10;   // 10 is a literal
+```
+
+Here, `10` is directly written into the code, so it is considered a literal.
+Java supports several types of literals, each designed to represent different kinds of values.
+
+
+## Types of Literals
+
+Java provides different categories of literals depending on the kind of data being represented.
+
+
+## 1. Integer Literals
+
+Integer literals represent whole numbers and can be written in **multiple number systems**.
+This flexibility helps in low-level programming, bit manipulation, and readability.
+
+### Different Ways to Write Integer Literals
+
+```java
+int num1 = 0b101;        // Binary literal (prefix 0b) → 5
+int num2 = 0x78;         // Hexadecimal literal (prefix 0x) → 120
+int num3 = 1000_000_00;  // Underscore for readability → 100000000
+```
+
+### Notes
+
+* The prefix `0b` or `0B` is used for binary.
+* The prefix `0x` or `0X` is used for hexadecimal.
+* Underscores (`_`) can be placed between digits to improve readability.
+* Java does **not** allow numbers to start with zero for octal in modern versions.
+
+
+## 2. Floating-Point Literals
+
+Floating-point literals represent decimal numbers.
+Java allows writing them using normal decimal notation or **scientific notation** (also called exponential notation).
+
+### Examples
+
+```java
+double num4 = 12e10;  // 12 × 10^10 (scientific notation)
+float f = 5.6f;       // Use 'f' or 'F' for float
+double d = 5.6;       // Decimal is double by default
+```
+
+### Notes
+
+* `double` is the default type for decimal numbers.
+* A `float` requires the suffix `f` or `F`.
+* Scientific notation uses `e` or `E` for powers of 10.
+
+## 3. Character Literals
+
+Character literals represent a **single character** enclosed in **single quotes**.
+
+### Examples
+
+```java
+char c1 = 'a';         // Direct character
+char c2 = 65;          // Unicode/ASCII value → 'A'
+char c3 = '\u0041';    // Unicode literal → 'A'
+```
+
+### Notes
+
+* Java uses Unicode, so characters from all languages can be represented.
+* The escape sequence `\uXXXX` represents Unicode characters.
+
+## 4. Boolean Literals
+
+Boolean literals are used in conditional logic, loops, and decision-making.
+They represent values of truth.
+
+### Examples
+
+```java
+boolean b1 = true;
+boolean b2 = false;
+```
+
+There are **only two** possible boolean literals in Java.
+
+
+## Example Program
+
+The following program demonstrates various literal types used together:
+
+```java
+public class Hello {
+    public static void main(String[] args) {
+        int num1 = 0b101;         // Binary → 5
+        int num2 = 0x78;          // Hexadecimal → 120
+        int num3 = 1000_000_00;   // Readable large number
+        double num4 = 12e10;      // Scientific notation
+        char c = 'a';
+        c = (char)(c + 1);        // 'b'
+
+        boolean flag = true;
+
+        System.out.println(num1);
+        System.out.println(num2);
+        System.out.println(num3);
+        System.out.println(num4);
+        System.out.println(c);
+        System.out.println(flag);
+    }
+}
+```
+
+
+## Key Notes (Recap)
+
+* Use **underscores (`_`)** to make large numbers easier to read.
+* Prefixes:
+
+  * `0b` → binary
+  * `0x` → hexadecimal
+* Floating-point literals can use **scientific notation** (`e` / `E`).
+* Characters can be written using:
+
+  * Single quotes → `'a'`
+  * ASCII/Unicode values → `65`
+  * Unicode escape sequences → `'\u0041'`
+* Booleans only accept `true` or `false`.

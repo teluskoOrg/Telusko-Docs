@@ -1,0 +1,169 @@
+---
+title: Logical & Bitwise Operators in Java
+---
+
+<Video id="hLimYJZQ2kc" />
+
+Logical and bitwise operators are essential tools in Java for building decision-making logic, validating conditions, and performing low-level operations on binary data.  
+This lecture explains how they work, where they are used, and the difference between short-circuit and non-short-circuit operators.
+
+## 1. Logical Operators (Work on boolean values)
+
+Logical operators operate **only on boolean expressions** and always produce a boolean output (`true` or `false`).  
+They are commonly used in **if-conditions, loops, validations, and comparisons**.
+
+Here is the rewritten section with **simple bullet points instead of a table**, keeping the meaning clear and beginner-friendly:
+
+
+### Available Logical Operators
+
+* **`&&` – Logical AND (short-circuit)**
+  Evaluates to `true` only if **both** conditions are true.
+  **Example:**
+  `(x < y && a > b)` → `false`
+
+* **`||` – Logical OR (short-circuit)**
+  Evaluates to `true` if **any one** condition is true.
+  **Example:**
+  `(x < y || a > b)` → `true`
+
+* **`!` – Logical NOT**
+  Reverses a boolean value.
+  **Example:**
+  `!(x < y)` → `true`
+
+
+### Logical AND – `&&` (Short-Circuit)
+
+- Returns **true** only when **both** conditions are true.
+- **Short-circuit behavior:**  
+  If the **first condition is false**, Java **does not evaluate the second**, because the final result is already false.
+
+### Logical OR – `||` (Short-Circuit)
+
+- Returns **true** if **any one** condition is true.
+- **Short-circuit behavior:**  
+  If the **first condition is true**, Java **skips the second condition** since the final result is guaranteed to be true.
+
+### Logical NOT – `!`
+
+- Reverses a boolean value:  
+  `!true → false`  
+  `!false → true`
+
+
+## 2. `&` vs `&&` and `|` vs `||`
+
+Java has two versions of AND and OR:
+
+### AND Operators
+
+#### `&&` – Logical AND (short-circuit)
+- Skips evaluation of second condition if first is false.
+- More efficient, safer (avoids errors like dividing by zero).
+
+#### `&` – Non-short-circuit AND
+- **Always evaluates both conditions**, even if first is false.
+- Also used as a **bitwise operator** when dealing with numbers.
+
+
+### OR Operators
+
+#### `||` – Logical OR (short-circuit)
+- Skips second condition if first is true.
+
+#### `|` – Non-short-circuit OR
+- Always evaluates both conditions.
+- Also used as a **bitwise OR** operator.
+
+
+### Example
+
+```java
+int a = 10, b = 5;
+
+System.out.println(a > b && a < 20); // true (short-circuit AND)
+System.out.println(a > b & a < 20);  // true (both checked)
+
+System.out.println(a > b || a < 2);  // true (short-circuit OR)
+System.out.println(a > b | a < 2);   // true (both checked)
+```
+
+## 3. Bitwise Operators (Work on binary digits)
+
+Bitwise operators operate on the **individual bits** of numbers.
+They are useful for performance-critical tasks, binary manipulation, encryption, and low-level operations.
+
+### Bitwise operators:
+
+* `&` → Bitwise AND
+* `|` → Bitwise OR
+* `^` → Bitwise XOR
+* `~` → Bitwise NOT
+* `<<` → Left Shift
+* `>>` → Right Shift
+
+### Example Program
+
+```java
+public class Hello {
+    public static void main(String[] args) {
+        int a = 5, b = 3;
+
+        System.out.println("a & b: " + (a & b));   // 1
+        System.out.println("a | b: " + (a | b));   // 7
+        System.out.println("a ^ b: " + (a ^ b));   // 6
+        System.out.println("~a: " + (~a));         // -6
+        System.out.println("a << 1: " + (a << 1)); // 10
+        System.out.println("a >> 1: " + (a >> 1)); // 2
+    }
+}
+```
+
+### Explanation (Binary View)
+
+```
+a = 5 → 0101
+b = 3 → 0011
+
+a & b → 0001 (1)
+a | b → 0111 (7)
+a ^ b → 0110 (6)
+~a    → -(a+1) = -6
+```
+
+Shift operators:
+
+* `a << 1` shifts bits left → multiply by 2
+* `a >> 1` shifts bits right → divide by 2
+
+---
+
+## 4. Truth Tables
+
+### Logical AND (`&&`)
+
+| x | y | x && y |
+| - | - | ------ |
+| T | T | T      |
+| T | F | F      |
+| F | T | F      |
+| F | F | F      |
+
+
+### Logical OR (`||`)
+
+* `T || T` → **T**
+* `T || F` → **T**
+* `F || T` → **T**
+* `F || F` → **F**
+
+
+## Key Notes Recap
+
+* `&&` and `||` are **short-circuit** operators.
+* `&` and `|` always evaluate **both sides** (also used in bitwise operations).
+* Bitwise operators manipulate values at the **binary** level.
+* Logical operators work only on **boolean values**.
+* Bitwise operators work on **numeric types** (int, byte, long).
+

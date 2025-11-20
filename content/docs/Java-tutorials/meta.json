@@ -2,9 +2,10 @@
     "root":false,
     "pages":[
         "getting-started.mdx",
-        "Getting-started-with-java",
+        "Introduction-to-Java",
+        "Basics-of-Java",
+        "Data-of-types-in-Java",
         "Operators-in-Java",
-        "Control-Statements",
-        "Introduction-to-Classes-&-Objects"
+        "Loops-in-Java"
     ]
 }

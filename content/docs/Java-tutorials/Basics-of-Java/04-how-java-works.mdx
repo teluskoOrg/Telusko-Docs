@@ -1,0 +1,152 @@
+---
+title: How Java Works
+---
+
+<Video id="NHrsLjhjmi4" />
+
+## Basic Flow
+
+Java executes through a structured, layered architecture designed to isolate programs from hardware differences.  
+Before any Java code runs, multiple layers work together to translate code into machine-understandable instructions.
+
+<Callout type="info">
+The operating system communicates directly with the hardware.  
+The JVM sits on top of the OS and interprets Java bytecode, allowing the same Java program to run on any system.
+</Callout>
+
+Java's execution model is built around three major ideas:
+
+- Every Java program needs the **Java Virtual Machine (JVM)** to execute.  
+- The **Operating System (OS)** interacts with the system hardware.  
+- The JVM runs above the OS, giving Java its unique **platform independence**.
+
+Java does not compile directly to machine code. Instead, it produces a universal form called **bytecode**, which any JVM can execute regardless of the underlying computer.
+
+
+## Platform Independence
+
+Java follows the famous principle:
+
+**WORA – Write Once, Run Anywhere**
+
+This means:
+
+- You write your code once  
+- Compile it into **bytecode**  
+- Run the same bytecode on any platform where a JVM is installed  
+
+This eliminates the need to create different versions of a program for Windows, macOS, or Linux.
+
+<Accordions>
+  <Accordion title="Why JVM Makes Java Platform Independent">
+    The JVM understands Java bytecode.  
+    It takes the same <b>.class</b> file and translates it into the native machine instructions of the system it is running on.  
+    This translation happens at runtime, making Java portable without modifying the code.
+  </Accordion>
+</Accordions>
+
+
+## Java Code Execution Flow
+
+Java’s execution pipeline is simple but powerful. Here’s the lifecycle of every Java program:
+
+1. **Write the Java code** in a `.java` file  
+2. **Compile** using `javac` → this generates a `.class` file containing **bytecode**  
+3. **JVM reads and executes** the bytecode, converting it into machine instructions for the OS  
+
+### Example Code
+
+```java
+public class Hello {
+    public static void main(String[] args) {
+        System.out.println("Hello World");
+    }
+}
+```
+
+### Commands to Run
+
+```bash
+javac Hello.java    # Compiles and generates Hello.class
+java Hello          # Executes -> Hello World
+```
+
+Every time you run `java Hello`, the JVM loads the class file, verifies it, interprets or JIT-compiles it, and finally executes it.
+
+
+## Main Method Signature
+
+Every standalone Java program begins execution from a single method:
+
+```java
+public static void main(String[] args)
+```
+
+This method acts as the **entry point**.
+The JVM searches specifically for this signature when executing a class.
+
+More details:
+
+* **public** → JVM must access it from outside your class
+* **static** → JVM can call it without creating an object
+* **void** → it does not return a value
+* **String[] args** → allows command-line arguments
+
+<Callout type="warning">
+If the <b>main</b> method signature is changed even slightly,  
+the JVM will not recognize it and your program will fail to start.
+</Callout>
+
+
+## Diagram 1 – Code to Execution
+
+```
+Java Code (.java)  --javac-->  Bytecode (.class)  --JVM-->  Machine Code
+```
+
+This pipeline ensures that Java code works consistently across different machines.
+
+
+## JDK, JRE, JVM
+
+Understanding these three components is crucial for every Java developer:
+
+<Cards>
+  <Card title="JDK (Java Development Kit)">
+    The JDK is required for Java development.  
+    It contains tools like the compiler (<b>javac</b>), debugger, and includes the full JRE.  
+    You install the JDK when you want to <b>write and compile</b> Java programs.
+  </Card>
+
+  <Card title="JRE (Java Runtime Environment)">
+    The JRE includes the JVM and essential libraries needed to <b>run</b> Java programs.  
+    It does not include development tools.  
+    Useful for systems that only need to execute Java applications.
+  </Card>
+
+  <Card title="JVM (Java Virtual Machine)">
+    The JVM executes Java bytecode and converts it into machine-level instructions.  
+    It is the key component responsible for platform independence.
+  </Card>
+</Cards>
+
+### Diagram 2 – Inside the JDK
+
+```
+JDK
+ ├── JRE
+ │    ├── Libraries
+ │    └── JVM
+ └── Tools (javac, debugger, etc.)
+```
+
+The JDK includes the JRE, and the JRE includes the JVM.
+
+## Key Points Summary
+
+* `.java` → human-readable source code
+* `.class` → bytecode generated after compilation
+* **JVM** executes the bytecode
+* Java is an **Object-Oriented Programming (OOP)** language, so code must be placed inside a **class**
+
+Java’s layered execution model makes it secure, portable, efficient, and easy to maintain across platforms and architectures.

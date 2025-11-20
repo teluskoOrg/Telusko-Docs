@@ -1,0 +1,181 @@
+---
+title: Java Development Kit (JDK)
+---
+
+<Video id="WRISYpKhIrc" />
+
+The Java Development Kit is the core foundation required to write, compile, and run Java applications. Before writing your first line of Java code, it is important to understand the tools involved and how your development environment should be set up.
+This guide explains the difference between IDEs and editors, what the JDK contains, how to install it, and how to verify your setup.It is written especially for beginners who want a clear and easy-to-follow explanation.
+
+## IDE vs Editor
+
+When learning Java, beginners often confuse **IDEs** with simple **text editors**. Understanding the difference helps you choose the right tool for your work.
+
+### IDE (Integrated Development Environment)
+
+Examples: **IntelliJ IDEA, Eclipse, VS Code**
+
+An IDE is a feature-rich tool designed specifically for software development.  
+It provides everything a programmer needs in one place.
+
+Typical IDE features include:
+
+- Intelligent autocomplete (IntelliSense)
+- Step-by-step debugging tools
+- Code navigation (jump to definition, search symbols)
+- Built-in compiler and execution tools
+- Project management and organization
+- Integrated support for version control (Git)
+- Plugin marketplace for extending functionality
+
+IDEs are recommended for **most Java learners** because they reduce the friction of writing Java from scratch and highlight mistakes early.
+
+### Editor (Lightweight Text Editors)
+
+Examples: **Notepad, VS Code (as an editor), Notepad++, Sublime Text**
+
+Text editors are lightweight tools designed mainly for writing plain text. Unlike IDEs, they do **not** include Java-specific features unless extensions are installed.
+
+Typical characteristics:
+- Only provides basic text editing
+- No built-in compiler or debugger
+- Requires manual setup for Java execution
+- Faster and more lightweight than full IDEs
+
+Text editors are good for quick edits, but beginners usually find IDEs more supportive for learning Java.
+
+## JDK (Java Development Kit)
+
+The JDK is the essential toolkit required to develop Java programs. Without the JDK, your system cannot compile or run Java code.
+
+The JDK includes:
+
+- The **Java compiler (`javac`)**
+- The **Java Runtime Environment (JRE)**  
+- JVM (Java Virtual Machine)
+- Development tools such as debugger, documentation tools, etc.
+
+There are multiple JDK distributions:
+
+- **OpenJDK** (open-source)
+- **Oracle JDK**
+- Vendor builds like **Amazon Corretto**, **Zulu**, etc.
+
+All are compatible for learning and development.
+
+### Why You Should Install the Latest Version
+
+- New performance improvements  
+- Updated language features  
+- Better security  
+- Modern tooling  
+- Long-term stability
+
+Java is **backward compatible**, so older programs still run on modern JDK versions.
+
+## LTS (Long-Term Support)
+
+Java releases versions twice a year, but not all versions are supported long term. LTS versions receive **updates, security patches, and stability improvements** for several years.
+
+Common LTS versions:
+
+- **Java 17**
+- **Java 21**
+
+For beginners, using an LTS version is the safest choice.
+
+## Installation & Setup
+
+Installing the JDK properly is the first step toward writing Java programs.
+
+### Steps to Install JDK
+
+1. Download the JDK from **Oracle**, **OpenJDK**, or another trusted vendor.
+2. Run the installer and note the installation directory  
+   (e.g., `C:\Program Files\Java\jdk-21`).
+3. Configure environment variables so your system can find the JDK tools.
+
+### Environment Variables Explained
+
+Environment variables tell your operating system *where* the Java tools are located.
+
+- **User Variables**  
+  Apply only to your user account.
+
+- **System Variables**  
+  Apply to all users on the machine.  
+  Best choice when multiple users need Java.
+
+The most important variable is:
+
+```
+PATH = C:\Program Files\Java\jdk-21\bin
+
+```
+
+This ensures that commands like `javac` and `java` can run from anywhere in the terminal.
+
+### Check Installed Version
+
+Use these commands in the terminal:
+
+```bash
+java -version
+javac -version
+```
+
+If both commands return a version number, your installation is correct. If `javac` fails, your JDK path is likely not set correctly.
+
+## Steps to Install & Set Up VS Code
+
+VS Code can function both as an editor and a lightweight IDE for Java.
+
+1. Download and install **VS Code**.
+2. Open Extensions Marketplace → search **Java Extensions Pack**.
+3. Install the recommended extensions:
+
+   * Extension Pack for Java
+   * Debugger for Java
+   * Java Test Runner
+   * Maven for Java
+
+VS Code will automatically detect your JDK once these extensions are installed.
+
+
+## Example Program to Verify Setup
+
+Create a file named **Hello.java**:
+
+```java
+public class Hello {
+    public static void main(String[] args) {
+        System.out.println("Hello, Java Setup Successful!");
+    }
+}
+```
+
+Run the following commands:
+
+```bash
+javac Hello.java   # Compiles the program
+java Hello         # Runs the program
+```
+
+You should see:
+
+```
+Hello, Java Setup Successful!
+```
+
+## Why This Setup Matters for Beginners
+
+Many beginners struggle not with Java itself, but with the **environment setup**.
+A correct installation ensures:
+
+* Fewer errors while learning
+* Easier debugging
+* Smooth execution of programs
+* IDE features work correctly
+* Ability to follow tutorials without frustration
+
+Understanding the JDK, JVM, and IDE environment early on creates a strong foundation for everything else you will learn in Java.

@@ -1,0 +1,148 @@
+---
+title: Arithmetic Operators in Java
+---
+<Video id="flWjzwzgybI" />
+
+
+Arithmetic operators are used to perform mathematical operations on numeric data in Java.  
+They form the foundation for calculations, logic building, loops, and data processing.  
+Understanding how these operators behave—especially with integers—is essential for writing correct programs.
+
+
+## Basic Arithmetic Operators
+
+Java supports several arithmetic operators that work on integer, float, and double values.  
+The most common ones include:
+
+- `+`  → Addition  
+- `-`  → Subtraction  
+- `*`  → Multiplication  
+- `/`  → Division  
+- `%`  → Modulus (remainder)
+
+### Example:
+
+```java
+int num1 = 7;
+int num2 = 5;
+
+int add = num1 + num2;   // Addition → 12
+int sub = num1 - num2;   // Subtraction → 2
+int mul = num1 * num2;   // Multiplication → 35
+int div = num1 / num2;   // Division → 1 (integer division)
+int mod = num1 % num2;   // Modulus → 2
+
+System.out.println(add);
+System.out.println(sub);
+System.out.println(mul);
+System.out.println(div);
+System.out.println(mod);
+````
+
+### Important Note About Integer Division
+
+When both operands are integers, Java performs **integer division**, meaning:
+
+* Decimal values are discarded
+* Result is always an integer
+
+Example:
+`7 / 5 = 1` → the result is not 1.4, but **1**
+
+This is a frequent source of confusion among beginners.
+
+
+## Assignment with Operators (Shorthand Operators)
+
+Java provides shorthand versions of common assignment operations to make the code cleaner and easier to read.
+
+### Example:
+
+```java
+int num1 = 7;
+
+num1 += 2;   // num1 = num1 + 2  → 9
+num1 -= 2;   // num1 = num1 - 2  → 7
+num1 *= 2;   // num1 = num1 * 2  → 14
+num1 /= 2;   // num1 = num1 / 2  → 7
+```
+
+### Why use shorthand operators?
+
+* They are shorter and cleaner
+* Reduce repetition
+* More readable in loops and calculations
+
+These operators work for **all numeric types** (int, float, double, etc.).
+
+
+## Increment and Decrement Operators
+
+Java provides two operators to increase or decrease a value by 1:
+
+* **Increment:** `++`
+* **Decrement:** `--`
+
+Each operator has two forms:
+
+### • Post-Increment (num++)
+
+Uses the value first, then increments.
+
+### • Pre-Increment (++num)
+
+Increments first, then uses the value.
+
+### • Post-Decrement (num--)
+
+Uses the value, then decrements.
+
+### • Pre-Decrement (--num)
+
+Decrements first, then uses the value.
+
+### Example:
+
+```java
+int num = 5;
+
+System.out.println(num++); // Output: 5, then num becomes 6
+System.out.println(++num); // num becomes 7, then prints 7
+
+System.out.println(num--); // Prints 7, then becomes 6
+System.out.println(--num); // Becomes 5, then prints 5
+```
+
+### Why does this matter?
+
+Pre/post increment behavior is very important when working with:
+
+* Loops
+* Complex expressions
+* Indexing arrays
+* Algorithm logic
+
+Beginners often confuse pre-increment and post-increment, so always be mindful of when the change happens.
+
+
+## Division Notes (Integer vs Float)
+
+If **either** operand is a floating-point number (float or double), Java performs **floating-point division**.
+
+Example:
+
+```java
+System.out.println(7 / 5);    // 1   (integer division)
+System.out.println(7 / 5.0);  // 1.4 (floating division)
+```
+
+Java automatically promotes the calculation to a wider type if necessary.
+
+
+## Key Points Recap
+
+* `%` (modulus) returns the remainder of a division operation.
+* Integer division **removes decimals** — it does not round.
+* `++` and `--` behave differently depending on their position (pre vs post).
+* Shorthand operators (`+=`, `-=`, `*=`, `/=`) help make code cleaner and more readable.
+* Use floating-point numbers to get decimal results in division.

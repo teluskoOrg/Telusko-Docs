@@ -1,0 +1,146 @@
+---
+title: Data Types in Java
+---
+
+<Video id="Le25I331_yU" />
+
+Understanding data types is one of the most important fundamentals of Java.  
+Every piece of data you store must have a clearly defined type, and this helps Java maintain consistency, efficiency, and safety in your programs.
+
+Java divides its data types into two main categories:
+
+1. **Primitive Data Types** – these are the basic, built-in data types.  
+2. **Non-Primitive Data Types** – these include classes, arrays, strings, and objects created using classes.
+
+In this lecture, we focus entirely on **Primitive Data Types**, which serve as the building blocks for all other types.
+
+
+## Primitive Data Types
+
+Primitive types are simple, efficient, and stored directly in memory.  
+They represent the most basic forms of data that Java can handle and are divided into **four major groups** based on the kind of values they store.
+
+
+## 1. Integer Types
+
+Integer types store **whole numbers**, both positive and negative.  
+Java provides four different integer types, each designed for different memory constraints and ranges.
+
+| Type  | Size    | Range                                                   |
+|-------|---------|---------------------------------------------------------|
+| byte  | 1 byte  | -128 to 127                                             |
+| short | 2 bytes | -32,768 to 32,767                                       |
+| int   | 4 bytes | -2,147,483,648 to 2,147,483,647                         |
+| long  | 8 bytes | -9,223,372,036,854,775,808 to 9,223,372,036,854,775,807 |
+
+### Notes
+
+- `int` is the most commonly used integer type.
+- `byte` and `short` are used when memory is very limited (e.g., embedded systems).
+- `long` requires an **L** at the end of the value, otherwise Java treats numbers as `int` by default.
+
+### Example
+
+```java
+int num1 = 9;
+byte by = 127;        // Max value for byte
+short sh = 558;
+long l = 5584L;       // Must end with 'L'
+```
+
+
+## 2. Floating-Point Types
+
+Floating-point types store decimal numbers.
+They are useful for mathematical operations, scientific calculations, and any situation requiring fractional values.
+
+| Type   | Size    | Notes                                |
+| ------ | ------- | ------------------------------------ |
+| float  | 4 bytes | Must use `f` at the end (e.g., 5.6f) |
+| double | 8 bytes | Default type for decimal numbers     |
+
+### Notes
+
+* `double` is preferred because it offers greater precision.
+* `float` uses less memory but is less precise.
+
+### Example
+
+```java
+float f = 5.8f;
+double d = 5.6;   // By default, decimals are considered double
+```
+
+
+## 3. Character Type
+
+Characters represent **single letters, digits, or symbols**.
+Java uses **Unicode**, allowing it to support characters from all languages worldwide.
+
+| Type | Size    | Example         |
+| ---- | ------- | --------------- |
+| char | 2 bytes | `char c = 'k';` |
+
+### Notes
+
+* Characters must be written in **single quotes** (`'a'`, `'9'`, `'$'`).
+* Behind the scenes, characters are stored as numeric Unicode values.
+
+
+## 4. Boolean Type
+
+Booleans can store only two values:
+
+* `true`
+* `false`
+
+### Notes
+
+* Java booleans do **not** behave like numbers (`0` and `1`) as in C/C++.
+* They are mainly used for conditions, decision-making, and loops.
+
+### Example
+
+```java
+boolean b = true;
+```
+
+
+## Example Program
+
+The following example shows all primitive types in action:
+
+```java
+public class Hello {
+    public static void main(String[] args) {
+        int num1 = 9;
+        byte by = 127;
+        short sh = 558;
+        long l = 5584L;
+
+        float f = 5.8f;
+        double d = 5.6;
+
+        char c = 'k';
+        boolean b = true;
+
+        System.out.println("int: " + num1);
+        System.out.println("byte: " + by);
+        System.out.println("short: " + sh);
+        System.out.println("long: " + l);
+        System.out.println("float: " + f);
+        System.out.println("double: " + d);
+        System.out.println("char: " + c);
+        System.out.println("boolean: " + b);
+    }
+}
+```
+
+
+## Key Point Recap
+
+* Java is a **strongly typed** language → every variable must have a declared type.
+* Use **L** for long values and **f** for float values.
+* `char` uses **Unicode** to support global characters.
+* `boolean` can only store `true` or `false`.
+* Primitive types are stored **directly in memory**, making them fast and efficient.
