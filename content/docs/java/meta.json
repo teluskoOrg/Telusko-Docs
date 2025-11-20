@@ -1,5 +1,7 @@
 
 {    "root":false,
+    "title":"Java",
+    "icon":"CodeXml",
     "pages":[
         "getting-started.mdx",
         "introduction.mdx",
