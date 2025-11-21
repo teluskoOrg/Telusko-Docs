@@ -1,0 +1,8 @@
+{   "title":"Basics",
+    "pages":[
+        "first-code.mdx",
+        "python-setup.mdx",
+        "IDEs-installation.mdx",
+        "python-IDLE-and-number-operations.mdx"
+    ]
+} 

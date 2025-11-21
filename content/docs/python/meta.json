@@ -1,9 +1,10 @@
 {   "title":"Python",
-    "icon":"AlignStartVertical",
+    "icon":"CodeXml",
     "pages":[
-        "Introduction-to-Python",
-        "Basics-of-Python",
-        "Strings-in-Python",
-        "Data-types-in-Python"
+        "getting-started",
+        "introduction.mdx",
+        "basics",
+        "strings",
+        "data-types"
     ]
-}
+} 
