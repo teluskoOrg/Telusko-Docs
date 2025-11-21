@@ -1,5 +1,6 @@
 {   "title":"Data Types",
     "pages":[
-        "lists.mdx"
+        "lists.mdx",
+        "tuples.mdx"
     ]
 } 

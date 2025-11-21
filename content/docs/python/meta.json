@@ -2,7 +2,7 @@
     "icon":"CodeXml",
     "pages":[
         "getting-started",
-        "python-tutorial2025.mdx",
+        "introductio.mdx",
         "basics",
         "strings",
         "data-types"
