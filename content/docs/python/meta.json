@@ -2,7 +2,7 @@
     "icon":"CodeXml",
     "pages":[
         "getting-started",
-        "introductio.mdx",
+        "introduction.mdx",
         "basics",
         "strings",
         "data-types"

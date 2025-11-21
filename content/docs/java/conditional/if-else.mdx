@@ -1,0 +1,156 @@
+---
+title: If-Else
+---
+
+<Video id="74Q7POjS7mQ" />
+
+## Conditional Statements in Java
+
+Conditional statements allow a program to **make decisions**.  
+They enable Java to choose different paths of execution based on whether a condition is `true` or `false`.
+
+Whenever you see an `if` statement, think of it as the program asking a **yes/no question**.  
+If the answer is “yes” (true), some code will run.  
+If the answer is “no” (false), another block of code may run instead.
+
+<img src="/images/java/if-else.png" width="250px" height="100px" />
+
+### General Form
+
+```java
+if (condition) {
+    // executes if condition is true
+} else {
+    // executes if condition is false
+}
+```
+
+The condition must always evaluate to a **boolean value**.
+
+
+## Flowchart Representation
+
+```
+        [Condition?]
+           /   \
+        True    False
+        /          \
+ [Execute Block1]  [Execute Block2]
+```
+
+This flowchart shows how the program checks the condition and decides which block of code to execute.
+
+
+## Real-World Example – Car Speed
+
+Imagine cruise control in a car:
+
+* If speed is **above** the limit → decrease speed
+* If speed is **below** the limit → increase speed
+* If speed is **equal** to the limit → maintain the speed
+
+This is exactly how `if-else` works in real programs: different actions for different conditions.
+
+
+## Example 1 – Basic If
+
+```java
+public class Demo {
+    public static void main(String[] args) {
+        int x = 18;
+        if (x > 10) {
+            System.out.println("Hello");
+        }
+    }
+}
+```
+
+### Explanation
+
+* The program checks whether `x > 10`.
+* Since 18 is greater than 10, the condition is **true**, and `"Hello"` is printed.
+* If the condition were false, nothing inside the block would execute.
+
+## Example 2 – If with Else
+
+```java
+int x = 8;
+if (x > 10 && x <= 20) {   // Valid range: 11 to 20
+    System.out.println("Hello");
+} else {
+    System.out.println("Bye");
+}
+```
+
+### Understanding the Logic
+
+* If `x` lies **between 11 and 20**, print `"Hello"`.
+* Otherwise, print `"Bye"`.
+
+**Note:**
+
+* `if` can exist on its own.
+* `else` **must always** be paired with an `if`.
+
+## Example 3 – Comparing Two Numbers
+
+```java
+int x = 5;
+int y = 7;
+
+if (x > y) {
+    System.out.println(x);
+} else {
+    System.out.println(y);
+}
+```
+
+Output:
+
+```
+7
+```
+
+The larger number is printed based on the condition.
+
+## Example 4 – Braces Matter
+
+Incorrect version:
+
+```java
+if (x > y)
+    System.out.println(x);
+    System.out.println("Thank you"); // Always runs - NOT part of if
+else
+    System.out.println(y); // Error
+```
+
+This code fails because:
+
+* Without braces `{}`, Java treats **only one line** as part of the `if`.
+* `"Thank you"` always prints, even when `x > y` is false.
+* The `else` gets misaligned and causes a compilation error.
+
+### Correct version:
+
+```java
+if (x > y) {
+    System.out.println(x);
+    System.out.println("Thank you");
+} else {
+    System.out.println(y);
+}
+```
+
+Braces ensure both statements belong to the `if` block.
+
+
+## Key Notes
+
+* Java **does not rely on indentation** (unlike Python).
+  Whether the code is indented or not, the compiler only follows braces `{}`.
+* Always use **braces** when you have more than one statement in a block.
+* Using braces even for a single statement improves clarity and reduces bugs.
+* `if-else` is the foundation of decision-making and will be used heavily in loops, validations, and algorithms.
+
+Written By: <a href="https://www.linkedin.com/in/shivasrivastava1/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer"> Shiva Srivastava <ExternalLink className="w-4 h-4" /></a>
