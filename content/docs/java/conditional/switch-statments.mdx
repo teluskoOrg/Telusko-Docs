@@ -1,0 +1,175 @@
+---
+title: Switch Statement
+---
+
+<Video id="IrQKDdptiw8" />
+
+## Why Switch?
+
+In many programs, we need to compare a single value against several possible options.  
+If we try to do this using a long chain of `if-else-if` statements, the code quickly becomes difficult to read, maintain, and debug.
+
+The **switch statement** solves this problem by providing a clean, organized structure for handling multiple possible outcomes based on one variable.  
+This makes the code easier to understand because:
+
+- Each case clearly represents a specific value  
+- All possible choices stay grouped together  
+- We avoid repeating the variable inside every condition  
+- It improves readability and avoids clutter  
+
+Switch is especially useful for menus, category-based logic, day/month selection, command processing, and similar tasks where one value determines the result.
+
+![Switch](/images/java/switch.png)
+
+## Example – Days of the Week
+
+### Using `if-else-if` (Lengthy and repetitive)
+
+```java
+int n = 1;
+
+if (n == 1)
+    System.out.println("Monday");
+else if (n == 2)
+    System.out.println("Tuesday");
+else if (n == 3)
+    System.out.println("Wednesday");
+else if (n == 4)
+    System.out.println("Thursday");
+else if (n == 5)
+    System.out.println("Friday");
+else if (n == 6)
+    System.out.println("Saturday");
+else if (n == 7)
+    System.out.println("Sunday");
+else
+    System.out.println("Invalid Day");
+````
+
+### Why this is not ideal?
+
+* You repeat the variable (`n`) in every condition
+* The code grows longer with each new case
+* Harder to scan visually
+* Inefficient structure when conditions depend on the same variable
+
+## Using `switch` (Cleaner and more readable)
+
+```java
+int n = 1;
+
+switch (n) {
+    case 1:
+        System.out.println("Monday");
+        break;
+    case 2:
+        System.out.println("Tuesday");
+        break;
+    case 3:
+        System.out.println("Wednesday");
+        break;
+    case 4:
+        System.out.println("Thursday");
+        break;
+    case 5:
+        System.out.println("Friday");
+        break;
+    case 6:
+        System.out.println("Saturday");
+        break;
+    case 7:
+        System.out.println("Sunday");
+        break;
+    default:
+        System.out.println("Invalid Day");
+}
+```
+
+### Why this is better?
+
+* Only the values change inside each `case`, not the entire condition
+* Code looks structured and grouped
+* Easy to add, modify, or remove cases
+* Clear separation of each possible output
+
+## Key Points
+
+### 1. Use of `break`
+
+Whenever a matching case is found, the statements inside that case run.
+However, if there is **no `break`**, the execution does not stop and continues into the next case—even if that case does not match.
+This behavior is called **fall-through**.
+
+Example:
+
+```java
+int n = 1;
+switch (n) {
+    case 1:
+        System.out.println("Monday");
+    case 2:
+        System.out.println("Tuesday");
+}
+```
+
+Output:
+
+```
+Monday
+Tuesday
+```
+
+This happens because:
+
+* Case 1 matches and prints “Monday”
+* No `break`, so execution falls through to case 2
+* Case 2 prints “Tuesday” even though the value does not match
+
+### Why fall-through can be risky?
+
+* It may produce unexpected output
+* Beginners often forget `break`, causing logical errors
+* Code becomes harder to predict
+
+But fall-through can be intentionally used for grouping cases (e.g., common output for multiple cases).
+
+### 2. Use of `default`
+
+The `default` block acts like the `else` in an if-else structure.
+It runs when **none of the cases match** the value provided to the switch.
+
+Example:
+
+```java
+int n = 9;
+
+switch (n) {
+    case 1:
+        System.out.println("Monday");
+        break;
+    default:
+        System.out.println("Invalid Day");
+}
+```
+
+Output:
+
+```
+Invalid Day
+```
+
+### Why `default` is important?
+
+* Ensures your program handles incorrect or unexpected input
+* Prevents the switch block from doing nothing when no case matches
+* Helps maintain reliability and user-friendly error messages
+
+
+## Summary
+
+* `switch` is much cleaner than writing multiple `if-else-if` conditions.
+* Always include a **break** to prevent fall-through (unless intentionally required).
+* The **default** case ensures the program behaves correctly for invalid or unhandled values.
+* Switch is ideal when decisions depend on **a single variable**, especially when the values are distinct and known.
+
+Written By: <a href="https://www.linkedin.com/in/shivasrivastava1/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer"> Shiva Srivastava <ExternalLink className="w-4 h-4" /></a>

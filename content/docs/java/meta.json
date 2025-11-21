@@ -5,6 +5,8 @@
         "introduction.mdx",
         "basics",
         "data-types",
-        "operators"
+        "operators",
+        "conditional",
+        "loops"
     ]
 }
