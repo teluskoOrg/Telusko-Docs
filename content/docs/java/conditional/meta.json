@@ -2,6 +2,8 @@
 {    "root":false,
     "pages":[
         "if-else.mdx",
-       "switch-statments.mdx"
+       "switch-statments.mdx",
+       "if-else-if.mdx",
+       "ternary-operator.mdx"
     ]
 }

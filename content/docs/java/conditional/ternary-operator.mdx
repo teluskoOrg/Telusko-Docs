@@ -1,0 +1,93 @@
+---
+title: Ternary Operator
+---
+
+<Video id="kBdZBbWZ2a4" />
+
+## What is the Ternary Operator?
+
+The **ternary operator** provides a compact way to write an `if-else` statement in a single line.  
+It is most useful when you need to **assign a value based on a condition**.
+
+It uses three components (hence the name “ternary”):  
+`condition ? value_if_true : value_if_false`
+
+### Syntax
+
+```java
+condition ? value_if_true : value_if_false;
+```
+
+<img src="/images/java/ternary.png" width="250px" height="100px" />
+
+
+This expression evaluates to either the value after `?` or the value after `:` depending on the condition.
+
+## Example 1 – Without Ternary
+
+```java
+int n = 4;
+int result = 0;
+
+if (n % 2 == 0)
+    result = 10;
+else
+    result = 20;
+
+System.out.println(result);   // Output: 10
+```
+
+This approach works, but it is lengthy for simple decisions.
+
+## Example 2 – With Ternary (Cleaner)
+
+```java
+int n = 4;
+int result = 0;
+
+result = (n % 2 == 0) ? 10 : 20;
+
+System.out.println(result);   // Output: 10
+```
+
+The same logic is written more compactly and cleanly.
+
+## How It Works
+
+* When the **condition is true**, Java selects the expression immediately after `?`.
+* When the **condition is false**, Java selects the expression after `:`.
+
+This makes ternary ideal for short, simple conditions where readability is maintained.
+
+## Example 3 – Maximum of Two Numbers
+
+```java
+int a = 8, b = 5;
+int max = (a > b) ? a : b;
+
+System.out.println("Maximum: " + max); // Output: 8
+```
+
+A very common and clean use case of ternary.
+
+## Example 4 – Nested Ternary (Use Carefully)
+
+```java
+int marks = 75;
+String grade = (marks >= 90) ? "A" :
+               (marks >= 75) ? "B" :
+               (marks >= 50) ? "C" : "Fail";
+
+System.out.println("Grade: " + grade); // Output: B
+```
+
+Nested ternaries are possible but can make the code harder to read if overused.
+
+## Key Notes
+
+* Ternary operator helps simplify short decision-making expressions.
+* It improves readability when used for **simple** conditions.
+* Avoid creating overly complex or deeply nested ternary expressions — they reduce clarity.
+* Prefer ternary primarily for **value assignment**, not long logical decisions.
+
+Written By: <a href="https://www.linkedin.com/in/shivasrivastava1/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer"> Shiva Srivastava <ExternalLink className="w-4 h-4" /></a>

@@ -1,0 +1,113 @@
+---
+title: If-Else-If
+---
+
+<Video id="Tn6BNLD0PmU" />
+
+## Why Use Else If?
+
+In many real-world scenarios, a program must choose between **several possible outcomes**, not just true or false.  
+Using only `if` and `else` becomes inefficient because:
+
+- Some conditions must be checked **only if previous ones fail**  
+- Writing multiple isolated `if` statements can create unnecessary checks  
+- The code becomes harder to read and maintain  
+
+The **if–else-if ladder** provides an elegant solution.  
+It lets the program evaluate conditions **in sequence**, and as soon as one becomes true, its block runs and the rest are ignored — improving clarity and efficiency.
+
+## Syntax
+
+```java
+if (condition1) {
+    // executes if condition1 is true
+} else if (condition2) {
+    // executes if condition2 is true
+} else if (condition3) {
+    // executes if condition3 is true
+} else {
+    // executes if all conditions are false
+}
+```
+
+### How it works
+
+* Start with the first condition
+* Move downward only if the current condition is false
+* At the first `true`, the corresponding block executes
+* The ladder ends immediately (remaining conditions are skipped)
+
+This structure is ideal for ordered, priority-based decisions.
+
+
+## Example – Finding the Greatest of Three Numbers
+
+```java
+public class Demo {
+    public static void main(String[] args) {
+        int x = 8;
+        int y = 7;
+        int z = 9;
+
+        if (x > y && x > z) {
+            System.out.println(x);
+        } else if (y > z) {
+            System.out.println(y);
+        } else {
+            System.out.println(z);
+        }
+    }
+}
+```
+
+Output:
+
+```
+9
+```
+
+
+## Flow Explanation
+
+Let’s analyze the decision process step by step.
+
+1. **Check if `x` is greater than both `y` and `z`.**
+
+   * If this is true, `x` is the greatest → print `x`.
+   * If false, move to the next condition.
+
+2. **Check if `y` is greater than `z`.**
+
+   * If true → print `y`.
+
+3. **Else (final option)**
+
+   * If neither of the above is true, then `z` must be the greatest → print `z`.
+
+This ensures *only one value* is printed, and the logic is clear and predictable.
+
+
+## Why This Works Well
+
+The `if–else-if` ladder naturally fits cases where:
+
+* Only **one** outcome must be selected
+* Conditions are **mutually exclusive** (cannot be true simultaneously)
+* Decisions follow a clear order or priority
+
+Examples include:
+
+* Grading systems (A, B, C, D, F)
+* Menu selections
+* Range checking (e.g., temperature ranges)
+* Category classification
+
+
+## Key Notes
+
+* Execution stops at the **first true condition** — later conditions are ignored.
+* The final `else` block is optional but helpful for handling unexpected values.
+* Avoid writing unrelated conditions in one ladder; the chain should represent a **logical progression**.
+* Helps keep code clean, structured, and easy for others to understand.
+
+ Written By: <a href="https://www.linkedin.com/in/shivasrivastava1/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer"> Shiva Srivastava <ExternalLink className="w-4 h-4" /></a>
