@@ -1,0 +1,233 @@
+---
+title: Sets
+---
+
+
+<Steps>
+<Video id="DeriNSJ7Ev0" />
+
+---
+
+In Python, a **set** is an unordered collection of **unique**, **hash-based** elements designed for fast membership testing and efficient mathematical operations. Unlike lists or tuples, sets do not maintain any specific order and automatically eliminate duplicate values. Their internal hashing mechanism allows constant-time performance for searching, inserting, and removing elements.
+
+<Step>
+## Key Characteristics of Sets
+
+**1. Unordered**: The elements of a set have *no index* and do not preserve insertion order.
+
+```python
+s = {22, 25, 14, 21}
+print(s)  
+# Output order may vary
+```
+
+**2. Unique Elements**: Duplicates are removed automatically.
+
+```python
+s = {25, 14, 98, 63, 75, 98}
+print(s)
+# {98, 25, 75, 14, 63}
+```
+
+**3. No Indexing or Slicing**: Sets are unordered, direct indexing is not allowed.
+
+```python
+s[1]
+# TypeError: 'set' object is not subscriptable
+```
+
+**4. Hash-Based Storage**: All elements must be **immutable**, enabling Python to assign a unique hash value for fast lookup.
+
+</Step>
+
+---
+
+<Step>
+## Creating Sets
+
+### Standard Set
+
+- A set is created using the `{}` braces in Python.
+
+```python
+set1 = {23, 56, 78, 21}
+```
+
+### Empty Set
+
+> Empty `{}` creates a dictionary, so use `set()`:
+
+```python
+set2 = set()
+print(type(set2))   # <class 'set'>
+```
+
+</Step>
+
+---
+
+<Step>
+## **Basic Operations with Sets**
+
+**1. Membership Test**
+
+Extremely fast due to hashing.
+
+```python
+21 in set1    # True
+50 in set1    # False
+```
+
+**2. Size of Set**
+
+```python
+len(set1)     # 4
+```
+
+</Step>
+
+---
+
+<Step>
+## Adding & Removing Elements
+
+Sets support limited but efficient modification operations:
+
+**add()** — Add a single element
+
+```python
+s = {10, 20}
+s.add(30)
+print(s)   # {10, 20, 30}
+```
+
+**update()** — Add multiple elements
+
+```python
+s.update([40, 50])
+print(s)   # {10, 20, 30, 40, 50}
+```
+
+**remove()** — Removes a specific element (error if not found)
+
+```python
+s.remove(20)
+print(s)   # {10, 30, 40, 50}
+```
+
+**discard()** — Same as remove but **no error** if element missing
+
+```python
+s.discard(100)   # No error
+```
+
+**pop()** — Removes an arbitrary element
+
+```python
+s.pop()   # Removes a random element (since no indexing)
+```
+
+**clear()** — Remove all elements
+
+```python
+s.clear()
+# Result: set()
+```
+
+</Step>
+
+---
+
+<Step>
+## Mathematical Set Operations
+
+Given:
+
+```python
+A = set("abcdmnop")
+B = set("aeioupd")
+```
+
+### 1. Difference (A – B)
+
+Elements in A **not** in B:
+
+```python
+A - B
+# {'m', 'n', 'c', 'b'}
+```
+
+### 2. Union (A | B)
+
+All unique elements from both sets:
+
+```python
+A | B
+# {'a','b','c','d','e','i','m','n','o','p','u'}
+```
+
+### 3. Intersection (A & B)
+
+Elements **common** to both sets:
+
+```python
+A & B
+# {'a', 'o', 'p', 'd'}
+```
+
+### 4. Symmetric Difference (A ^ B)
+
+Elements **not common** (unique to each set):
+
+```python
+A ^ B
+# {'u', 'e', 'm', 'i', 'c', 'n'}
+```
+
+</Step>
+
+---
+
+<Step>
+## Why Sets Are Fast?
+
+Because of **hashing**, which allows:
+
+* **O(1)** membership testing (`in`)
+* Efficient union/intersection operations
+* Automatic uniqueness handling
+
+This makes sets ideal for large datasets where performance matters.
+
+</Step>
+
+---
+
+<Step>
+## Usage of Sets
+
+Use a set when:
+
+* You need **unique elements** with no duplicates
+* The **order of elements is not important**
+* You require **fast membership testing**
+* You need to perform **mathematical operations** like union/intersection
+* You want to remove duplicates from a list quickly
+* You want efficient comparisons between collections
+
+</Step>
+
+---
+
+<Step>
+## Summary
+
+* A set is an **unordered, mutable, hash-based** collection of **unique** items.
+* **No indexing or slicing** is possible due to lack of order.
+* Ideal for **fast membership testing**, **duplicate removal**, and mathematical set operations.
+* Supports operations like `add()`, `update()`, `remove()`, `discard()`, and mathematical operators (`-`, `|`, `&`, `^`).
+
+</Step>
+</Steps>
+
+Written By: <a href="https://www.linkedin.com/in/muskangarg03/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer"> Muskan Garg <ExternalLink className="w-4 h-4" /></a>

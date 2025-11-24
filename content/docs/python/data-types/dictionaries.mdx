@@ -1,0 +1,193 @@
+---
+title: Dictionaries
+---
+
+
+<Steps>
+<Video id="_vl4dNCS5bY" />
+
+---
+
+
+A dictionary in Python is a built-in data structure that stores data in **key–value pairs**. Unlike lists or tuples where elements are accessed using indices, dictionaries allow data retrieval directly using **keys**, making them highly efficient for lookups.
+
+<Step>
+## Key Features of a Dictionary
+
+- Stores data as **key–value pairs**.
+  
+  Example:
+  ```python
+  data={1:'Navin',2:'kiran',4:'Harsh'}
+  ```
+  Here:
+  - 1, 2, and 4 are keys
+  - 'Navin', 'Kiran', 'Harsh' are values.
+  
+- **Keys** must be:
+  - **Immutable** → cannot be changed once defined (e.g., numbers, strings, tuples).
+  - **Unique** → duplicate keys are not allowed.
+- **Values** can be of **any data type** and can be repeated.
+- Values are accessed using their keys, and index-based access is not allowed.
+
+![Dictionaries](/images/python/python_dictionary.png)
+
+</Step>
+
+---
+
+<Step>
+## Creating and Accessing Dictionary Values
+```python
+data = {1: 'Navin', 2: 'Kiran', 4: 'Harsh'}
+
+print(data)       # {1: 'Navin', 2: 'Kiran', 4: 'Harsh'}
+print(data[4])    # 'Harsh'
+
+# Accessing a non-existent key will throw an error
+# print(data[3])  # KeyError: 3
+```
+
+
+> If a dictionary contains duplicate keys, the last value overwrites earlier ones.
+``` python
+data = {
+    'kiran': 34,
+    'harsh': 67,
+    'harsh': 34
+}
+print(data)
+# {'kiran': 34, 'harsh': 34}
+```
+
+Here, 
+- Keys → behave like a set (unique)
+- Values → behave like a list (can repeat)
+
+</Step>
+
+---
+
+<Step>
+## Using the `get()` Method
+
+- The `get()` method is used to safely fetch values from a dictionary.
+- It returns None or a custom default value if the key is missing.
+
+```python
+data = {1: 'Navin', 2: 'Kiran', 4: 'Harsh'}
+
+print(data.get(1))               # 'Navin'
+print(data.get(3))               # None
+print(data.get(3, 'Not found'))  # 'Not found'
+```
+
+</Step>
+
+---
+
+<Step>
+## Using `zip()` and `dict()`
+Dictionaries are often created by zipping two lists (keys and values) together.
+- `zip()` → Combines two lists element-wise into tuples.
+- `dict()` → Converts those tuples into key–value pairs inside a dictionary.
+
+```python
+keys = ['Navin', 'Kiran', 'Harsh']
+values = ['Python', 'Java', 'JS']
+
+# Using zip
+zipped = zip(keys, values)
+print(list(zipped))
+# [('Navin', 'Python'), ('Kiran', 'Java'), ('Harsh', 'JS')]
+
+# Using dict
+data = dict(zip(keys, values))
+print(data)
+# {'Navin': 'Python', 'Kiran': 'Java', 'Harsh': 'JS'}
+```
+
+</Step>
+
+---
+
+<Step>
+## Adding and Deleting Items
+
+### **Add** → Assign a new key directly
+
+You can add a new key-value pair simply by assigning it to the dictionary.
+
+```python
+data = {'Navin': 'Python', 'Kiran': 'Java', 'Harsh': 'JS'}
+
+# Adding a new key-value pair
+data['Monika'] = 'CS'
+print(data)
+# {'Navin': 'Python', 'Kiran': 'Java', 'Harsh': 'JS', 'Monika': 'CS'}
+```
+
+### **Delete** → Use the `del` keyword
+
+`del` removes a key-value pair permanently. If the key doesn’t exist, it raises an error.
+
+```python
+# Deleting a key-value pair
+del data['Harsh']
+print(data)
+# {'Navin': 'Python', 'Kiran': 'Java', 'Monika': 'CS'}
+```
+
+
+### **pop()** → Remove and return a value
+
+`pop(key)` removes the key and returns its value, it is useful when you want to use the deleted value just after removing it.
+
+```python
+removed_value = data.pop('Monika')
+print("Removed:", removed_value)
+print(data)
+# Removed: CS
+# {'Navin': 'Python', 'Kiran': 'Java'}
+```
+
+</Step>
+
+---
+
+<Step>
+## Nested Dictionary
+Dictionaries can contain other dictionaries or lists as values.
+```python
+prog = {
+    'JS': 'Atom',
+    'CS': 'VS',
+    'Python': ['Pycharm', 'Sublime'],
+    'Java': {'JSE': 'Netbeans', 'JEE': 'Eclipse'}
+}
+
+print(prog['JS'])          # 'Atom'
+print(prog['Python'])      # ['Pycharm', 'Sublime']
+print(prog['Python'][1])   # 'Sublime'
+print(prog['Java'])        # {'JSE': 'Netbeans', 'JEE': 'Eclipse'}
+print(prog['Java']['JEE']) # 'Eclipse'
+```
+
+</Step>
+
+---
+
+<Step>
+## Summary
+- Dictionaries store data in **key–value** pairs.
+- Keys must be **immutable and unique**, while values can be anything.
+- Use `get()` to safely access values without errors.
+- You can build dictionaries using `dict()` and `zip()`.
+- Supports adding, deleting, and nesting for complex data structures.
+
+Dictionaries are one of Python’s most powerful and flexible data structures, making them essential for tasks like data representation, quick lookups, and configuration storage.
+
+</Step>
+</Steps>
+
+Written By: <a href="https://www.linkedin.com/in/muskangarg03/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer"> Muskan Garg <ExternalLink className="w-4 h-4" /></a>
