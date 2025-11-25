@@ -1,0 +1,84 @@
+---
+title: Need for Loop
+---
+
+<Video id="mh3sTmXWMLE" />
+
+## Why Do We Need Loops?
+
+In real programs, we frequently encounter situations where a particular task needs to be performed **multiple times**.  
+If we try to repeat the same statement manually, the code becomes long, repetitive, and difficult to maintain.
+
+Using `if-else` cannot help here, because an `if` condition is checked **only once**, not repeatedly.  
+To repeat logic automatically, Java provides **loops**, which allow a block of code to run again and again as long as a condition is satisfied.
+
+Loops help us:
+
+- Reduce repetition in code  
+- Improve readability  
+- Make programs dynamic and flexible  
+- Perform repeated tasks efficiently
+
+
+## Example Without Loop
+
+```java
+System.out.println("Hi");
+System.out.println("Hi");
+System.out.println("Hi");
+System.out.println("Hi");
+```
+
+This works, but:
+
+* Hard to maintain
+* More lines of code
+* Changing count requires editing multiple statements
+* Not practical for large repetitions (e.g., 1000 times)
+
+
+## Example With Loop
+
+```java
+for (int i = 1; i <= 4; i++) {
+    System.out.println("Hi");
+}
+```
+
+This version is:
+
+* Short
+* Structured
+* Easy to update (just change loop limit)
+* Efficient even for very large repetitions
+
+If you want to print “Hi” 1000 times, simply change `i <= 4` to `i <= 1000`.
+
+
+## Loops in Java
+
+Java offers three main looping constructs.
+Each loop is designed for a specific scenario, but all serve the same purpose—**repeat code automatically**.
+
+### 1. **for loop**
+
+Used when the number of repetitions is known in advance.
+
+### 2. **while loop**
+
+Used when you want to repeat something *while* a condition remains true.
+
+### 3. **do-while loop**
+
+Similar to while, but guarantees that the loop body runs **at least once**, even if the condition is false initially.
+
+## Key Idea
+
+Loops make code:
+
+* **Clean** → remove unnecessary repetition
+* **Efficient** → one loop replaces many lines
+* **Dynamic** → behavior changes with variable values
+* **Scalable** → repeat logic hundreds or thousands of times easily
+
+In any real program—printing messages, processing arrays, reading data, performing calculations—loops are essential tools that make Java programs powerful and flexible.
