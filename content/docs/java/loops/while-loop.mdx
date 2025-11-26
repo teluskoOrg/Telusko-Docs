@@ -1,0 +1,150 @@
+---
+title: While Loop
+---
+
+<Video id="mzt5tmV7wxI" />
+
+## Why While Loop?
+
+A **while loop** is used when we want to repeat a task **as long as a certain condition remains true**.  
+It is especially useful when the number of repetitions is **not known in advance**.
+
+![while loop](/images/java/while-loop.png)
+
+The structure is simple:
+
+```java
+while (condition) {
+    // statements
+}
+```
+
+The loop continuously evaluates the condition:
+
+* If **true**, the body executes.
+* If **false**, the loop stops.
+
+This makes the `while` loop perfect for real-world situations like waiting for user input, reading data until the end of a file, or running a task until a goal is met.
+
+
+## Example 1 – Infinite Loop
+
+```java
+public class Demo {
+    public static void main(String[] args) {
+        while (true) {
+            System.out.println("Hi");
+        }
+    }
+}
+```
+
+### Explanation
+
+* The condition is `true`, which **never becomes false**.
+* This results in an infinite loop.
+* `"Hi"` gets printed endlessly until the program is forcibly stopped or system resources run out.
+
+Infinite loops can be intentional (e.g., servers waiting for requests) or accidental due to missing updates.
+
+
+## Example 2 – Loop with Counter
+
+```java
+int i = 1;
+while (i <= 4) {
+    System.out.println("Hi " + i);
+    i++;
+}
+System.out.println("Bye " + i);
+```
+
+### Output
+
+```
+Hi 1
+Hi 2
+Hi 3
+Hi 4
+Bye 5
+```
+
+### Explanation
+
+1. **Initialization:**
+   `int i = 1;` sets the starting point.
+
+2. **Condition:**
+   `i <= 4` ensures the loop runs while `i` is 1, 2, 3, or 4.
+
+3. **Update:**
+   `i++` moves the counter toward termination.
+
+4. After the loop, `i` becomes 5, so `"Bye 5"` prints outside the loop.
+
+This example shows the typical structure of a controlled while loop.
+
+
+## Example 3 – Nested While Loop
+
+```java
+int i = 1;
+while (i <= 4) {
+    System.out.println("Hi " + i);
+
+    int j = 1;
+    while (j <= 3) {
+        System.out.println("Hello " + j);
+        j++;
+    }
+
+    i++;
+}
+```
+
+### Output
+
+```
+Hi 1
+Hello 1
+Hello 2
+Hello 3
+Hi 2
+Hello 1
+Hello 2
+Hello 3
+Hi 3
+Hello 1
+Hello 2
+Hello 3
+Hi 4
+Hello 1
+Hello 2
+Hello 3
+```
+
+### Explanation
+
+* The **outer loop** runs 4 times (`i = 1` to `4`).
+* For each iteration of the outer loop:
+
+  * The program prints `"Hi i"`.
+  * Then the **inner loop** runs 3 times (`j = 1` to `3`), printing `"Hello j"`.
+
+Nested loops are useful for:
+
+* Printing patterns
+* Working with 2D arrays
+* Handling repeated tasks inside repeated tasks
+
+
+## Key Notes
+
+* **Initialization** happens before the loop begins.
+* **Condition** is checked before every iteration (pre-test loop).
+* **Update step** (e.g., `i++`) must be included to avoid infinite loops.
+* A `while` loop may run **zero times** if the condition is false initially.
+* Loops can be **nested** for multi-level repeated tasks.
+* Incorrect or missing updates can easily lead to **infinite loops**.
+
+Written By: <a href="https://www.linkedin.com/in/shivasrivastava1/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer"> Shiva Srivastava <ExternalLink className="w-4 h-4" /></a>

@@ -1,7 +1,7 @@
 {
     "root":false,
     "pages":[
-        "need-for-loop.mdx"
-    
+        "need-for-loop.mdx",
+        "while-loop.mdx"
     ]
 }
