@@ -1,0 +1,124 @@
+---
+title: Which loop to use when
+---
+<Video id="uO5nSTJ9Iz4" />
+
+Java provides three primary looping constructs—`while`, `do-while`, and `for`—and an additional enhanced loop (`for-each`) for collections.  
+Understanding *when* to use each loop helps you write clearer and more efficient code.
+
+Choosing the right loop depends on **whether you know the number of repetitions** and **how the loop condition behaves**.
+
+## 1. For Loop
+
+Use the `for` loop when you know *exactly how many times* the loop should run.
+
+It combines **initialization**, **condition**, and **update** in one line, making it ideal for loops that count or iterate in a predictable manner.
+
+```java
+for (int i = 1; i <= 10; i++) {
+    System.out.println(i);
+}
+```
+
+### When to use a `for` loop?
+
+* When the number of iterations is **fixed or easily calculated**
+* When using a **counter/index**
+* When iterating through a **range of numbers**
+* When writing compact, structured loops
+
+Common examples:
+
+* Printing a list of numbers
+* Running a loop a fixed number of times
+* Nested loops for patterns or tables
+
+## 2. While Loop
+
+Use the `while` loop when the number of iterations is **not known beforehand**.
+The loop continues as long as the condition remains true.
+
+```java
+int i = 1;
+while (i <= 10) {
+    System.out.println(i);
+    i++;
+}
+```
+
+### When to use a `while` loop?
+
+* When the loop depends on **changing conditions**
+* When you may **not enter** the loop at all
+* When input, file reading, or dynamic conditions control the loop
+
+Practical examples:
+
+* Waiting for user input
+* Reading data from a file until the end
+* Continuously checking a sensor value
+
+## 3. Do-While Loop
+
+A `do-while` loop is similar to a `while` loop, but with one important difference:
+It **executes at least once**, even if the condition is false from the start.
+
+```java
+int i = 11;
+do {
+    System.out.println(i);   // executes once
+    i++;
+} while (i <= 10);
+```
+
+### When to use a `do-while` loop?
+
+* When a task must run **at least once**
+* When the loop condition is checked **after** execution
+* When designing menu-driven or input-driven programs
+
+Real-world use:
+
+* ATM menu
+* Game menus
+* Asking user “Do you want to continue?”
+
+
+## 4. Enhanced For Loop (for-each)
+
+The enhanced for loop (also called **for-each**) is used to iterate through **arrays or collections** without needing an index.
+
+```java
+int[] nums = {10, 20, 30};
+for (int n : nums) {
+    System.out.println(n);
+}
+```
+
+### When to use `for-each`?
+
+* When you want to access every element directly
+* When you don't need the index
+* When working with arrays, lists, sets, maps (keys or values)
+
+It improves readability and reduces the chance of index errors.
+
+
+## Summary Table
+
+| Loop Type    | When to Use                                      |
+| ------------ | ------------------------------------------------ |
+| **for**      | Number of iterations is known                    |
+| **while**    | Unknown repetitions; condition controls the loop |
+| **do-while** | Must run at least once                           |
+| **for-each** | Traversing arrays or collections                 |
+
+
+## Golden Rule
+
+* Use **for** → when you know *how many times*
+* Use **while** → when you know *until when*
+* Use **do-while** → when it must run *at least once*
+* Use **for-each** → when working with *collections/arrays*
+
+These rules make it easy to choose the right loop for any situation.
