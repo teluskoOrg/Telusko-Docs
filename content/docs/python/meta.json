@@ -6,6 +6,7 @@
         "basics",
         "strings",
         "basic-data-structures",
-        "variables-and-data-types"
+        "variables-and-data-types",
+        "functions-and-modules"
     ]
 } 
