@@ -1,0 +1,145 @@
+---
+title: Getters and Setters
+---
+
+## Why Do We Need Getters and Setters?
+
+Once we declare variables as `private`, they cannot be accessed directly from outside the class.  
+To read or modify these private variables safely, we use **public methods**.
+
+These methods are known as **getters** (to retrieve data) and **setters** (to modify data).
+
+Encapsulation relies heavily on these methods to ensure controlled access to internal data.
+
+
+## What Are Getters and Setters?
+
+| Method Type | Purpose |
+|-------------|---------|
+| **Getter**  | Provides read-only access to private variables |
+| **Setter**  | Allows controlled modification of private variables |
+
+Getters and setters maintain data security and allow validation before updating any field.
+
+![methods](/images/java/getter-setter.png)
+
+## Example
+
+```java
+class Student {
+    private int rollNo;
+    private String name;
+
+    // Setter for roll number
+    public void setRollNo(int rollNo) {
+        this.rollNo = rollNo;   // 'this' refers to the current object
+    }
+
+    // Getter for roll number
+    public int getRollNo() {
+        return rollNo;
+    }
+
+    // Setter for name
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    // Getter for name
+    public String getName() {
+        return name;
+    }
+}
+
+public class Demo {
+    public static void main(String[] args) {
+        Student s1 = new Student();
+
+        s1.setRollNo(101);
+        s1.setName("Kiran");
+
+        System.out.println("Student RollNo: " + s1.getRollNo());
+        System.out.println("Student Name: " + s1.getName());
+    }
+}
+```
+
+### Output
+
+```
+Student RollNo: 101
+Student Name: Kiran
+```
+
+
+## Understanding the `this` Keyword
+
+When method parameters have the same name as instance variables,
+`this` is used to differentiate between them.
+
+Example:
+
+```java
+public void setAge(int age) {
+    this.age = age;
+}
+```
+
+Here:
+
+* `this.age` → instance variable
+* `age` → method parameter
+
+This avoids naming conflicts and makes the code clearer.
+
+
+
+## Why Not Access Variables Directly?
+
+Allowing direct access leads to several issues:
+
+* No validation (someone may set `age = -5`)
+* Breaks encapsulation
+* Reduces control over how data is modified
+* Makes debugging and maintenance harder
+
+Using setters allows controlled updates:
+
+```java
+obj.setAge(-5);   // You can validate inside the method
+```
+
+
+## Naming Conventions
+
+Java follows standard naming rules:
+
+| Variable | Getter        | Setter                  |
+| -------- | ------------- | ----------------------- |
+| `age`    | `getAge()`    | `setAge(int age)`       |
+| `name`   | `getName()`   | `setName(String name)`  |
+| `rollNo` | `getRollNo()` | `setRollNo(int rollNo)` |
+
+These conventions help frameworks and tools automatically recognize getter and setter methods.
+
+
+
+## Summary
+
+| Concept           | Description                                           |
+| ----------------- | ----------------------------------------------------- |
+| Encapsulation     | Hiding internal data and controlling access           |
+| Private variables | Cannot be accessed directly                           |
+| Getter            | Returns the value of a private variable               |
+| Setter            | Updates a private variable with validation            |
+| this keyword      | Refers to the current object                          |
+| Benefit           | Data hiding, validation, flexibility, maintainability |
+
+
+## Real-World Analogy
+
+A vending machine stores items inside, but you cannot access them directly.
+You use buttons to request an item.
+These buttons act like getters and setters — providing controlled access to what’s inside.
+
+Written By: <a href="https://www.linkedin.com/in/shivasrivastava1/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer"> Shiva Srivastava <ExternalLink className="w-4 h-4" /></a>

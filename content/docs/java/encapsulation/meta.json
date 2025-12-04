@@ -2,6 +2,7 @@
     "root":false,
     "pages":[
       "encapsulation.mdx",
-      "methods.mdx"
+      "methods.mdx",
+      "getter-setter.mdx"
     ]
 }
