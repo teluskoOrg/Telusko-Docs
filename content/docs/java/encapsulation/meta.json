@@ -1,6 +1,7 @@
 {
     "root":false,
     "pages":[
-      "encapsulation.mdx"
+      "encapsulation.mdx",
+      "methods.mdx"
     ]
 }

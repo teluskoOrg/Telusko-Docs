@@ -1,0 +1,142 @@
+---
+title: Methods
+---
+
+<Video id="KSS3MUbBWLk" />
+
+## What Are Methods?
+
+A method is a block of code designed to perform a specific task.  
+Methods allow you to:
+
+* Organize logic into meaningful units
+* Avoid repeating code
+* Improve readability and maintainability
+* Represent the behaviour of an object in Object-Oriented Programming
+
+Every Java program starts execution from the **main()** method, but you can create many other methods to structure your code better.
+
+![methods](/images/java/methods.png)
+
+## Example – Class with Methods
+
+```java
+class Computer {
+
+    // Behaviour 1: does not return anything
+    public void playMusic() {
+        System.out.println("Playing music");
+    }
+
+    // Behaviour 2: returns a value
+    public String getMeAPen(int cost) {
+        if (cost >= 10)
+            return "Pen";
+        return "Nothing";
+    }
+}
+```
+
+This class defines two behaviours:
+
+1. `playMusic()` → prints a message
+2. `getMeAPen(int cost)` → returns a value based on the input
+
+
+## Main Class – Calling Methods
+
+```java
+public class Demo {
+    public static void main(String[] args) {
+        Computer obj = new Computer();     // Create object
+
+        obj.playMusic();                   // Call method 1
+
+        String item = obj.getMeAPen(5);    // Call method 2
+        System.out.println(item);
+    }
+}
+```
+
+### Output
+
+```
+Playing music
+Nothing
+```
+
+## Understanding How Methods Work
+
+A method in Java has this general structure:
+
+```java
+returnType methodName(parameters) {
+    // method body
+}
+```
+
+### Example Breakdown
+
+```java
+public String getMeAPen(int cost)
+```
+
+| Part         | Meaning                                               |
+| ------------ | ----------------------------------------------------- |
+| `public`     | Access modifier — method is visible outside the class |
+| `String`     | Return type — this method returns a String            |
+| `getMeAPen`  | Method name                                           |
+| `(int cost)` | Parameter — input value required to execute method    |
+
+
+## Important Concepts
+
+### 1. The `void` Keyword
+
+When a method does not return anything, you use `void`:
+
+```java
+public void playMusic() {
+    System.out.println("Playing music");
+}
+```
+
+This method performs an action but does not return a value.
+
+### 2. Returning a Value
+
+If a method returns a value, its return type must match what it returns:
+
+```java
+public String getMeAPen(int cost) {
+    if (cost >= 10)
+        return "Pen";      // Must return a String
+    return "Nothing";
+}
+```
+
+If a return statement is expected, it must be present on every possible path.
+
+
+### 3. Passing Arguments (Parameters)
+
+Data is passed into a method using parameters:
+
+```java
+obj.getMeAPen(15);
+```
+
+Here, `15` is copied into the parameter `cost`.
+
+The number and type of arguments must match the method definition.
+
+
+## Summary
+
+* Methods represent the **behaviours** of an object.
+* `void` methods perform actions without returning a value.
+* Methods with return types must return the specified type.
+* Parameters allow data to be passed into methods.
+* The `main()` method acts as the program’s entry point, from where other methods are invoked.
+
+Written By: <a href="https://www.linkedin.com/in/shivasrivastava1/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer"> Shiva Srivastava <ExternalLink className="w-4 h-4" /></a>
