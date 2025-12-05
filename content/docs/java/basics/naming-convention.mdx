@@ -1,0 +1,260 @@
+---
+title: Naming Conventions
+---
+## 1. Introduction
+
+Naming conventions are standard rules for how we name classes, methods, variables, and other elements in Java.
+
+Even though the compiler does not enforce naming conventions, following them is very important because:
+
+- It makes code easier to read and understand.
+- It helps multiple developers work on the same project.
+- It matches industry standards and expectations (interviews, real projects).
+- It reduces confusion and mistakes in large codebases.
+
+In this document, you will learn the recommended Java naming conventions and see examples of good and bad names.
+
+
+## 2. General Rules
+
+Before getting into each Java element, there are some general rules:
+
+- Java is **case-sensitive**  
+  `studentName` and `StudentName` are different identifiers.
+- Names can contain:
+  - Letters: `A–Z`, `a–z`
+  - Digits: `0–9`
+  - Symbols: `_` (underscore), `$` (dollar), though `$` is rarely used by developers.
+- Names **cannot start with a digit**  
+  `student1` is valid, `1student` is not.
+- Avoid using special characters or spaces in identifiers.
+
+![naming-convention](/images/java/naming-convention1.png)
+
+## 3. Naming Conventions by Element
+
+### 3.1 Class Names
+
+- Use **PascalCase** (also called UpperCamelCase).
+- Start with an uppercase letter.
+- If the name has multiple words, each word starts with a capital letter.
+- The name should be a **noun** or noun phrase.
+
+Examples:
+
+- Good: `Student`, `BankAccount`, `OrderService`, `EmployeeManager`
+- Bad: `student`, `bank_account`, `bankaccount`, `doWorkClass`
+
+### 3.2 Interface Names
+
+- Also use **PascalCase**.
+- Often describe a **capability** or **role**.
+- Sometimes start with an adjective or noun.
+
+Examples:
+
+- Good: `Serializable`, `Comparable`, `Runnable`, `PaymentProcessor`
+- Bad: `iserializable`, `iPayment`, `paymentprocessor`
+
+### 3.3 Method Names
+
+- Use **camelCase** (lowerCamelCase).
+- Start with a **verb** or verb phrase.
+- First word is lowercase, each subsequent word starts with uppercase.
+
+Examples:
+
+- Good: `getName`, `calculateTotal`, `printReport`, `findStudentById`
+- Bad: `GetName`, `calculate_total`, `Printreport`, `do`
+
+### 3.4 Variable and Field Names
+
+- Also use **camelCase**.
+- Names should be descriptive and indicate the purpose of the variable.
+- Avoid single-letter names except for very small scopes (like `i` in a simple loop).
+
+Examples:
+
+- Good: `studentName`, `totalAmount`, `maxScore`, `isActive`
+- Acceptable in loops: `i`, `j`, `k`
+- Bad: `sname`, `t`, `x1`, `StudentName` (starts with uppercase like a class)
+
+### 3.5 Constant Names (static final)
+
+- Use **ALL_UPPERCASE** letters.
+- Separate words with **underscores**.
+- Used for values that do not change.
+
+Examples:
+
+- Good: `MAX_STUDENTS`, `PI`, `DEFAULT_TIMEOUT_MS`
+- Bad: `MaxStudents`, `maxStudents`, `defaulttimeout`
+
+### 3.6 Package Names
+
+- Use **all lowercase**.
+- No underscores, no uppercase letters.
+- Typically use reversed domain name + project structure.
+
+Examples:
+
+- `com.example.school`
+- `org.mycompany.project.service`
+- `com.learnjava.basics`
+
+Bad examples:
+
+- `com.Example.School`
+- `com.example_School`
+- `com.example.SchoolProject`
+
+### 3.7 Enum Names and Enum Constants
+
+- Enum type name: **PascalCase** (like a class).
+- Enum constants: **ALL_UPPERCASE** with underscores.
+
+Example:
+
+```java
+enum DayOfWeek {
+    MONDAY,
+    TUESDAY,
+    WEDNESDAY,
+    THURSDAY,
+    FRIDAY,
+    SATURDAY,
+    SUNDAY
+}
+```
+
+![naming-convention](/images/java/naming-convention2.png)
+
+## 4. Summary Table
+
+| Element          | Style       | Example                |
+| ---------------- | ----------- | ---------------------- |
+| Package          | lowercase   | `com.example.myapp`    |
+| Class            | PascalCase  | `StudentRecord`        |
+| Interface        | PascalCase  | `PaymentService`       |
+| Method           | camelCase   | `calculateTotal()`     |
+| Variable/Field   | camelCase   | `studentCount`         |
+| Constant (final) | UPPER_SNAKE | `MAX_RETRY_COUNT`      |
+| Enum Type        | PascalCase  | `OrderStatus`          |
+| Enum Constant    | UPPER_SNAKE | `PENDING`, `COMPLETED` |
+
+## 5. Examples: Good vs Bad Names
+
+### Variables and Methods
+
+```java
+// Good
+int studentAge;
+double totalSalary;
+boolean isRegistered;
+
+void printReport() { }
+double calculateInterest(double principal, double rate) { ... }
+
+// Bad
+int s;
+double ts;
+boolean flag;
+
+void Printreport() { }      // starts with uppercase, inconsistent
+double calc(double p, double r) { ... }  // unclear meaning
+```
+
+### Classes and Interfaces
+
+```java
+// Good
+class BankAccount { }
+class EmployeeService { }
+interface Shape { }
+interface Drawable { }
+
+// Bad
+class bankaccount { }
+class employee_service { }
+interface IShape { }        // prefix "I" is not a common Java convention
+interface drawable { }
+```
+
+### Constants
+
+```java
+// Good
+public static final int MAX_USERS = 100;
+public static final double PI = 3.14159;
+
+// Bad
+public static final int maxUsers = 100;
+public static final double Pi = 3.14159;
+```
+
+
+## 6. Small Complete Example
+
+```java
+package com.example.schoolmanagement;
+
+public class StudentRecord {
+
+    // Constants
+    public static final int MAX_SUBJECTS = 6;
+
+    // Fields (variables)
+    private String studentName;
+    private int rollNumber;
+    private double averageScore;
+
+    // Constructor
+    public StudentRecord(String studentName, int rollNumber) {
+        this.studentName = studentName;
+        this.rollNumber = rollNumber;
+    }
+
+    // Getter method
+    public String getStudentName() {
+        return studentName;
+    }
+
+    // Setter method
+    public void setStudentName(String studentName) {
+        this.studentName = studentName;
+    }
+
+    public double calculatePercentage() {
+        return (averageScore / MAX_SUBJECTS);
+    }
+}
+```
+
+This example shows:
+
+* Package in lowercase: `com.example.schoolmanagement`
+* Class name in PascalCase: `StudentRecord`
+* Constant in UPPER_SNAKE_CASE: `MAX_SUBJECTS`
+* Fields in camelCase: `studentName`, `rollNumber`, `averageScore`
+* Methods in camelCase: `getStudentName`, `setStudentName`, `calculatePercentage`
+
+
+## 7. Common Mistakes to Avoid
+
+* Using class-style names for variables (e.g., `StudentName` instead of `studentName`).
+* Mixing naming styles in the same project.
+* Using unclear one-letter names in large scopes.
+* Using uppercase letters in package names.
+* Not using constants for fixed values and hardcoding them multiple times in code.
+
+
+## 8. Summary
+
+* Java naming conventions are not enforced by the compiler, but they are extremely important for readability and professionalism.
+* Use PascalCase for classes, interfaces, and enums.
+* Use camelCase for methods, variables, and fields.
+* Use UPPER_SNAKE_CASE for constants.
+* Use lowercase for package names.
+* Consistency is key: follow the same pattern throughout your project.
+
+Written By: <a href="https://www.linkedin.com/in/shivasrivastava1/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer"> Shiva Srivastava <ExternalLink className="w-4 h-4" /></a>

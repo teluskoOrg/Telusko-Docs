@@ -1,0 +1,287 @@
+---
+title: Data Types
+---
+
+<Video id="Le25I331_yU" />
+
+## 1. Introduction
+
+Data types define the **type of data a variable can store** and how much memory it occupies.  
+Java is a **strongly typed language**, which means every variable must have a declared type.
+
+Understanding data types is essential because they determine:
+
+- The memory size required  
+- The values allowed  
+- The operations permitted  
+- How data is stored and processed by the JVM  
+
+Java provides two categories of data types:
+
+1. **Primitive Data Types**
+2. **Non-Primitive (Reference) Data Types**
+
+This document covers both with detailed explanations and examples.
+
+
+## 2. Categories of Data Types in Java
+
+Java data types are divided into:
+
+
+```
+            Data Types
+            /        \
+     Primitive     Non-Primitive
+```
+
+![data-types](/images/java/data-type1.png)
+
+## 3. Primitive Data Types
+
+Primitive types store simple values and are not objects.  
+They are pre-defined by Java and stored directly in stack memory (except arrays inside heap).
+
+There are **8 primitive data types**:
+
+| Type    | Size     | Range | Example |
+|---------|----------|--------|---------|
+| byte    | 1 byte   | -128 to 127 | `byte b = 10;` |
+| short   | 2 bytes  | -32,768 to 32,767 | `short s = 200;` |
+| int     | 4 bytes  | -2^31 to 2^31-1 | `int x = 50000;` |
+| long    | 8 bytes  | -2^63 to 2^63-1 | `long l = 900000L;` |
+| float   | 4 bytes  | ~7 decimal digits | `float f = 10.5f;` |
+| double  | 8 bytes  | ~15 decimal digits | `double d = 99.99;` |
+| char    | 2 bytes  | Single Unicode character | `char grade = 'A';` |
+| boolean | 1 bit (JVM-dependent) | true or false | `boolean isAdmin = true;` |
+
+
+## 4. Detailed Explanation of Each Primitive Type
+
+### 4.1 byte  
+Used for small integers, memory saving in arrays.
+
+```java
+byte age = 25;
+```
+
+### 4.2 short
+
+Rarely used, but useful in large arrays to reduce memory.
+
+```java
+short temperature = 280;
+```
+
+### 4.3 int
+
+Default choice for integers.
+
+```java
+int salary = 75000;
+```
+
+### 4.4 long
+
+Use when integer value exceeds `int` range.
+Must end with **L** or **l**.
+
+```java
+long population = 7800000000L;
+```
+
+### 4.5 float
+
+Used for fractional values with less precision.
+Must end with **f** or **F**.
+
+```java
+float rating = 4.5f;
+```
+
+### 4.6 double
+
+Default for decimal values.
+
+```java
+double price = 999.99;
+```
+
+### 4.7 char
+
+Stores a single Unicode character.
+
+```java
+char grade = 'A';
+char symbol = '#';
+```
+
+### 4.8 boolean
+
+Stores true or false.
+
+```java
+boolean isActive = true;
+```
+
+## 5. Non-Primitive Data Types
+
+These types refer to **objects**, not primitive values.
+They are stored in heap memory, and the variable stores a **reference**.
+
+Examples include:
+
+* **String**
+* **Arrays**
+* **Classes**
+* **Interfaces**
+* **Enums**
+* **Wrapper Classes**
+
+### 5.1 String
+
+```java
+String name = "John";
+```
+
+Strings are objects in Java, even though they behave like primitives.
+
+### 5.2 Arrays
+
+```java
+int[] numbers = {1, 2, 3, 4};
+```
+
+### 5.3 Classes & Objects
+
+```java
+class Student { }
+Student s = new Student();
+```
+
+### 5.4 Wrapper Classes
+
+Every primitive has a corresponding wrapper:
+
+| Primitive | Wrapper   |
+| --------- | --------- |
+| byte      | Byte      |
+| short     | Short     |
+| int       | Integer   |
+| long      | Long      |
+| float     | Float     |
+| double    | Double    |
+| char      | Character |
+| boolean   | Boolean   |
+
+
+![data-types](/images/java/data-type2.png)
+
+## 6. Type Ranges and Memory Usage
+
+Memory allocation helps JVM optimize performance.
+
+Example:
+
+```java
+int a = 10;
+double b = 20.5;
+char c = 'X';
+```
+
+JVM stores these in stack memory with fixed sizes.
+
+Non-primitive example:
+
+```java
+String city = "Mumbai";
+```
+
+Here, `city` (reference) is in stack, the actual string object is stored in heap.
+
+
+## 7. Type Casting
+
+Sometimes you need to convert one type to another.
+
+### 7.1 Implicit Casting (Widening)
+
+Small → large type (safe)
+
+```
+byte → short → int → long → float → double
+```
+
+Example:
+
+```java
+int x = 10;
+double y = x;  // implicit
+```
+
+### 7.2 Explicit Casting (Narrowing)
+
+Large → small type (risk of data loss)
+
+```
+double → float → long → int → short → byte
+```
+
+Example:
+
+```java
+double d = 99.9;
+int i = (int) d; // i becomes 99
+```
+
+## 8. Default Values of Primitive Types (Instance Variables)
+
+Local variables do NOT get default values.
+
+| Type    | Default  |
+| ------- | -------- |
+| int     | 0        |
+| double  | 0.0      |
+| boolean | false    |
+| char    | '\u0000' |
+| Object  | null     |
+
+
+## 9. Examples
+
+### Primitive Example
+
+```java
+int age = 21;
+double height = 5.9;
+char section = 'A';
+boolean isEligible = true;
+```
+
+### Non-Primitive Example
+
+```java
+String course = "Java Programming";
+int[] marks = {85, 90, 78};
+Student st = new Student();
+```
+
+---
+
+## 10. Common Mistakes
+
+* Using `float` without `f` suffix
+* Using `long` without `L` suffix
+* Confusing `char` with String type
+* Thinking boolean stores 1/0
+* Using uninitialized local variables
+
+## 11. Summary
+
+* Java has **8 primitive** and many **non-primitive** data types.
+* Primitive types store values; non-primitives store references.
+* Memory for primitives is fixed; objects grow dynamically.
+* Type casting allows conversion between types.
+* Understanding data types is essential for efficient memory and performance.
+
+Written By: <a href="https://www.linkedin.com/in/shivasrivastava1/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer"> Shiva Srivastava <ExternalLink className="w-4 h-4" /></a>
