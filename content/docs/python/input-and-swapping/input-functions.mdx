@@ -2,22 +2,21 @@
 title: User Input
 ---
 
-
 <Steps>
 <Video id="Ye3vV4QQ_js" />
 
 ---
 
-
 Python allows programs to interact with users by accepting user input. The primary tool for this is the `input()` function, and Python also supports command-line input using the `sys.argv` list.
 
 <Step>
-## Getting User Input  
+## Getting User Input
 
 Python provides an easy way to get user input using the **`input()`** function.  
-It pauses the program and waits for the user to type something and press Enter.  
+It pauses the program and waits for the user to type something and press Enter.
 
 ### Example:
+
 ```python
 name = input("Please enter your name: ")
 x = input("Enter first number: ")
@@ -27,13 +26,14 @@ print(z)
 ```
 
 **Output:**
+
 ```
-Enter first number: 9  
-Enter second number: 5  
+Enter first number: 9
+Enter second number: 5
 95
 ```
 
-> Note: The output is `95` because the `input()` function returns a **string** by default.  
+> Note: The output is `95` because the `input()` function returns a **string** by default.
 
 </Step>
 
@@ -42,7 +42,7 @@ Enter second number: 5
 <Step>
 ## How the `input()` Function Works
 
-The **`input()`** function accepts user input from the command line.  
+The **`input()`** function accepts user input from the command line.
 
 ```python
 name = input("Enter your name: ")
@@ -62,13 +62,13 @@ If you want to use the input as a number, convert it using `int()` or `float()`.
 
 ---
 
-
 <Step>
 ## Type Conversion
 
-Since all input values are returned as **strings**, we must convert them to perform arithmetic.  
+Since all input values are returned as **strings**, we must convert them to perform arithmetic.
 
 ### Example:
+
 ```python
 x = input("Enter first number: ")
 y = input("Enter second number: ")
@@ -79,9 +79,10 @@ print(z)
 ```
 
 **Output:**
+
 ```
-Enter first number: 9  
-Enter second number: 5  
+Enter first number: 9
+Enter second number: 5
 14
 ```
 
@@ -98,7 +99,6 @@ print(z)
 
 ---
 
-
 <Step>
 ## Using Index Value
 
@@ -110,6 +110,7 @@ print(ch[0])
 ```
 
 **Output:**
+
 ```
 Enter a character: Muskan
 M
@@ -123,6 +124,7 @@ print(ch)
 ```
 
 **Output:**
+
 ```
 Enter a character: Muskan
 M
@@ -132,31 +134,34 @@ M
 
 ---
 
-
 <Step>
-## The `eval()` Function  
+## The `eval()` Function
 
-The **`eval()`** function evaluates the input as a Python expression and returns the result.  
+The **`eval()`** function evaluates the input as a Python expression and returns the result.
 
 ### Example1:
+
 ```python
 x = eval(input("Enter an expression: "))
 print(type(x))
 ```
 
 **Output:**
+
 ```
 Enter an expression: 9 + 5
 <class 'int'>
 ```
 
 ### Example2:
+
 ```python
 result = eval(input("Enter an expression: "))
 print(result)
 ```
 
 **Output:**
+
 ```
 Enter an expression: 2 + 3 * 5
 17
@@ -166,14 +171,14 @@ Enter an expression: 2 + 3 * 5
 
 ---
 
-
 <Step>
-## Command-Line Arguments  
+## Command-Line Arguments
 
 Python’s **`sys`** module allows passing values from the command line.  
 Use **`sys.argv`** to access the command-line arguments.
 
 ### Example (`Mycode.py`)
+
 ```python
 import sys
 
@@ -184,19 +189,22 @@ print(z)
 ```
 
 **Command:**
+
 ```
 python Mycode.py 9 5
 ```
 
 **Output:**
+
 ```
 95
 ```
 
 Here:
-- `Mycode.py` → Argument 0  
-- `9` → Argument 1  
-- `5` → Argument 2  
+
+- `Mycode.py` → Argument 0
+- `9` → Argument 1
+- `5` → Argument 2
 
 Since these are strings, the result is concatenation.  
 To fix this, convert inputs to integers:
@@ -211,11 +219,13 @@ print(z)
 ```
 
 **Command:**
+
 ```
 python Mycode.py 9 5
 ```
 
 **Output:**
+
 ```
 14
 ```
@@ -224,17 +234,16 @@ python Mycode.py 9 5
 
 ---
 
-
 <Step>
-## Summary  
+## Summary
 
-| Concept | Description | Example |
-|----------|--------------|----------|
-| `input()` | Takes user input as a string | `x = input("Enter name: ")` |
-| Type Conversion | Converts string input to number | `int(input("Enter number: "))` |
-| Indexing | Access specific character | `input("Enter: ")[0]` |
-| `eval()` | Evaluates an expression | `eval(input("Enter expr: "))` |
-| Command-line Input | Takes arguments via terminal | `sys.argv` |
+| Concept            | Description                     | Example                        |
+| ------------------ | ------------------------------- | ------------------------------ |
+| `input()`          | Takes user input as a string    | `x = input("Enter name: ")`    |
+| Type Conversion    | Converts string input to number | `int(input("Enter number: "))` |
+| Indexing           | Access specific character       | `input("Enter: ")[0]`          |
+| `eval()`           | Evaluates an expression         | `eval(input("Enter expr: "))`  |
+| Command-line Input | Takes arguments via terminal    | `sys.argv`                     |
 
 </Step>
 </Steps>

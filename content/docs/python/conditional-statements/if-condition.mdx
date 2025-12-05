@@ -1,0 +1,235 @@
+---
+title: If Condition
+---
+
+
+<Steps>
+<Video id="kcD_gClL95Q" />
+
+---
+
+
+Conditional statements allow a program to **make decisions** based on conditions.
+Python uses `if`, `elif`, and `else` to control which block of code executes depending on whether an expression evaluates to **True** or **False**.
+
+<Step>
+## Why Do We Need Conditions?
+
+The **CPU (Central Processing Unit)** is the brain of every computer. It consists of three major units:
+
+| Unit    | Full Form             | Function                                         |
+| ------- | --------------------- | ------------------------------------------------ |
+| **CU**  | Control Unit          | Manages instruction flow and controls operations |
+| **ALU** | Arithmetic Logic Unit | Performs mathematical and logical decisions      |
+| **MU**  | Memory Unit           | Stores variables, instructions, and data         |
+
+The **ALU** has two sub-units:
+
+* **AU (Arithmetic Unit):** Handles addition, subtraction, etc.
+* **LU (Logic Unit):** Evaluates conditions like
+
+  * Is the number even?
+  * Is A > B?
+  * Is the condition True or False?
+
+The **Logic Unit** enables decision-making, and that is exactly what Python’s `if` statement uses.
+
+</Step>
+
+---
+
+<Step>
+## The `if` Statement
+
+The `if` statement allows Python to execute a block of code **only when the condition is True**.
+
+### Syntax
+
+```python
+if condition:
+    statements
+```
+
+**Key Rules:**
+
+* Python does not use `{ }` like C/C++.
+* Code blocks are defined using indentation (4 spaces recommended).
+* If the condition is False, the block is skipped.
+
+
+![If_Condition](/images/python/if_condition.png)
+
+### Example:
+
+```python
+if True:
+    print("I'm right")
+```
+
+**Output:**
+
+```
+I'm right
+```
+
+### Example (False condition):
+
+```python
+if False:
+    print("I'm right")
+print("Bye")
+```
+
+**Output:**
+
+```
+Bye
+```
+
+</Step>
+
+---
+
+<Step>
+## Understanding Indentation in Python
+
+Indentation is **mandatory** in Python and determines which statements belong to a block.
+
+### Example 1 (Both inside the block):
+
+```python
+if True:
+    print("Even")
+    print("Bye")
+```
+
+**Output:**
+
+```
+Even
+Bye
+```
+
+### Example 2 (Only first line is inside the block):
+
+```python
+if True:
+    print("Even")
+print("Bye")
+```
+
+**Output:**
+
+```
+Even
+Bye
+```
+
+### Example 3 (Condition False):
+
+```python
+if False:
+    print("Even")
+print("Bye")
+```
+
+**Output:**
+
+```
+Bye
+```
+
+</Step>
+
+---
+
+<Step>
+## Making Decisions Using Conditions
+
+Conditions evaluate to **True** or **False**, allowing programs to behave dynamically.
+
+**Example: Check if a number is even or odd.**
+
+```python
+num = int(input("Enter a number: "))
+
+if num % 2 == 0:
+    print("Even")
+
+if num % 2 == 1:
+    print("Odd")
+
+print("Bye")
+```
+
+**How it works:**
+
+* `%` is the modulus operator → gives remainder
+* Even number → `num % 2 == 0`
+* Odd number → `num % 2 == 1`
+
+</Step>
+
+---
+
+<Step>
+## Usage of the `if` Statement 
+
+The `if` statement is used whenever a program must **choose between different actions**.
+Common uses include:
+
+* **Validating user input**
+
+  ```python
+  if age >= 18:
+      print("Eligible to vote")
+  ```
+
+* **Performing calculations based on conditions**
+
+  ```python
+  if marks >= 40:
+      print("Pass")
+  ```
+
+* **Executing code only when a condition is met**
+
+  ```python
+  if is_logged_in:
+      show_dashboard()
+  ```
+
+* **Checking for errors or special cases**
+
+  ```python
+  if filename == "":
+      print("Filename cannot be empty")
+  ```
+
+* **Making decisions in games, apps, and automation scripts**
+
+  ```python
+  if health <= 0:
+      print("Game Over")
+  ```
+
+In short, **any situation that requires decision-making uses `if` statements**.
+
+</Step>
+
+---
+
+<Step>
+## Summary
+
+* The `if` statement is used to execute code **only when a condition is True**.
+* Python determines code blocks using **indentation**, not curly braces.
+* The **Logic Unit (LU)** of the CPU performs logical checks that help programs make decisions.
+* Conditions like `num % 2 == 0` return True/False, controlling program flow.
+* Using `if`, Python can perform intelligent decisions such as checking even/odd, validating input, comparing values, etc.
+
+
+</Step>
+</Steps>
+
+Written By: <a href="https://www.linkedin.com/in/muskangarg03/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer"> Muskan Garg <ExternalLink className="w-4 h-4" /></a>
