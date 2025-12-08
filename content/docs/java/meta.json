@@ -9,36 +9,38 @@
         "basics",
         "operators",
         "control-flow",
-        "arrays",
-        "methods-and-constructors",
+        
+        "DISABLED-arrays",
+        "DISABLED-methods-and-constructors",
 
-        "classes-and-objects",
-        "encapsulation",
-        "inheritance",
-        "polymorphism",
-        "abstraction-and-interfaces",
-        "inner-classes",
+        "DISABLED-classes-and-objects",
+        "DISABLED-encapsulation",
+        "DISABLED-inheritance",
+        "DISABLED-polymorphism",
+        "DISABLED-abstraction-and-interfaces",
+        "DISABLED-inner-classes",
 
-        "strings",
-        "lang-and-util-apis",
-        "exception-handling",
+        "DISABLED-strings",
+        "DISABLED-lang-and-util-apis",
+        "DISABLED-exception-handling",
 
-        "collections",
-        "collection-internals",
-        "stream-api",
+        "DISABLED-collections",
+        "DISABLED-collection-internals",
+        "DISABLED-stream-api",
 
-        "concurrency-advanced",
-        "jvm-internals",
-        "nio",
-        "modern-java",
+        "DISABLED-concurrency-advanced",
+        "DISABLED-jvm-internals",
+        "DISABLED-nio",
+        "DISABLED-modern-java",
 
-        "file-handling",
-        "design-patterns",
-        "testing",
-        "build-tools",
+        "DISABLED-file-handling",
+        "DISABLED-design-patterns",
+        "DISABLED-testing",
+        "DISABLED-build-tools",
 
-        "spring-core",
-        "spring-boot",
-        "rest-api"
+        "DISABLED-spring-core",
+        "DISABLED-spring-boot",
+        "DISABLED-rest-api"
     ]
 }
+    
