@@ -1,0 +1,258 @@
+---
+title: Assignment Operators in Java
+---
+
+## 1. Introduction
+
+Assignment operators in Java are used to **assign values to variables**.  
+The most commonly used assignment operator is `=`, but Java provides several **compound assignment operators** that simplify expressions and make code cleaner.
+
+Assignment operators help you:
+
+- Update variable values efficiently  
+- Reduce repetitive code  
+- Perform arithmetic and assignment in one step  
+- Improve readability in loops and calculations  
+
+This document explains each assignment operator with examples.
+
+
+
+## 2. Basic Assignment Operator (`=`)
+
+This operator assigns the value on the **right-hand side** (RHS) to the **left-hand side** (LHS) variable.
+
+### Syntax:
+
+```java
+variable = value;
+```
+
+### Example:
+
+```java
+int x = 10;
+String name = "John";
+```
+
+
+
+## 3. Compound Assignment Operators
+
+Compound operators perform an operation and assignment **in a single step**.
+
+Example:
+
+```java
+x = x + 5;
+```
+
+Can be written as:
+
+```java
+x += 5;
+```
+
+### List of Compound Assignment Operators
+
+| Operator | Meaning                         | Example               | Equivalent To |      |        |    |
+| -------- | ------------------------------- | --------------------- | ------------- | ---- | ------ | -- |
+| `+=`     | Add and assign                  | `x += 5`              | `x = x + 5`   |      |        |    |
+| `-=`     | Subtract and assign             | `x -= 3`              | `x = x - 3`   |      |        |    |
+| `*=`     | Multiply and assign             | `x *= 2`              | `x = x * 2`   |      |        |    |
+| `/=`     | Divide and assign               | `x /= 4`              | `x = x / 4`   |      |        |    |
+| `%=`     | Modulo and assign               | `x %= 2`              | `x = x % 2`   |      |        |    |
+| `&=`     | Bitwise AND and assign          | `x &= 3`              | `x = x & 3`   |      |        |    |
+| `        | =`                              | Bitwise OR and assign | `x            | = 2` | `x = x | 2` |
+| `^=`     | Bitwise XOR and assign          | `x ^= 6`              | `x = x ^ 6`   |      |        |    |
+| `<<=`    | Left shift and assign           | `x <<= 1`             | `x = x << 1`  |      |        |    |
+| `>>=`    | Right shift and assign          | `x >>= 1`             | `x = x >> 1`  |      |        |    |
+| `>>>=`   | Unsigned right shift and assign | `x >>>= 2`            | `x = x >>> 2` |      |        |    |
+
+
+
+
+![assignment](/images/java/assignment1.png)
+
+
+
+## 4. Detailed Examples
+
+### 4.1 Addition Assignment (`+=`)
+
+```java
+int x = 10;
+x += 5; 
+```
+
+Now:
+
+```
+x = 15
+```
+
+
+
+### 4.2 Subtraction Assignment (`-=`)
+
+```java
+int x = 20;
+x -= 4;
+```
+
+Now:
+
+```
+x = 16
+```
+
+
+
+### 4.3 Multiplication Assignment (`*=`)
+
+```java
+int x = 7;
+x *= 3;
+```
+
+Now:
+
+```
+x = 21
+```
+
+
+
+### 4.4 Division Assignment (`/=`)
+
+```java
+int x = 40;
+x /= 5;
+```
+
+Now:
+
+```
+x = 8
+```
+
+
+
+### 4.5 Modulus Assignment (`%=`)
+
+```java
+int x = 13;
+x %= 5;
+```
+
+Now:
+
+```
+x = 3
+```
+
+
+
+## 5. Bitwise Assignment Operators
+
+These work at the bit level.
+
+### Example:
+
+```java
+int x = 6;   // binary: 110
+x &= 3;     // binary: 011
+```
+
+Now:
+
+```
+x = 2   // binary: 010
+```
+
+
+
+## 6. Shift Assignment Operators
+
+Used to shift bits to the left or right.
+
+### Left shift:
+
+```java
+int x = 4;   // 0100
+x <<= 1;     // becomes 1000
+```
+
+Now:
+
+```
+x = 8
+```
+
+### Right shift:
+
+```java
+int x = 16; // 10000
+x >>= 2;    // becomes 00010
+```
+
+Now:
+
+```
+x = 4
+```
+![assignment](/images/java/assignment2.png)
+
+
+
+## 7. Real-World Use Cases
+
+### Loop counters
+
+```java
+i += 2; // increment by 2
+```
+
+### Summations
+
+```java
+sum += value;
+```
+
+### Reducing repetitive arithmetic
+
+```java
+total -= discount;
+balance *= rate;
+```
+
+### Working with bitwise flags
+
+```java
+permissions |= READ;
+permissions &= ~WRITE;
+```
+
+
+
+## 8. Common Mistakes
+
+* Using `/=` with integers (may cause integer division)
+* Forgetting type limitations with `+=` on small types (e.g., byte/short)
+* Confusing `x += y` with `x =+ y` (which assigns positive value)
+
+Bad:
+
+```java
+x =+ 5; // means x = +5, not x += 5
+```
+
+
+
+## 9. Summary
+
+* Assignment operators simplify updating variable values.
+* `=` is the basic operator; others combine arithmetic and assignment.
+* Compound operators help write cleaner and shorter code.
+* Bitwise and shift assignment operators are useful for performance and low-level programming.
+* Understanding assignment operators is essential for loops, conditions, and calculations.

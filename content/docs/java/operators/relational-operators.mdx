@@ -3,113 +3,211 @@ title: Relational Operators
 ---
 <Video id="TEJpeRI_NEo" />
 
+## 1. Introduction
 
-Relational operators are used to **compare two values**.  
-They form the foundation of decision-making in Java.  
-Every comparison performed using these operators results in a **boolean value** — either `true` or `false`.
+Relational operators in Java are used to **compare two values**.  
+They always return a **boolean result** (`true` or `false`).
 
-These operators are widely used in conditions, loops, filtering logic, and anywhere you need to make a choice based on data.
+These operators are essential for:
+
+- Decision-making (`if`, `else`)
+- Loop conditions
+- Validations
+- Sorting and comparison logic
+- Implementing business rules
+
+Understanding relational operators is fundamental to writing correct conditional logic in Java.
 
 
-## What are Relational Operators?
+## 2. List of Relational Operators
 
-Relational operators allow us to check:
+Java provides six relational operators:
 
-- Is one value greater than another?
-- Are two values equal?
-- Are they different?
-- Is a value within a certain range?
+| Operator | Meaning                 | Example      |
+|----------|--------------------------|--------------|
+| `==`     | Equal to                | `a == b`     |
+| `!=`     | Not equal to            | `a != b`     |
+| `>`      | Greater than            | `a > b`      |
+| `<`      | Less than               | `a < b`      |
+| `>=`     | Greater than or equal   | `a >= b`     |
+| `<=`     | Less than or equal      | `a <= b`     |
 
-The result of these comparisons determines the flow of your program.
+All relational operators return a boolean value.
+
+---
+
+![relational](/images/java/relational1.png)
+
+---
+
+## 3. Relational Operators Explained
+
+### 3.1 Equal To (`==`)
+
+Checks if two values are **equal**.
+
+```java
+int a = 10, b = 10;
+System.out.println(a == b); // true
+```
+
+For objects, `==` compares **references**, not values.
 
 Example:
 
 ```java
-int x = 6;
-int y = 5;
-
-boolean result = x > y; // true
+String s1 = new String("Hi");
+String s2 = new String("Hi");
+System.out.println(s1 == s2); // false (different memory locations)
 ```
 
-This boolean value is often used inside `if`, `while`, or other conditional statements.
+### 3.2 Not Equal To (`!=`)
 
-
-## List of Relational Operators
-
-Java provides six relational operators:
-
-| Operator | Meaning            | Example (`x=6, y=5`) | Result |
-| -------- | ------------------ | -------------------- | ------ |
-| `<`      | Less than          | `x < y`  → `6 < 5`   | false  |
-| `>`      | Greater than       | `x > y`  → `6 > 5`   | true   |
-| `<=`     | Less than or equal | `x <= y` → `6 <= 5`  | false  |
-| `>=`     | Greater or equal   | `x >= y` → `6 >= 5`  | true   |
-| `==`     | Equal to           | `x == y` → `6 == 5`  | false  |
-| `!=`     | Not equal to       | `x != y` → `6 != 5`  | true   |
-
-### Important Notes About `==`
-
-* `==` checks **value equality**, not assignment.
-* It compares whether the two values are the same.
-* In contrast, `=` is the assignment operator (stores a value).
-
-
-## Example Program
-
-Here’s a complete Java program demonstrating relational operators:
+Returns `true` if values are **not equal**.
 
 ```java
-public class Hello {
-    public static void main(String[] args) {
-        int x = 6;
-        int y = 5;
+int a = 10, b = 20;
+System.out.println(a != b); // true
+```
 
-        boolean r1 = x < y;
-        boolean r2 = x >= y;
-        boolean r3 = x != y;
-        boolean r4 = (x == y);
+For objects, also compares references:
 
-        System.out.println("x < y : " + r1);
-        System.out.println("x >= y: " + r2);
-        System.out.println("x != y: " + r3);
-        System.out.println("x == y: " + r4);
-    }
+```java
+String s1 = "Hello";
+String s2 = "World";
+System.out.println(s1 != s2); // true
+```
+
+### 3.3 Greater Than (`>`)
+
+```java
+int a = 15, b = 10;
+System.out.println(a > b); // true
+```
+
+### 3.4 Less Than (`<`)
+
+```java
+int a = 5, b = 12;
+System.out.println(a < b); // true
+```
+
+### 3.5 Greater Than or Equal To (`>=`)
+
+```java
+int marks = 75;
+System.out.println(marks >= 60); // true (passing marks)
+```
+
+### 3.6 Less Than or Equal To (`<=`)
+
+```java
+int age = 18;
+System.out.println(age <= 18); // true
+```
+
+## 4. Relational Operators with Different Data Types
+
+Java allows relational operations on:
+
+* Numeric types (`int`, `double`, `float`, etc.)
+* Characters (`char`)
+* Booleans → **NOT allowed**, except comparison using `==` and `!=`
+* Objects → only `==` and `!=` allowed (reference comparison)
+
+### 4.1 Character Comparison
+
+```java
+char c1 = 'A';  // ASCII 65
+char c2 = 'B';  // ASCII 66
+System.out.println(c1 < c2); // true
+```
+
+Java compares the **Unicode values** of characters.
+
+
+### 4.2 Numeric Comparisons
+
+Mixing numeric types:
+
+```java
+int a = 10;
+double b = 10.0;
+System.out.println(a == b); // true (numeric promotion)
+```
+
+## 5. Relational Operators in Real Conditions
+
+### Example 1: Age Check
+
+```java
+if (age >= 18) {
+    System.out.println("Eligible to vote");
 }
 ```
 
-### Output
-
-```
-x < y : false
-x >= y: true
-x != y: true
-x == y: false
-```
-
-## When Are Relational Operators Used?
-
-Relational operators are essential in:
-
-* **if / else conditions**
-* **while loops**
-* **for loops**
-* **switch conditions (indirectly)**
-* **filtering data**
-* **validations (age, limits, boundaries)**
-
-Example inside a condition:
+### Example 2: Password Length Validation
 
 ```java
-if (x > y) {
-    System.out.println("x is greater");
+if (password.length() < 8) {
+    System.out.println("Password too short");
 }
 ```
 
-## Key Notes (Recap)
+### Example 3: Comparing Scores
 
-* Relational operators always return **true** or **false**.
-* `==` compares values, not assignment.
-* Commonly used in decision-making statements.
-* Play a crucial role in controlling program flow.
+```java
+if (score > highScore) {
+    System.out.println("New high score!");
+}
+```
 
-Written By: <a href="https://www.linkedin.com/in/shivasrivastava1/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer"> Shiva Srivastava <ExternalLink className="w-4 h-4" /></a>
+![relational](/images/java/relational2.png)
+
+
+## 6. Object Comparison – Important Note
+
+Using relational operators (`>`, `<`, `>=`, `<=`) on objects like `String`, `Integer`, or custom classes is **not allowed** in Java.
+
+Example (INVALID):
+
+```java
+String s1 = "Apple";
+String s2 = "Banana";
+
+// if (s1 > s2) {}  // ERROR
+```
+
+For object value comparison, use:
+
+```java
+s1.equals(s2);
+```
+
+Or for sorting comparisons:
+
+```java
+s1.compareTo(s2);
+```
+
+## 7. Common Mistakes to Avoid
+
+* Using `==` to compare strings — use `.equals()`
+* Expecting relational operators to work on objects
+* Confusing `=` (assignment) with `==` (comparison)
+* Assuming floating-point comparisons are always accurate
+  (precision issues with `double`)
+
+Example:
+
+```java
+double x = 0.1 + 0.2;
+System.out.println(x == 0.3); // false (precision issue)
+```
+
+## 8. Summary
+
+* Relational operators compare two values and return boolean results.
+* They are used extensively in branching and looping conditions.
+* Work on numbers, characters, and references (with limitations).
+* For object value comparison, always use `.equals()` or `.compareTo()`.

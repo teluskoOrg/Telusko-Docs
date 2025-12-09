@@ -1,0 +1,258 @@
+---
+title: Operator Precedence in Java
+---
+
+## 1. Introduction
+
+In Java, an expression can contain many operators at the same time.  
+For example:
+
+```java
+int result = 10 + 5 * 2 - 3;
+```
+
+How does Java decide:
+
+* Which operator to evaluate first?
+* In which direction to evaluate when operators have the same precedence?
+
+This is controlled by:
+
+* **Operator precedence** → decides which operator goes first
+* **Associativity** → decides the direction (left-to-right or right-to-left) for operators of the same precedence
+
+Understanding operator precedence is important to:
+
+* Predict the output of expressions
+* Avoid unexpected results
+* Write clear and maintainable code (often with parentheses)
+
+## 2. What Is Operator Precedence?
+
+Operator precedence is a **set of rules** that decide which operator is evaluated first when multiple operators appear in a single expression.
+
+Example:
+
+```java
+int result = 10 + 5 * 2;
+```
+
+Here:
+
+* `*` has **higher precedence** than `+`
+* So `5 * 2` is evaluated first → `10`
+* Then `10 + 10` → `20`
+
+If you want `10 + 5` to happen first, you must use parentheses:
+
+```java
+int result = (10 + 5) * 2; // 30
+```
+
+---
+
+![operator](/images/java/operator1.png)
+
+---
+
+## 3. What Is Associativity?
+
+Associativity decides **the direction** of evaluation when **operators with the same precedence** appear together.
+
+Example:
+
+```java
+int x = 10 - 5 - 2;
+```
+
+`-` has **left-to-right associativity**, so:
+
+* First: `10 - 5 = 5`
+* Then: `5 - 2 = 3`
+
+If it were right-to-left, result would be `10 - (5 - 2) = 7`, which is not how Java works for `-`.
+
+Most operators in Java are **left-to-right associative**, except:
+
+* Unary operators: `++`, `--`, `+`, `-`, `~`, `!`
+* Ternary operator: `?:`
+* Assignment operators: `=`, `+=`, `-=`, etc.
+
+These have **right-to-left associativity**.
+
+## 4. Operator Precedence Table (High to Low)
+
+From **highest** precedence (evaluated first) to **lowest** (evaluated last):
+
+| Level | Category       | Operators                                                                     | Associativity |
+| ----: | -------------- | ----------------------------------------------------------------------------- | ------------- |
+|     1 | Postfix        | `expr++`, `expr--`                                                            | Left to right |
+|     2 | Unary          | `++expr`, `--expr`, `+`, `-`, `!`, `~`                                        | Right to left |
+|     3 | Multiplicative | `*`, `/`, `%`                                                                 | Left to right |
+|     4 | Additive       | `+`, `-`                                                                      | Left to right |
+|     5 | Shift          | `<<`, `>>`, `>>>`                                                             | Left to right |
+|     6 | Relational     | `<`, `>`, `<=`, `>=`, `instanceof`                                            | Left to right |
+|     7 | Equality       | `==`, `!=`                                                                    | Left to right |
+|     8 | Bitwise AND    | `&`                                                                           | Left to right |
+|     9 | Bitwise XOR    | `^`                                                                           | Left to right |
+|    10 | Bitwise OR     | `\|`                                                                          | Left to right |
+|    11 | Logical AND    | `&&`                                                                          | Left to right |
+|    12 | Logical OR     | `\|\|`                                                                        | Left to right |
+|    13 | Ternary        | `?:`                                                                          | Right to left |
+|    14 | Assignment     | `=`, `+=`, `-=`, `*=`, `/=`, `%=`,`&=`, `^=`, `\|=`, `<<=`, `>>=`, `>>>=` | Right to left |
+
+Use this table as a reference when reading or writing complex expressions.
+
+
+## 5. Examples of Precedence in Action
+
+### 5.1 Arithmetic with Different Operators
+
+```java
+int result = 10 + 5 * 2 - 8 / 4;
+```
+
+Step-by-step:
+
+* Multiplicative first: `5 * 2 = 10`, `8 / 4 = 2`
+* Now expression becomes: `10 + 10 - 2`
+* Left to right: `10 + 10 = 20`
+* Then: `20 - 2 = 18`
+
+Final result: `18`
+
+
+### 5.2 With Parentheses
+
+```java
+int result = (10 + 5) * (20 - 8) / 4;
+```
+
+Steps:
+
+* `(10 + 5) = 15`
+* `(20 - 8) = 12`
+* Expression: `15 * 12 / 4`
+* Multiplicative left to right: `15 * 12 = 180`
+* Then `180 / 4 = 45`
+
+Result: `45`
+
+Parentheses always override precedence rules.
+
+## 6. Precedence with Relational and Logical Operators
+
+```java
+int a = 10, b = 20, c = 5;
+boolean result = a < b && b > c || c > a;
+```
+
+Order:
+
+1. Relational operators first:
+
+   * `a < b` → `10 < 20` → `true`
+   * `b > c` → `20 > 5` → `true`
+   * `c > a` → `5 > 10` → `false`
+2. Now expression: `true && true || false`
+3. `&&` has higher precedence than `||`, so:
+
+   * `true && true` → `true`
+4. Now: `true || false` → `true`
+
+Final result: `true`
+
+## 7. Precedence and Assignment
+
+Assignment has the **lowest precedence** (evaluated near the end), and is **right-to-left associative**.
+
+Example:
+
+```java
+int a, b, c;
+a = b = c = 10;
+```
+
+This is evaluated as:
+
+* `b = c = 10;`
+* First `c = 10` → `c` becomes 10
+* Then `b = c` → `b` becomes 10
+* Then `a = b` → `a` becomes 10
+
+All three variables become 10.
+
+## 8. Precedence in Ternary Operator
+
+Ternary operator `?:` has low precedence but higher than assignment.
+
+```java
+int a = 10, b = 20;
+int max = (a > b) ? a : b;
+```
+
+Here:
+
+* Relational `>` evaluated first
+* Then ternary `?:`
+* Finally assignment `=`
+
+If you write:
+
+```java
+int x = 10;
+int y = 20;
+int result = x > y ? x + 10 : y + 10;
+```
+
+The expressions `x + 10` and `y + 10` are evaluated based on the condition `x > y`.
+
+---
+
+![operator](/images/java/operator2.png)
+
+---
+
+## 9. Complex Expression Example
+
+Consider:
+
+```java
+int a = 5, b = 10, c = 15;
+int result = a + b * c > 100 && b < c || a == 5;
+```
+
+Step-by-step:
+
+1. Multiplicative: `b * c = 10 * 15 = 150`
+2. Additive: `a + 150 = 5 + 150 = 155`
+3. Relational: `155 > 100` → `true`
+   Also: `b < c` → `10 < 15` → `true`
+   And: `a == 5` → `true`
+4. Logical AND first: `true && true` → `true`
+5. Logical OR: `true || true` → `true`
+
+Final result: `true`
+
+## 10. Best Practices
+
+* Do not rely too heavily on remembering all precedence rules for very complex expressions.
+* Use **parentheses** to make expressions clear and explicit.
+* Keep expressions **simple** and readable.
+* When in doubt, break expressions into multiple lines:
+
+```java
+int temp = a + b * c;
+boolean cond = temp > 100 && b < c;
+boolean result = cond || a == 5;
+```
+
+This is easier to read, debug, and maintain.
+
+## 11. Summary
+
+* Operator precedence decides **which operator is evaluated first**.
+* Associativity decides **the direction of evaluation** when precedence is the same.
+* Most operators are **left-to-right associative**, but unary, ternary, and assignment are **right-to-left**.
+* Parentheses can always be used to **override precedence** and improve readability.
+* Understanding precedence helps predict and control complex expression behavior in Java.

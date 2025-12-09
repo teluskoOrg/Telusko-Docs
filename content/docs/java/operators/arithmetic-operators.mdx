@@ -3,148 +3,246 @@ title: Arithmetic Operators
 ---
 <Video id="flWjzwzgybI" />
 
+## 1. Introduction
 
-Arithmetic operators are used to perform mathematical operations on numeric data in Java.  
-They form the foundation for calculations, logic building, loops, and data processing.  
-Understanding how these operators behave—especially with integers—is essential for writing correct programs.
+Arithmetic operators in Java are used to perform basic mathematical operations such as addition, subtraction, multiplication, division, and modulus.  
+These operators work with **primitive numeric types** like:
+
+- `int`
+- `float`
+- `double`
+- `long`
+- `short`
+- `byte`
+
+Understanding arithmetic operators is foundational for performing calculations in Java programs, including loops, conditions, formulas, financial calculations, and more.
 
 
-## Basic Arithmetic Operators
 
-Java supports several arithmetic operators that work on integer, float, and double values.  
-The most common ones include:
+## 2. Types of Arithmetic Operators
 
-- `+`  → Addition  
-- `-`  → Subtraction  
-- `*`  → Multiplication  
-- `/`  → Division  
-- `%`  → Modulus (remainder)
+Java provides five primary arithmetic operators:
 
-### Example:
+| Operator | Meaning            | Example     |
+|----------|---------------------|-------------|
+| `+`      | Addition            | `a + b`     |
+| `-`      | Subtraction         | `a - b`     |
+| `*`      | Multiplication      | `a * b`     |
+| `/`      | Division            | `a / b`     |
+| `%`      | Modulus (Remainder) | `a % b`     |
+
+
+
+![arithmetic](/images/java/arithmetic1.png)
+
+
+
+## 3. Addition (+)
+
+Used for both numeric addition and string concatenation.
+
+### Numeric Addition
 
 ```java
-int num1 = 7;
-int num2 = 5;
-
-int add = num1 + num2;   // Addition → 12
-int sub = num1 - num2;   // Subtraction → 2
-int mul = num1 * num2;   // Multiplication → 35
-int div = num1 / num2;   // Division → 1 (integer division)
-int mod = num1 % num2;   // Modulus → 2
-
-System.out.println(add);
-System.out.println(sub);
-System.out.println(mul);
-System.out.println(div);
-System.out.println(mod);
+int a = 10;
+int b = 20;
+int sum = a + b; // 30
 ````
 
-### Important Note About Integer Division
-
-When both operands are integers, Java performs **integer division**, meaning:
-
-* Decimal values are discarded
-* Result is always an integer
-
-Example:
-`7 / 5 = 1` → the result is not 1.4, but **1**
-
-This is a frequent source of confusion among beginners.
-
-
-## Assignment with Operators (Shorthand Operators)
-
-Java provides shorthand versions of common assignment operations to make the code cleaner and easier to read.
-
-### Example:
+### String Concatenation
 
 ```java
-int num1 = 7;
-
-num1 += 2;   // num1 = num1 + 2  → 9
-num1 -= 2;   // num1 = num1 - 2  → 7
-num1 *= 2;   // num1 = num1 * 2  → 14
-num1 /= 2;   // num1 = num1 / 2  → 7
+String result = "Hello " + "World"; // Hello World
 ```
 
-### Why use shorthand operators?
-
-* They are shorter and cleaner
-* Reduce repetition
-* More readable in loops and calculations
-
-These operators work for **all numeric types** (int, float, double, etc.).
-
-
-## Increment and Decrement Operators
-
-Java provides two operators to increase or decrease a value by 1:
-
-* **Increment:** `++`
-* **Decrement:** `--`
-
-Each operator has two forms:
-
-### • Post-Increment (num++)
-
-Uses the value first, then increments.
-
-### • Pre-Increment (++num)
-
-Increments first, then uses the value.
-
-### • Post-Decrement (num--)
-
-Uses the value, then decrements.
-
-### • Pre-Decrement (--num)
-
-Decrements first, then uses the value.
-
-### Example:
+Mixed addition:
 
 ```java
-int num = 5;
-
-System.out.println(num++); // Output: 5, then num becomes 6
-System.out.println(++num); // num becomes 7, then prints 7
-
-System.out.println(num--); // Prints 7, then becomes 6
-System.out.println(--num); // Becomes 5, then prints 5
+System.out.println("Total = " + 5 + 5); 
+// Output: Total = 55 (because first part is string)
 ```
 
-### Why does this matter?
+Use parentheses for numeric addition:
 
-Pre/post increment behavior is very important when working with:
-
-* Loops
-* Complex expressions
-* Indexing arrays
-* Algorithm logic
-
-Beginners often confuse pre-increment and post-increment, so always be mindful of when the change happens.
+```java
+System.out.println("Total = " + (5 + 5)); 
+// Output: Total = 10
+```
 
 
-## Division Notes (Integer vs Float)
 
-If **either** operand is a floating-point number (float or double), Java performs **floating-point division**.
+## 4. Subtraction (-)
+
+```java
+int a = 20;
+int b = 5;
+int diff = a - b; // 15
+```
+
+Also works with floating-point numbers:
+
+```java
+double x = 5.5 - 2.1; // 3.4
+```
+
+
+
+## 5. Multiplication (*)
+
+```java
+int a = 6;
+int b = 4;
+int product = a * b; // 24
+```
+
+
+
+## 6. Division (/)
+
+Division behaves differently for integers and floating-point types.
+
+### Integer Division
+
+```java
+int a = 7;
+int b = 2;
+int result = a / b; // 3 (decimal part discarded)
+```
+
+### Floating-Point Division
+
+```java
+double x = 7.0 / 2; // 3.5
+```
+
+### Division by Zero
+
+* Integer division by zero → **ArithmeticException**
+* Floating division by zero → `Infinity` or `NaN`
 
 Example:
 
 ```java
-System.out.println(7 / 5);    // 1   (integer division)
-System.out.println(7 / 5.0);  // 1.4 (floating division)
+System.out.println(5.0 / 0);   // Infinity
+System.out.println(0.0 / 0);   // NaN
 ```
 
-Java automatically promotes the calculation to a wider type if necessary.
 
 
-## Key Points Recap
+## 7. Modulus (%)
 
-* `%` (modulus) returns the remainder of a division operation.
-* Integer division **removes decimals** — it does not round.
-* `++` and `--` behave differently depending on their position (pre vs post).
-* Shorthand operators (`+=`, `-=`, `*=`, `/=`) help make code cleaner and more readable.
-* Use floating-point numbers to get decimal results in division.
+Returns the remainder after division.
 
-Written By: <a href="https://www.linkedin.com/in/shivasrivastava1/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer"> Shiva Srivastava <ExternalLink className="w-4 h-4" /></a>
+```java
+int a = 10;
+int b = 3;
+int remainder = a % b; // 1
+```
+
+Useful for:
+
+* Checking even/odd numbers
+* Circular patterns
+* Clock calculations
+* Loop cycling
+
+Example:
+
+```java
+if (n % 2 == 0) {
+    System.out.println("Even");
+}
+```
+
+
+
+![arithmetic](/images/java/arithmetic2.png)
+
+
+
+## 8. Operator Behavior with Different Data Types
+
+### Mixing int and double
+
+```java
+int a = 5;
+double b = 2.0;
+double result = a + b; // 7.0
+```
+
+Java automatically promotes smaller types (`byte`, `short`) to `int` in arithmetic expressions.
+
+Example:
+
+```java
+byte x = 10;
+byte y = 20;
+byte z = (byte)(x + y); // x+y becomes int → cast required
+```
+
+
+
+## 9. Precedence with Arithmetic Operators
+
+Operator precedence:
+
+1. `*`, `/`, `%` → higher precedence
+2. `+`, `-` → lower precedence
+
+Example:
+
+```java
+int result = 10 + 5 * 2; // 20
+```
+
+Correct way if you want addition first:
+
+```java
+int result = (10 + 5) * 2; // 30
+```
+
+
+
+## 10. Real-World Examples
+
+### Example 1: Calculate Area
+
+```java
+double radius = 5;
+double area = 3.14 * radius * radius;
+```
+
+### Example 2: Shopping Bill Calculation
+
+```java
+double price = 100;
+double discount = 10;
+double finalPrice = price - (price * discount / 100);
+```
+
+### Example 3: Convert Seconds to Minutes and Seconds
+
+```java
+int total = 125;
+int minutes = total / 60; // 2
+int seconds = total % 60; // 5
+```
+
+
+
+## 11. Common Mistakes
+
+* Assuming `7 / 2` gives `3.5` (integer division returns 3)
+* Forgetting to use parentheses for clarity
+* Misusing `%` with floating numbers
+* Forgetting type casting for `byte` and `short`
+
+
+
+## 12. Summary
+
+* Arithmetic operators perform mathematical computations.
+* `/` behaves differently for integers and floating-point values.
+* `%` gives remainder, useful for patterns, conditions, and cycles.
+* Operator precedence affects evaluation order.
+* Parentheses help make expressions clearer.
