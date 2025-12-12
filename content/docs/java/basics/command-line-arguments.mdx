@@ -1,0 +1,220 @@
+---
+title: Command-Line Arguments
+---
+
+## 1. Introduction
+
+Command-line arguments allow users to pass information to a Java program **at the time of execution**, without modifying the code.
+
+They are commonly used for:
+
+- Configurations  
+- File paths  
+- User inputs in automated scripts  
+- Running programs with dynamic values  
+- Processing multiple inputs efficiently  
+
+In Java, command-line arguments are stored in the **String array `args`** of the `main()` method.
+
+## 2. main() Method and args[]
+
+The standard Java main method is:
+
+```java
+public static void main(String[] args)
+```
+
+Here:
+
+* `args` → array of Strings
+* Each value passed from the command line becomes an element of this array
+
+Example:
+
+```bash
+java ProgramName hello world 123
+```
+
+Inside main:
+
+* `args[0]` → "hello"
+* `args[1]` → "world"
+* `args[2]` → "123"
+
+![command-line](/images/java/command-line1.png)
+
+
+## 3. Basic Example
+
+### Program: Print Command-Line Arguments
+
+```java
+public class Main {
+    public static void main(String[] args) {
+        for (int i = 0; i < args.length; i++) {
+            System.out.println("Argument " + i + ": " + args[i]);
+        }
+    }
+}
+```
+
+### Execution:
+
+```bash
+java Main Apple Banana Mango
+```
+
+### Output:
+
+```
+Argument 0: Apple
+Argument 1: Banana
+Argument 2: Mango
+```
+
+## 4. Passing Numbers as Command-Line Arguments
+
+Arguments are always Strings.
+To use them as numbers, convert them manually.
+
+### Example: Add Two Numbers
+
+```java
+public class Add {
+    public static void main(String[] args) {
+        int a = Integer.parseInt(args[0]);
+        int b = Integer.parseInt(args[1]);
+
+        int sum = a + b;
+        System.out.println("Sum: " + sum);
+    }
+}
+```
+
+### Execution:
+
+```bash
+java Add 10 20
+```
+
+### Output:
+
+```
+Sum: 30
+```
+
+## 5. Handling Errors (Missing Arguments)
+
+If you run:
+
+```bash
+java Add 10
+```
+
+Then `args[1]` does not exist → runtime error:
+
+```
+ArrayIndexOutOfBoundsException
+```
+
+### Fix using validation:
+
+```java
+if (args.length < 2) {
+    System.out.println("Please provide two numbers!");
+    return;
+}
+```
+
+## 6. Using args.length
+
+`args.length` tells how many arguments were passed.
+
+Example:
+
+```java
+System.out.println("Total arguments: " + args.length);
+```
+
+## 7. real-world use cases
+
+### 7.1 File input from command line
+
+```bash
+java FileReader data.txt
+```
+
+`args[0]` → "data.txt"
+
+### 7.2 Running programs with configurations
+
+```bash
+java Server --port=8080 --mode=dev
+```
+
+### 7.3 Automating tasks in DevOps scripts
+
+```bash
+java Backup /home/user/files
+```
+## 8. Advanced Example
+
+### Example: Sum of all command-line arguments
+
+```java
+public class SumArgs {
+    public static void main(String[] args) {
+        int sum = 0;
+
+        for (String val : args) {
+            sum += Integer.parseInt(val);
+        }
+
+        System.out.println("Total Sum: " + sum);
+    }
+}
+```
+
+### Execution:
+
+```bash
+java SumArgs 5 10 15 20
+```
+
+### Output:
+
+```
+Total Sum: 50
+```
+
+## 9. Common Mistakes
+
+* Forgetting to check `args.length`
+* Assuming command-line arguments are always numbers
+* Attempting to modify `args` (avoid doing so)
+* Mixing spaces incorrectly while passing input
+
+Example mistake:
+
+```bash
+java Test "Hello World"
+```
+
+If quotes are not used:
+
+```bash
+java Test Hello World
+# args[0] = Hello
+# args[1] = World
+```
+
+
+## 10. Summary
+
+* Command-line arguments allow passing dynamic values to a program.
+* They are accessed through the `args[]` array in the `main()` method.
+* All arguments are Strings; convert manually for numeric use.
+* Always validate the number of arguments using `args.length`.
+* Useful for automation, scripts, configurations, and flexible programs.
+
+Written By: <a href="https://www.linkedin.com/in/shivasrivastava1/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer"> Shiva Srivastava <ExternalLink className="w-4 h-4" /></a>
