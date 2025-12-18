@@ -1,0 +1,251 @@
+---
+title: Array Functions
+---
+
+<Steps>
+<Video id="SQAMEB-kRGM" />
+
+---
+
+
+Python arrays provide several built-in methods to inspect, modify, and manipulate array data efficiently
+
+
+## Common Array Functions
+
+<Step>
+### `buffer_info()`
+
+The `buffer_info()` method returns important low-level details about the array.
+
+#### What it returns:
+
+A tuple containing:
+
+1. **Memory address** of the array
+2. **Number of elements** stored in the array
+
+#### Example:
+
+```python
+from array import *
+
+vals = array('i', [5, 9, 8, 4, 2])
+print(vals.buffer_info())
+```
+
+**Output (example):**
+
+```
+#(address, length)
+()
+```
+
+#### Use Case:
+
+Helpful when working with **memory management**, low-level programming, or interfacing with C-based libraries.
+</Step>
+
+
+<Step>
+### `typecode`
+
+The `typecode` attribute returns the **data type** of elements stored in the array.
+
+#### Example:
+
+```python
+print(vals.typecode)
+```
+
+**Output:**
+
+```
+i
+```
+
+#### Use Case:
+
+Useful when the array comes from an **external source** (e.g., file or network) and the data type is not known in advance.
+</Step>
+
+
+<Step>
+### `append()`
+
+Adds a new element to the **end of the array**.
+
+#### Example:
+
+```python
+vals.append(10)
+print(vals)
+```
+
+**Output:**
+
+```
+array('i', [5, 9, 8, 4, 2, 10])
+```
+
+> The appended value **must match the array’s typecode**.
+</Step>
+
+
+<Step>
+### `remove()`
+
+Removes the **first occurrence** of a specified value.
+
+#### Example:
+
+```python
+vals.remove(8)
+print(vals)
+```
+
+**Output:**
+
+```
+array('i', [5, 9, 4, 2])
+```
+</Step>
+
+
+<Step>
+### `reverse()`
+
+Reverses the order of elements **in-place**.
+
+#### Example:
+
+```python
+vals.reverse()
+print(vals)
+```
+
+**Output:**
+
+```
+array('i', [2, 4, 9, 5])
+```
+
+> `reverse()` modifies the **original array**, not a copy.
+
+
+### Example: Using Multiple Array Functions Together
+
+```python
+from array import *
+
+vals = array('i', [5, 9, 8, 4, 2])
+
+print("Buffer Info:", vals.buffer_info())
+print("Type Code:", vals.typecode)
+
+vals.append(10)
+vals.remove(8)
+vals.reverse()
+
+print("Final Array:", vals)
+```
+</Step>
+
+
+---
+
+
+## Copying and Transforming Arrays
+
+Arrays can be copied or transformed using **generator expressions** for better memory efficiency.
+
+
+### 1. Copying an Existing Array (Using Generator Expression)
+
+```python
+from array import *
+
+vals = array('i', [5, 9, 8, 4, 2])
+newArr = array(vals.typecode, (a for a in vals))
+
+for e in newArr:
+    print(e)
+```
+
+#### Why This Is Efficient:
+
+* Avoids creating an intermediate list
+* Consumes **less memory** than `tolist()`
+
+
+### 2. Creating a Derived Array (Square of Elements)
+
+```python
+vals = array('i', [5, 9, 8, 4, 2])
+newArr = array(vals.typecode, (a * a for a in vals))
+
+for e in newArr:
+    print(e)
+```
+
+**Output:**
+
+```
+25
+81
+64
+16
+4
+```
+
+### Converting Array to List
+
+```python
+lst = a.tolist()
+```
+
+#### Note:
+
+* `tolist()` creates an **extra list in memory**
+* Generator-based copying is more memory-efficient
+
+![Arrays_Transformations](/images/python/array_transform.png)
+
+---
+
+
+## Reference vs Copy in Arrays
+
+### Assignment Creates a Reference (Not a Copy)
+
+```python
+a = array('i', [1, 2, 3])
+b = a
+```
+
+* Changes in `b` will affect `a`
+* Both variables point to the **same array**
+
+### Creating an Actual Copy
+
+```python
+b = array(a.typecode, (x for x in a))
+```
+
+* Now `a` and `b` are **independent arrays**
+
+
+---
+
+
+## Summary
+
+* Arrays are optimized for efficient storage and processing of single-type numeric data.
+* Generator expressions help reduce memory usage by avoiding unnecessary list creation.
+* Understanding typecode and reference vs copy behavior is essential to prevent logical errors.
+* Arrays are best suited for performance-critical and memory-efficient applications involving homogeneous data.
+
+
+</Steps>
+
+Written By: <a href="https://www.linkedin.com/in/muskangarg03/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer"> Muskan Garg <ExternalLink className="w-4 h-4" /></a>
