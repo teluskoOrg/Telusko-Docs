@@ -1,6 +1,7 @@
 {   "title":"Arrays",
     "pages":[
         "basics-of-array.mdx",
-        "array-functions.mdx"
+        "array-functions.mdx",
+        "search-in-array.mdx"
     ]
 } 
