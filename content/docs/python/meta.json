@@ -11,6 +11,7 @@
         "input-and-swapping",
         "conditional-statements",
         "iteration",
-        "arrays"
+        "arrays",
+        "variable-scope-and-recursion"
     ]
 } 

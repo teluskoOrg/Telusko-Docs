@@ -1,0 +1,228 @@
+---
+title: Arguments in Function
+---
+
+<Steps>
+<Video id="BuAp27fbLVg" />
+
+---
+
+
+<Step>
+In Python, **functions** can accept different kinds of arguments, making them flexible, reusable, and easy to adapt to varying input requirements. Python supports **required arguments, default arguments, variable-length arguments, and keyword arguments**, each serving a specific purpose in function design.
+
+
+## Functions with Required Arguments
+
+- Required arguments are parameters that must be provided when a function is called. Python matches these arguments by position (unless keyword arguments are used)
+- If any required argument is missing, Python cannot execute the function and raises a **TypeError**.
+
+### Example
+
+```python
+def add(num1, num2):
+    return num1 + num2
+
+result = add(4, 5)
+print(result)
+```
+
+**Output**
+
+```
+9
+```
+
+
+If a required argument is missing:
+
+```python
+def add(num1, num2):
+    return num1 + num2
+
+result = add(4)
+print(result)
+
+```
+
+**Error**
+
+```
+TypeError: add() missing 1 required positional argument: 'num2'
+```
+
+> Required arguments enforce strict input and help avoid incomplete function calls.
+
+</Step>
+
+---
+
+<Step>
+## Default Arguments
+
+- Default arguments allow you to **define pre-assigned values for function parameters**. When a function is called without providing those arguments, Python automatically uses the default values instead.
+- This makes functions more flexible and user-friendly, as they can handle both minimal and complete inputs without causing errors.
+
+### How it works:
+- Default values are assigned in the function definition.
+- If a value is passed during the function call, it **overrides** the default.
+- If no value is passed, the **default value is used**.
+
+![Default_Arguments](/images/python/default_argument_python.png)
+
+### Example
+
+```python
+def add(num1=0, num2=0):
+    return num1 + num2
+```
+
+#### Function Calls and Outputs
+
+```python
+add()        # 0
+add(4)       # 4
+add(4, 5)    # 9
+```
+
+If more arguments than defined are passed:
+
+```python
+add(4, 5, 6)
+```
+
+**Error**
+
+```
+TypeError: add() takes from 0 to 2 positional arguments but 3 were given
+```
+
+> Default arguments improve flexibility while still maintaining control over function input.
+
+</Step>
+
+---
+
+<Step>
+## Variable-Length Arguments (`*args`)
+
+When the number of arguments is unknown, Python allows **variable-length positional arguments** using a single asterisk (`*`).
+
+### How it works:
+- The **`*args`** parameter allows a function to accept **any number of positional arguments**.
+- All extra positional arguments passed to the function are **automatically collected into a tuple**.
+- This makes the function flexible, eliminating the need to define multiple versions of the same function for different argument counts.
+- You can iterate over `args` just like any other tuple to process each value.
+
+![Variable_Length_Arguments](/images/python/variable_length_arguments_python.png)
+
+### Example: Accepting Multiple Values
+
+```python
+def add(num1, *num2):
+    total = num1
+    for n in num2:
+        total += n
+    return total
+
+result = add(4, 5, 6, 7)
+print(result)
+```
+
+**Output**
+
+```
+22
+```
+
+> `*` eliminates the need to create multiple functions for different argument counts.
+
+</Step>
+
+---
+
+<Step>
+## Keyword Arguments
+
+Keyword arguments allow values to be passed using **parameter names**, making function calls clearer and avoiding issues caused by incorrect order.
+
+### Example
+
+```python
+def person(name, age):
+    print("name:", name)
+    print("age:", age)
+
+person(age=30, name="Navin")
+```
+
+**Output**
+
+```
+name: Navin
+age: 30
+```
+
+If extra keyword arguments are passed to a function that doesn’t accept them:
+
+```python
+person(name="Navin", age=30, loc="Pune")
+```
+
+**Error**
+
+```
+TypeError: person() got an unexpected keyword argument 'loc'
+```
+
+</Step>
+
+---
+
+<Step>
+## Keyword Variable-Length Arguments 
+- **`**`** allows a function to accept **any number of keyword arguments** without knowing their names in advance.
+- All supplied keyword arguments are collected into a **dictionary**, where each key is the argument name and each value is the corresponding data.
+- Inside the function, you can iterate over the dictionary to process each key–value pair safely, without raising errors for extra arguments.
+
+![Keyword_Variable_Length_Arguments](/images/python/keyword_length_arguments_python.png)
+
+### Example
+
+```python
+def person(name, **kwargs):
+    print("name:", name)
+    for k, v in kwargs.items():
+        print(k, ":", v)
+
+person(name="Navin", age=30, loc="Pune", tech="Python")
+```
+
+**Output**
+
+```
+name: Navin
+age : 30
+loc : Pune
+tech : Python
+```
+
+> **`**`** is useful when dealing with optional or dynamic configuration data.
+
+</Step>
+
+---
+
+## Summary
+
+* Python functions support **required, default, variable-length, and keyword arguments**.
+* Default arguments make parameters optional and flexible.
+* `*args` handles multiple positional inputs as a tuple.
+* Keyword arguments improve readability and reduce order-related bugs.
+* `**kwargs` enables fully dynamic, dictionary-based keyword input.
+
+
+</Steps>
+
+Written By: <a href="https://www.linkedin.com/in/muskangarg03/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer"> Muskan Garg <ExternalLink className="w-4 h-4" /></a>
+

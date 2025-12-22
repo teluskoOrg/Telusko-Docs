@@ -1,0 +1,195 @@
+---
+title: Global vs Local Variables
+---
+
+<Steps>
+<Video id="OxSdUxvWb9o" />
+
+---
+
+In Python, the **scope** of a variable determines **where it can be accessed and modified**. Based on scope, variables are mainly classified into **global variables** and **local variables**.
+
+<Step>
+## Global Variables
+
+* **Global variables** are defined **outside any function**.
+* They are accessible **throughout the program**, including inside functions (for reading).
+* By default, a function can **read** a global variable but **cannot modify it** directly.
+
+### Example: Accessing a Global Variable
+
+```python
+a = 10   # global variable
+
+def something():
+    print("inside :", a)
+
+something()
+print("outside :", a)
+```
+
+**Output:**
+
+```
+inside : 10
+outside : 10
+```
+
+Here, the function can **read** the global variable `a` without any issue.
+
+</Step>
+
+---
+
+<Step>
+## Local Variables
+
+* **Local variables** are defined **inside a function**.
+* They are accessible **only within that function**.
+* Attempting to access a local variable outside its function results in a **NameError**.
+
+### Example: Local Variable Scope
+
+```python
+def something():
+    a = 15   # local variable
+    print("inside :", a)
+
+something()
+print("outside :", a)
+```
+
+**Output:**
+
+```
+inside : 15
+NameError: name 'a' is not defined
+```
+
+The variable `a` exists **only inside the function**, so it cannot be accessed outside.
+
+</Step>
+
+---
+
+
+![Variable_Scope_in_Python](/images/python/variable_scope.png)
+
+
+---
+
+<Step>
+## Same Variable Name in Global and Local Scope
+
+* Python allows **global and local variables to have the same name**.
+* They are treated as **separate and independent variables**.
+* Modifying the local variable does **not affect** the global variable.
+
+### Example: Separate Global and Local Variables
+
+```python
+a = 10   # global variable
+
+def something():
+    a = 15   # local variable
+    print("inside :", a)
+
+something()
+print("outside :", a)
+```
+
+**Output:**
+
+```
+inside : 15
+outside : 10
+```
+
+This demonstrates that the local `a` **shadows** the global `a` inside the function.
+
+</Step>
+
+---
+
+<Step>
+## Modifying Global Variables Inside a Function
+
+By default, Python treats variables assigned inside a function as **local**. To modify a global variable from within a function, Python provides **two approaches**.
+
+
+### 1. Using the `global` Keyword
+
+* The `global` keyword tells Python that the variable refers to the **global scope**.
+* This allows direct modification of the global variable.
+
+```python
+a = 10
+
+def something():
+    global a
+    a = 20
+    print("inside :", a)
+
+something()
+print("outside :", a)
+```
+
+**Output:**
+
+```
+inside : 20
+outside : 20
+```
+
+
+### 2. Using the `globals()` Function
+
+* `globals()` returns a **dictionary of all global variables**.
+* You can modify a global variable by accessing it using its **string name** as a key.
+* This method modifies the **global variable**, not the local one.
+
+```python
+a = 10
+
+def something():
+    a = 15      # local variable
+    globals()['a'] = 20
+    print("inside :", a)
+
+something()
+print("outside :", a)
+```
+
+**Output:**
+
+```
+inside : 15
+outside : 20
+```
+
+Here:
+
+* Local `a` remains `15`
+* Global `a` is updated to `20`
+
+</Step>
+
+---
+
+
+##  Summary
+
+* Local variables exist only within their function scope, any variable **defined inside a function is local by default**.
+* Global variables are **defined outside** functions and can be accessed (read) anywhere in the program, including inside functions.
+* To **modify a global variable** from within a function, you must explicitly:
+    * declare it using the global keyword, or
+    * update it through the globals() dictionary.
+* Local and global variables with the same name are treated as **separate variables** and do not affect each other unless explicitly connected.
+
+This clear separation of scopes enhances **code safety, readability, and long-term maintainability**.
+
+
+</Steps>
+
+Written By: <a href="https://www.linkedin.com/in/muskangarg03/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer"> Muskan Garg <ExternalLink className="w-4 h-4" /></a>
+

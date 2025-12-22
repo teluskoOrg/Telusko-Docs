@@ -1,0 +1,6 @@
+{   "title":"Variable Scope and Recursion",
+    "pages":[
+        "arguments-in-function.mdx",
+        "global-and-local-variables.mdx"
+    ]
+} 
