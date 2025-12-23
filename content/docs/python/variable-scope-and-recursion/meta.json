@@ -1,6 +1,8 @@
 {   "title":"Variable Scope and Recursion",
     "pages":[
         "arguments-in-function.mdx",
-        "global-and-local-variables.mdx"
+        "global-and-local-variables.mdx",
+        "factorial.mdx",
+        "recursion.mdx"
     ]
 } 

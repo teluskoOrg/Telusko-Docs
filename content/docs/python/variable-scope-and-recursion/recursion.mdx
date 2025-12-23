@@ -1,0 +1,176 @@
+---
+title: Recursion
+---
+
+<Steps>
+<Video id="vGqt9j18_kY" />
+
+---
+
+
+## Introduction to Recursion
+
+**Recursion** is a programming technique where a **function calls itself** to solve a problem by breaking it down into smaller subproblems.
+
+It is commonly used for problems that have a **repetitive or self-similar structure**, such as factorials, tree traversal, and mathematical sequences.
+
+In Python, recursion must be handled carefully to avoid infinite calls and runtime errors.
+
+![Benefits_of_Recursion](/images/python/recursion_benefits_python.png)
+
+
+### Basic Concept of Recursion
+
+A recursive function typically consists of two essential parts:
+
+1. **Base Case**
+   A condition that stops the recursion. Without this, the function will call itself indefinitely.
+
+2. **Recursive Case**
+   The part where the function calls itself with modified arguments.
+
+Without a base case, recursion leads to a runtime error.
+
+
+---
+
+
+## Example: Infinite Recursion (Without Base Case)
+
+```python
+def greet():
+    print("Hello")
+    greet()
+
+greet()
+```
+
+### Output
+
+```
+Hello
+Hello
+Hello
+...
+RecursionError: maximum recursion depth exceeded
+```
+
+### Explanation
+
+* The function `greet()` calls itself continuously.
+* There is **no base condition** to stop execution.
+* Python eventually raises a `RecursionError` to prevent system crash.
+
+
+---
+
+
+## Recursion Depth Limit in Python
+
+Python restricts the maximum number of recursive calls to **prevent excessive memory usage and stack overflow**.
+
+### Checking the Recursion Limit
+
+```python
+import sys
+print(sys.getrecursionlimit())
+```
+
+**Output:**
+
+```
+1000
+```
+
+This means Python allows **up to 1000 nested function calls** by default.
+
+
+### Modifying the Recursion Limit
+
+You can increase the recursion limit if required (with caution):
+
+```python
+import sys
+sys.setrecursionlimit(10000)
+print(sys.getrecursionlimit())
+```
+
+**Output:**
+
+```
+10000
+```
+
+**Warning:**
+Increasing the recursion limit too much may cause:
+
+* Stack overflow
+* High memory consumption
+* Program or system crash
+
+
+---
+
+![Recursion_in_Python](/images/python/recursion_python.png)
+
+---
+
+
+## Recursion Using `sleep()`
+
+You can slow down recursive execution to better understand how recursion works.
+
+### Example with Delay
+
+```python
+from time import sleep
+
+count = 1
+
+def greet():
+    global count
+    print("Hello", count)
+    count += 1
+    sleep(0.02)
+    greet()
+
+greet()
+```
+
+### Explanation
+
+* `sleep(0.02)` pauses execution for **20 milliseconds**.
+* This helps visualize recursive calls step by step.
+* The `global` keyword allows modification of the global variable `count`.
+
+
+---
+
+
+## Use of `global` in Recursion
+
+* Variables inside functions are **local by default**.
+* To modify a global variable inside a recursive function, you must declare it using `global`.
+
+```python
+global count
+```
+
+Without this declaration, Python treats `count` as a local variable and raises an error.
+
+
+---
+
+
+## Summary
+
+* Recursion involves a function calling itself and must always include a base case to stop execution.
+* Python enforces a recursion depth limit (default 1000) to prevent stack overflow and runtime errors.
+* Recursive solutions are often clear and elegant, but usually less efficient than iterative approaches.
+* Recursion should be used only when it naturally models the problem, such as in tree structures or divide-and-conquer logic.
+ 
+
+</Steps>
+
+Written By: <a href="https://www.linkedin.com/in/muskangarg03/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer"> Muskan Garg <ExternalLink className="w-4 h-4" /></a>
+
