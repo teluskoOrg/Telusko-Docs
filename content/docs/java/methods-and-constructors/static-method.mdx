@@ -1,0 +1,246 @@
+---
+title: Static Methods
+---
+
+## 1. Introduction
+
+In Java, methods can be either **instance methods** (belonging to objects) or **static methods** (belonging to the class).  
+A **static method** is associated with the **class itself**, not with any specific object.
+
+Because of this, static methods:
+
+- Can be called **without creating an object**
+- Are loaded into memory when the class is loaded
+- Are used for **utility**, **helper**, or **common functionality**
+
+Examples of static methods you already use:
+
+```java
+Math.sqrt(16)
+Integer.parseInt("10")
+Arrays.sort(arr)
+````
+
+All belong to their respective classes, not objects.
+
+## 2. What Is a Static Method?
+
+A static method is declared using the `static` keyword:
+
+```java
+static void showMessage() {
+    System.out.println("Hello from static method");
+}
+```
+
+To call it:
+
+```java
+showMessage();                 // inside same class
+ClassName.showMessage();       // outside class
+```
+
+Static methods are part of **class-level memory** (Method Area of JVM).
+
+![methods](/images/java/methods/static-method1.png)
+
+## 3. Why Do We Use Static Methods?
+
+Static methods are useful when:
+
+* Logic does **not depend on object state**
+* You want to perform general-purpose utility operations
+* You want quick access without creating objects
+
+Examples:
+
+* Mathematical operations (`Math.max`, `Math.pow`)
+* Conversion (`Integer.parseInt`)
+* Factory methods (like `List.of()`)
+
+## 4. Syntax and Example
+
+```java
+class Calculator {
+
+    static int add(int a, int b) {   // static method
+        return a + b;
+    }
+
+    int multiply(int a, int b) {     // instance method
+        return a * b;
+    }
+}
+```
+
+### Calling static method:
+
+```java
+int result = Calculator.add(5, 3);
+```
+
+### Calling instance method:
+
+```java
+Calculator c = new Calculator();
+int result = c.multiply(5, 3);
+```
+
+Important difference:
+
+| Feature                        | Static Method | Instance Method |
+| ------------------------------ | ------------- | --------------- |
+| Belongs to                     | Class         | Object          |
+| Call using                     | Class name    | Object          |
+| Can access instance variables? |  No           | Yes             |
+| Can access static variables?   |  Yes          | Yes             |
+
+
+## 5. Restrictions of Static Methods (Very Important)
+
+Static methods **cannot** access instance members directly.
+
+### 5.1 Static methods cannot use `this` or `super`
+
+```java
+static void test() {
+    this.x = 5;  // ERROR
+}
+```
+
+Reason: `this` refers to a specific object, and static methods do not run on objects.
+
+### 5.2 Static methods cannot access instance variables or instance methods directly
+
+```java
+class Demo {
+    int a = 5;
+
+    static void show() {
+        System.out.println(a);  //  ERROR
+    }
+}
+```
+
+To access instance members, create an object:
+
+```java
+static void show() {
+    Demo d = new Demo();
+    System.out.println(d.a);  // OK
+}
+```
+## 6. When Should You Use Static Methods?
+
+Use a static method when:
+
+1. Behavior does not depend on instance variables
+2. No need to modify or rely on object state
+3. You want shared utility logic
+
+Examples:
+
+* `Math.random()`
+* Logging utilities
+* File utility methods
+* Validation helpers (`isEmpty`, `isValidNumber`)
+
+## 7. Real-World Example: Utility Class
+
+```java
+class StringUtil {
+
+    static boolean isNullOrEmpty(String s) {
+        return s == null || s.isEmpty();
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+        System.out.println(StringUtil.isNullOrEmpty(""));      // true
+        System.out.println(StringUtil.isNullOrEmpty("Hello")); // false
+    }
+}
+```
+
+Static methods help build reusable libraries.
+
+## 8. Static Methods and Memory
+
+Static methods are stored in the **Method Area** of JVM, not on the heap.
+
+Lifecycle:
+
+1. Class is loaded into JVM
+2. All static methods and static variables are allocated
+3. They stay until class unloading (usually when program ends)
+
+Instance methods, in contrast, rely on objects stored in **heap memory**.
+
+## 9. Static Method Overloading
+
+Static methods **can** be overloaded:
+
+```java
+static void test() { }
+static void test(int a) { }
+```
+
+But they **cannot be overridden** in the true sense.
+(What looks like overriding is actually *method hiding*—covered later.)
+
+## 10. Static Blocks vs Static Methods (Short Preview)
+
+Static blocks execute **once** when the class loads:
+
+```java
+static {
+    System.out.println("Static block run");
+}
+```
+
+Static methods execute **whenever they are called**.
+
+Full detail is inside `static-block.mdx` (if included in your structure).
+
+## 11. Complete Example
+
+```java
+class MathOperations {
+
+    static int square(int n) {
+        return n * n;
+    }
+
+    static int cube(int n) {
+        return n * n * n;
+    }
+
+    void displayMessage() {
+        System.out.println("Instance method");
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+
+        System.out.println(MathOperations.square(4)); // 16
+        System.out.println(MathOperations.cube(3));   // 27
+
+        MathOperations obj = new MathOperations();
+        obj.displayMessage();
+    }
+}
+```
+
+## 12. Summary
+
+* Static methods belong to the **class**, not objects.
+* Called using class name: `ClassName.method()`
+* Cannot access instance members directly.
+* Cannot use `this` or `super`.
+* Ideal for utility, helper, and common operations.
+* Stored in JVM Method Area.
+* Can be overloaded but not overridden (only hidden).
+
+This completes **Static Methods in Java**.

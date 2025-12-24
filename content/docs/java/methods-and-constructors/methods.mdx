@@ -1,142 +1,479 @@
 ---
-title: Methods
+title: Methods in Java
 ---
 
 <Video id="KSS3MUbBWLk" />
 
-## What Are Methods?
+## 1. Introduction
 
-A method is a block of code designed to perform a specific task.  
+A **method** in Java is a named block of code that performs a specific task.  
+You can think of a method as a **function** that belongs to a class.
+
 Methods allow you to:
 
-* Organize logic into meaningful units
-* Avoid repeating code
-* Improve readability and maintainability
-* Represent the behaviour of an object in Object-Oriented Programming
+- Break a program into **logical units**  
+- Remove **repetition**  
+- **Reuse** logic in multiple places  
+- Make code **easier to test and debug**  
 
-Every Java program starts execution from the **main()** method, but you can create many other methods to structure your code better.
-
-![methods](/images/java/methods.png)
-
-## Example – Class with Methods
+Every Java application starts its execution from a method:
 
 ```java
-class Computer {
-
-    // Behaviour 1: does not return anything
-    public void playMusic() {
-        System.out.println("Playing music");
-    }
-
-    // Behaviour 2: returns a value
-    public String getMeAPen(int cost) {
-        if (cost >= 10)
-            return "Pen";
-        return "Nothing";
-    }
+public static void main(String[] args) {
+    // program starts here
 }
 ```
+So understanding methods is fundamental to understanding Java itself.
 
-This class defines two behaviours:
+## 2. Why Do We Need Methods?
 
-1. `playMusic()` → prints a message
-2. `getMeAPen(int cost)` → returns a value based on the input
+Without methods, code quickly becomes:
 
+* Long and unorganized
+* Hard to understand
+* Difficult to change
 
-## Main Class – Calling Methods
+### 2.1 Without Methods (Repetition)
 
 ```java
-public class Demo {
+public class Main {
     public static void main(String[] args) {
-        Computer obj = new Computer();     // Create object
-
-        obj.playMusic();                   // Call method 1
-
-        String item = obj.getMeAPen(5);    // Call method 2
-        System.out.println(item);
+        System.out.println("Welcome, Rohan");
+        System.out.println("Welcome, Rohan");
+        System.out.println("Welcome, Rohan");
     }
 }
 ```
 
-### Output
+If later you want to change the message, you must modify **every line**.
 
-```
-Playing music
-Nothing
-```
-
-## Understanding How Methods Work
-
-A method in Java has this general structure:
+### 2.2 With Methods (Reusable)
 
 ```java
-returnType methodName(parameters) {
-    // method body
+public class Main {
+
+    static void printWelcome() {
+        System.out.println("Welcome, Rohan");
+    }
+
+    public static void main(String[] args) {
+        printWelcome();
+        printWelcome();
+        printWelcome();
+    }
 }
 ```
 
-### Example Breakdown
+Now the message is defined **once** inside `printWelcome()`.
+If the message changes, you edit only **one place**.
+
+## 3. Method Syntax and Components
+
+General syntax:
 
 ```java
-public String getMeAPen(int cost)
-```
-
-| Part         | Meaning                                               |
-| ------------ | ----------------------------------------------------- |
-| `public`     | Access modifier — method is visible outside the class |
-| `String`     | Return type — this method returns a String            |
-| `getMeAPen`  | Method name                                           |
-| `(int cost)` | Parameter — input value required to execute method    |
-
-
-## Important Concepts
-
-### 1. The `void` Keyword
-
-When a method does not return anything, you use `void`:
-
-```java
-public void playMusic() {
-    System.out.println("Playing music");
+modifier(s) returnType methodName(parameterList) {
+    // method body (statements)
 }
 ```
 
-This method performs an action but does not return a value.
-
-### 2. Returning a Value
-
-If a method returns a value, its return type must match what it returns:
+Example:
 
 ```java
-public String getMeAPen(int cost) {
-    if (cost >= 10)
-        return "Pen";      // Must return a String
-    return "Nothing";
+public int add(int a, int b) {
+    int sum = a + b;
+    return sum;
 }
 ```
 
-If a return statement is expected, it must be present on every possible path.
+### 3.1 Components Breakdown
 
+1. **Modifiers** (optional here: `public`)
 
-### 3. Passing Arguments (Parameters)
+   * Control visibility (`public`, `private`, etc.)
+   * There can also be `static`, `final`, etc. (covered in their own topics)
 
-Data is passed into a method using parameters:
+2. **Return type** (`int`)
+
+   * Tells what type of value the method will return
+   * If nothing is returned → use `void`
+
+3. **Method name** (`add`)
+
+   * Should be meaningful and follow naming conventions
+   * Starts with lowercase, uses camelCase: `calculateTotal`, `printResult`
+
+4. **Parameter list** (`int a, int b`)
+
+   * Inputs to the method
+   * Can be zero or more parameters
+   * Each parameter has a type and a name
+
+5. **Method body**
+
+   * Inside `{ }`
+   * Contains local variables and statements
+   * May end with a `return` statement (if return type is not `void`)
+
+![methods](/images/java/methods/method1.png)
+
+## 4. Declaring vs Calling a Method
+
+### 4.1 Declaring (Defining) a Method
+
+You **declare** a method once, usually inside a class:
 
 ```java
-obj.getMeAPen(15);
+class Calculator {
+
+    int add(int x, int y) {
+        int result = x + y;
+        return result;
+    }
+}
 ```
 
-Here, `15` is copied into the parameter `cost`.
+### 4.2 Calling a Method
 
-The number and type of arguments must match the method definition.
+You **call** a method wherever you want to use its logic.
 
+For non-static methods, you call through an **object**:
 
-## Summary
+```java
+public class Main {
+    public static void main(String[] args) {
+        Calculator calc = new Calculator();        // create object
+        int sum = calc.add(5, 3);                  // method call
+        System.out.println("Sum = " + sum);
+    }
+}
+```
 
-* Methods represent the **behaviours** of an object.
-* `void` methods perform actions without returning a value.
-* Methods with return types must return the specified type.
-* Parameters allow data to be passed into methods.
-* The `main()` method acts as the program’s entry point, from where other methods are invoked.
+For static methods (belonging to the class itself), you can call directly from the class or from the same class without an object:
 
-Written By: <a href="https://www.linkedin.com/in/shivasrivastava1/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer"> Shiva Srivastava <ExternalLink className="w-4 h-4" /></a>
+```java
+class MathUtil {
+
+    static int square(int n) {
+        return n * n;
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+        int result = MathUtil.square(4);           // call via class name
+        System.out.println(result);
+    }
+}
+```
+
+(Details of `static` will be covered in `static-method.mdx`.)
+
+## 5. Methods with and without Parameters
+
+### 5.1 Methods Without Parameters
+
+Used when no input is required.
+
+```java
+void printLine() {
+    System.out.println("--------------");
+}
+```
+
+Call:
+
+```java
+printLine();
+```
+
+### 5.2 Methods With Parameters
+
+Used when method needs input to work.
+
+```java
+void greet(String name) {
+    System.out.println("Hello, " + name);
+}
+```
+
+Call:
+
+```java
+greet("Amit");
+greet("Sara");
+```
+
+Each call passes a different argument to the same method.
+
+## 6. Methods With and Without Return Values
+
+### 6.1 Methods with Return Type
+
+If a method needs to **produce a result**, it should return a value.
+
+```java
+double calculateArea(double radius) {
+    double area = 3.14 * radius * radius;
+    return area;
+}
+```
+
+Call:
+
+```java
+double circleArea = calculateArea(5.0);
+System.out.println(circleArea);
+```
+
+Rules:
+
+* The **type of value** returned must match the **return type**.
+* Every possible execution path in a non-void method must end with a `return`.
+
+### 6.2 Methods with `void` (No Return Value)
+
+Used when method performs an action but does not need to return anything.
+
+```java
+void printWelcomeMessage() {
+    System.out.println("Welcome to the system");
+}
+```
+
+Call:
+
+```java
+printWelcomeMessage();
+```
+
+You **cannot** write:
+
+```java
+int x = printWelcomeMessage(); // ERROR
+```
+
+because the method does not return a value.
+
+## 7. Parameters, Arguments, and Local Variables
+
+### 7.1 Parameters vs Arguments
+
+* **Parameters** → variables in method declaration
+
+  ```java
+  void add(int a, int b) { ... }
+  ```
+
+  Here, `a` and `b` are parameters.
+
+* **Arguments** → actual values passed during method call
+
+  ```java
+  add(10, 20); // 10 and 20 are arguments
+  ```
+
+### 7.2 Local Variables
+
+Variables declared **inside** a method:
+
+```java
+void demo() {
+    int x = 10; // local variable
+}
+```
+
+Properties:
+
+* Exist only while the method is executing
+* Cannot be accessed outside the method
+* Must be **initialized** before use (no default values like fields)
+
+## 8. How Method Call Works (Call Stack Concept)
+
+When a method is called:
+
+1. Java creates a **stack frame** for that method on the **call stack**
+2. Parameters and local variables are stored in this frame
+3. CPU executes the method body
+4. When method finishes (or hits `return`), its frame is removed
+5. Control goes back to the caller
+
+Example:
+
+```java
+public static void main(String[] args) {
+    int result = multiply(3, 4);
+}
+
+static int multiply(int a, int b) {
+    return a * b;
+}
+```
+
+Call order:
+
+* `main` starts
+* `main` calls `multiply(3,4)` → new frame for `multiply`
+* `multiply` returns 12 → frame removed
+* Control returns to `main`
+
+Understanding this helps when debugging and reading stack traces.
+
+![methods](/images/java/methods/method2.png)
+
+## 9. Pass-by-Value in Java
+
+Java is **strictly pass-by-value**, meaning:
+
+* When you pass a variable to a method, Java passes a **copy of the value**.
+
+### 9.1 For Primitive Types
+
+```java
+void change(int x) {
+    x = 100;
+}
+
+public static void main(String[] args) {
+    int n = 5;
+    change(n);
+    System.out.println(n); // still 5
+}
+```
+
+`n` remains unchanged, because `x` received a **copy** of the value.
+
+### 9.2 For Object References
+
+```java
+class Student {
+    String name;
+}
+
+void rename(Student s) {
+    s.name = "Updated";
+}
+
+public static void main(String[] args) {
+    Student st = new Student();
+    st.name = "Original";
+
+    rename(st);
+    System.out.println(st.name); // "Updated"
+}
+```
+
+Here:
+
+* The **reference value** is copied
+* Both `st` and `s` refer to the **same object**
+* Modifying the object through `s` affects what `st` sees
+
+Important: Java does **not** pass the object itself; it passes the **reference value** (also by value).
+
+## 10. Method Design Best Practices
+
+1. **Single Responsibility**
+
+   * Each method should perform **one logical task**
+   * Example: `calculateTax()`, `printInvoice()`, `validateUser()`
+
+2. **Meaningful Names**
+
+   * Use verbs: `calculate`, `print`, `fetch`, `update`, `validate`
+   * Avoid names like `doWork()`, `method1()`, `test123()`
+
+3. **Short Methods**
+
+   * Large methods become hard to understand
+   * Break into smaller helper methods
+
+4. **Limited Parameters**
+
+   * Too many parameters → method is doing too much
+   * Prefer passing a small object instead of 7–8 separate parameters
+
+5. **Avoid Side Effects Unless Intended**
+
+   * Side effect: method changes something outside itself (like a global variable or passed object)
+   * For clarity, document such behavior, or return new values instead of modifying arguments silently
+
+## 11. Complete Example: Banking Utility
+
+```java
+class BankAccount {
+    String accountNumber;
+    double balance;
+
+    // Method to deposit money
+    void deposit(double amount) {
+        if (amount <= 0) {
+            System.out.println("Invalid deposit amount");
+            return;
+        }
+        balance = balance + amount;
+        System.out.println("Deposited: " + amount);
+    }
+
+    // Method to withdraw money
+    boolean withdraw(double amount) {
+        if (amount <= 0) {
+            System.out.println("Invalid withdrawal amount");
+            return false;
+        }
+        if (amount > balance) {
+            System.out.println("Insufficient balance");
+            return false;
+        }
+        balance = balance - amount;
+        System.out.println("Withdrawn: " + amount);
+        return true;
+    }
+
+    // Method to print current balance
+    void printBalance() {
+        System.out.println("Current balance: " + balance);
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+
+        BankAccount acc = new BankAccount();
+        acc.accountNumber = "ABC123";
+
+        acc.deposit(1000);
+        acc.withdraw(300);
+        acc.printBalance();
+    }
+}
+```
+
+Explanation:
+
+* Each method has a **clear role** (`deposit`, `withdraw`, `printBalance`).
+* Some methods return a **value** (`withdraw` returns `boolean`).
+* Some methods are **void**, performing actions.
+
+## 12. Summary
+
+* A **method** is a named block of code that performs a specific task.
+* Methods help make code modular, reusable, and maintainable.
+* Methods have:
+
+  * Modifiers
+  * Return type
+  * Name
+  * Parameters
+  * Body
+* Methods can:
+
+  * Take parameters or not
+  * Return values or be `void`
+* Java uses **pass-by-value** for both primitives and object references.
+* Good method design focuses on:
+
+  * Single responsibility
+  * Meaningful names
+  * Clear inputs and outputs

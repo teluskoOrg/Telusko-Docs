@@ -1,0 +1,208 @@
+---
+title: Default vs Parameterized Constructor
+---
+## 1. Introduction
+
+Constructors are special methods used to initialize objects in Java.  
+There are two primary types:
+
+1. **Default Constructor**  
+2. **Parameterized Constructor**
+
+Understanding the difference between them is essential for writing clean and maintainable Java code.
+
+## 2. Default Constructor
+
+A **default constructor** is a constructor that:
+
+- Has **no parameters**
+- Is automatically provided by the Java compiler **only when no constructor is manually written**
+
+### 2.1 Compiler-Provided Default Constructor
+
+If you do not write any constructor, Java inserts:
+
+```java
+ClassName() { }
+````
+
+Example:
+
+```java
+class Student {
+    int age;
+    String name;
+    // compiler provides: Student() { }
+}
+```
+
+Creating the object:
+
+```java
+Student s = new Student();
+```
+
+All fields get **default values**:
+
+* int → 0
+* String → null
+* boolean → false
+* double → 0.0
+
+### 2.2 User-Defined Default Constructor (No-Arg Constructor)
+
+You can also create your own default constructor:
+
+```java
+class Student {
+    int age;
+    String name;
+
+    Student() {
+        age = 18;
+        name = "Unknown";
+    }
+}
+```
+
+Here, default values are replaced with meaningful initialization.
+
+![methods](/images/java/methods/default1.png)
+
+## 3. Parameterized Constructor
+
+A **parameterized constructor** accepts **arguments**, allowing you to initialize objects with specific values.
+
+### Example:
+
+```java
+class Student {
+    String name;
+    int age;
+
+    Student(String name, int age) {
+        this.name = name;
+        this.age = age;
+    }
+}
+```
+
+Creating objects:
+
+```java
+Student s1 = new Student("Amit", 22);
+Student s2 = new Student("Sara", 20);
+```
+
+Each object gets different initial values.
+
+## 4. Why Parameterized Constructors Are Useful
+
+They allow:
+
+* Custom initialization
+* Flexibility to create fully prepared objects
+* Avoiding the need for setter methods after creation
+* Ensuring required fields are always initialized
+
+Example:
+
+```java
+new BankAccount("Rahul", 5000);
+// ensures account holder & balance cannot be uninitialized
+```
+
+## 5. Differences Between Default and Parameterized Constructors
+
+| Feature                 | Default Constructor              | Parameterized Constructor      |
+| ----------------------- | -------------------------------- | ------------------------------ |
+| Accepts arguments?      | No                               | Yes                            |
+| Provided automatically? | Yes (if no constructor exists)   | No                             |
+| Used for                | Basic object creation            | Custom initialization          |
+| Overloading             | Can be overloaded                | Can be overloaded              |
+| Behavior                | Assigns default or preset values | Assigns values from parameters |
+
+## 6. Both Constructors in One Class
+
+You can include both:
+
+```java
+class Car {
+    String model;
+    int price;
+
+    Car() {
+        model = "Unknown";
+        price = 0;
+    }
+
+    Car(String model, int price) {
+        this.model = model;
+        this.price = price;
+    }
+}
+```
+
+Usage:
+
+```java
+Car c1 = new Car();
+Car c2 = new Car("Honda City", 1200000);
+```
+## 7. Complete Example Program
+
+```java
+class Book {
+    String title;
+    String author;
+
+    // Default constructor
+    Book() {
+        title = "Not Available";
+        author = "Unknown";
+    }
+
+    // Parameterized constructor
+    Book(String title, String author) {
+        this.title = title;
+        this.author = author;
+    }
+
+    void show() {
+        System.out.println(title + " by " + author);
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+        Book b1 = new Book();
+        Book b2 = new Book("Java Basics", "Amit Kumar");
+
+        b1.show();  
+        b2.show();
+    }
+}
+```
+Output:
+
+```
+Not Available by Unknown
+Java Basics by Amit Kumar
+```
+## 8. Summary
+
+### Default Constructor
+
+* No arguments
+* Automatically inserted if none provided
+* Initializes fields to default values
+
+### Parameterized Constructor
+
+* Accepts arguments
+* Allows custom initialization
+* MUST be written manually
+
+Both can be used together to give flexibility in object creation.
+
+This completes **Default vs Parameterized Constructor**.

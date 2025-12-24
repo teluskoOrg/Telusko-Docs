@@ -1,0 +1,281 @@
+---
+title: super Keyword
+---
+
+## 1. Introduction
+
+The **`super` keyword** in Java is a reference variable used to access members (variables, methods, and constructors) of the **parent class** (also known as the superclass).
+
+Whenever inheritance is used in Java, the `super` keyword helps the child class interact with the parent class by:
+
+- Accessing **parent class variables**
+- Calling **parent class methods**
+- Calling **parent class constructors**
+
+Understanding `super` is essential to mastering inheritance and avoiding naming conflicts.
+
+## 2. Why Do We Need `super`?
+
+A child class **inherits** properties from the parent class.  
+But sometimes, the child class defines variables or methods with the **same name** as the parent class.  
+In such cases, `super` helps remove ambiguity.
+
+Example of conflict:
+
+```java
+class Parent { int value = 10; }
+class Child extends Parent { int value = 20; }
+````
+
+Inside the child:
+
+* `value` → refers to child’s value (`20`)
+* `super.value` → refers to parent’s value (`10`)
+
+![methods](/images/java/methods/super1.png)
+
+## 3. Using super to Access Parent Class Variables
+
+```java
+class Parent {
+    int x = 10;
+}
+
+class Child extends Parent {
+    int x = 20;
+
+    void show() {
+        System.out.println(x);       // child's x → 20
+        System.out.println(super.x); // parent's x → 10
+    }
+}
+```
+
+Calling:
+
+```java
+new Child().show();
+```
+
+Output:
+
+```
+20
+10
+```
+
+## 4. Using super to Access Parent Class Methods
+
+If a child class overrides a method, `super` lets you call the overridden parent method.
+
+```java
+class Parent {
+    void show() {
+        System.out.println("Parent version");
+    }
+}
+
+class Child extends Parent {
+    void show() {
+        System.out.println("Child version");
+        super.show();     // calling parent method
+    }
+}
+```
+
+Output:
+
+```
+Child version
+Parent version
+```
+
+This is crucial in behavioral extensions where the child adds extra functionality while retaining parent behavior.
+
+## 5. Using super to Call Parent Class Constructor
+
+A child class constructor **must** call some constructor of the parent class.
+
+Java automatically inserts:
+
+```java
+super();
+```
+
+But we can explicitly call:
+
+```java
+super(arguments);
+```
+
+Example:
+
+```java
+class Parent {
+    Parent(int a) {
+        System.out.println("Parent constructor: " + a);
+    }
+}
+
+class Child extends Parent {
+    Child() {
+        super(100); // must be first statement
+        System.out.println("Child constructor");
+    }
+}
+```
+
+Output:
+
+```
+Parent constructor: 100
+Child constructor
+```
+
+Rules:
+
+1. `super()` or `super(arguments)` must be the **first line** in the child constructor.
+2. Only **one** super call allowed per constructor.
+
+![methods](/images/java/methods/super2.png)
+
+## 6. Why Constructor Chaining Uses super()
+
+Because parent class properties **must be initialized first**.
+
+When an object is created:
+
+1. Memory for full object (parent + child fields) is reserved.
+2. Parent constructor runs first.
+3. Child constructor runs afterward.
+
+Example:
+
+```java
+class A {
+    A() { System.out.println("A"); }
+}
+
+class B extends A {
+    B() { System.out.println("B"); }
+}
+```
+
+Creating `new B()` prints:
+
+```
+A
+B
+```
+
+Even without writing `super()`, Java inserts it automatically.
+
+## 7. super vs this
+
+| Feature               | this                            | super                           |
+| --------------------- | ------------------------------- | ------------------------------- |
+| Refers to             | Current object                  | Parent object                   |
+| Access                | Child class members             | Parent class members            |
+| Constructor call      | `this()`                        | `super()`                       |
+| Usable in             | Instance methods & constructors | Instance methods & constructors |
+| Use in static context |  Not allowed                    |   Not allowed                   |
+
+Important: You cannot use `this` or `super` inside static methods.
+
+## 8. Common Mistakes Students Make
+
+### Mistake 1: Trying to use super in a static method
+
+```java
+static void test() {
+    super.show(); // ERROR
+}
+```
+
+### Mistake 2: Using both this() and super() in the same constructor
+
+```java
+Child() {
+    this();  //
+    super(); // cannot use both
+}
+```
+
+Only one can appear, and it must be the **first statement**.
+
+### Mistake 3: Assuming super always calls parent’s no-arg constructor
+
+```java
+super();          // calls no-arg constructor
+super(10, 20);    // calls parameterized constructor
+```
+
+## 9. Complete Example Demonstrating All Uses of super
+
+```java
+class Animal {
+    String type = "Animal";
+
+    Animal() {
+        System.out.println("Animal constructor");
+    }
+
+    void sound() {
+        System.out.println("Animal makes sound");
+    }
+}
+
+class Dog extends Animal {
+    String type = "Dog";
+
+    Dog() {
+        super(); // calls Animal()
+        System.out.println("Dog constructor");
+    }
+
+    void sound() {
+        System.out.println("Dog barks");
+        super.sound(); // calling parent method
+    }
+
+    void showType() {
+        System.out.println(type);        // Dog
+        System.out.println(super.type);  // Animal
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+        Dog d = new Dog();
+        d.sound();
+        d.showType();
+    }
+}
+```
+
+Output:
+
+```
+Animal constructor
+Dog constructor
+Dog barks
+Animal makes sound
+Dog
+Animal
+```
+
+
+
+## 10. Summary
+
+* `super` is used to refer to the **parent class** in inheritance.
+* It helps:
+
+  * Access parent variables
+  * Call parent methods
+  * Invoke parent constructors
+* Must be used inside **instance methods or constructors**, not static contexts.
+* `super()` must always be the **first line** inside child constructors.
+* Prevents conflicts when child and parent have same variable or method names.
+
+This completes **super keyword in Java**.

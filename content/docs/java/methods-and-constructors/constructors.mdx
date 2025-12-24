@@ -1,0 +1,296 @@
+---
+title: Constructors
+---
+
+## 1. Introduction
+
+A **constructor** in Java is a special method that is automatically called **when an object is created**.  
+Its main purpose is to **initialize the object**, i.e., assign values to its fields and prepare it for use.
+
+Constructors play a fundamental role in object-oriented programming because they allow objects to start in a valid state from the moment they are created.
+
+Example:
+
+```java
+Car c = new Car();
+````
+
+Here, `new Car()` invokes the **constructor** of the `Car` class.
+
+## 2. Characteristics of Constructors
+
+A constructor:
+
+* Has the **same name** as the class
+* **Does not have a return type**, not even `void`
+* Is executed **automatically** when an object is created
+* Can be **overloaded** (multiple constructors allowed)
+* Cannot be **inherited**, but child classes can call parent constructors using `super()`
+
+## 3. Syntax of a Constructor
+
+```java
+class ClassName {
+    ClassName() {
+        // initialization code
+    }
+}
+```
+
+### Example:
+
+```java
+class Student {
+    Student() {
+        System.out.println("Student object created");
+    }
+}
+```
+
+Creating an object:
+
+```java
+Student s = new Student();
+```
+
+Output:
+
+```
+Student object created
+```
+![methods](/images/java/methods/constructor3.png)
+
+## 4. Types of Constructors in Java
+
+Java provides two main types of constructors:
+
+1. **Default Constructor (No-Arg Constructor)**
+2. **Parameterized Constructor**
+
+Both are essential for different situations.
+
+# 4.1 Default Constructor (No-Argument Constructor)
+
+A default constructor:
+
+* Has no parameters
+* Is inserted by the compiler **only if** no other constructor is present
+
+Example:
+
+```java
+class A {
+    // compiler inserts: A() { }
+}
+```
+
+Default values:
+
+* Integer → `0`
+* Float/Double → `0.0`
+* Boolean → `false`
+* Object references → `null`
+
+Example:
+
+```java
+class Employee {
+    int id;
+    String name;
+
+    // compiler provides default constructor
+}
+
+public class Main {
+    public static void main(String[] args) {
+        Employee e = new Employee();
+        System.out.println(e.id);   // 0
+        System.out.println(e.name); // null
+    }
+}
+```
+
+### 4.2 User-Defined No-Argument Constructor
+
+If you define your own no-arg constructor, the compiler does NOT generate one.
+
+```java
+class Car {
+    Car() {
+        System.out.println("Car created");
+    }
+}
+```
+
+### 4.3 Parameterized Constructor
+
+A constructor that accepts parameters to initialize object values.
+
+```java
+class Student {
+    String name;
+    int age;
+
+    Student(String n, int a) {
+        name = n;
+        age = a;
+    }
+}
+```
+
+Creating object:
+
+```java
+Student s = new Student("Ravi", 21);
+```
+Parameterized constructors allow objects to be created with meaningful initial values.
+
+## 5. Constructor Overloading
+
+You can create multiple constructors with different parameters.
+
+```java
+class Box {
+    int width, height;
+
+    Box() {
+        width = 10;
+        height = 10;
+    }
+
+    Box(int w, int h) {
+        width = w;
+        height = h;
+    }
+}
+```
+
+Calling:
+
+```java
+Box b1 = new Box();
+Box b2 = new Box(5, 8);
+```
+
+## 6. Rules of Constructors
+
+1. Constructor name must match class name.
+2. Constructors cannot have return types.
+3. Cannot use `return` to return a value.
+4. Cannot be declared `static`, `final`, or `abstract`.
+5. Can call another constructor using `this()` (constructor chaining).
+6. Can call parent constructor using `super()`.
+
+## 7. What Happens Behind the Scenes?
+
+When you create an object:
+
+```java
+Employee e = new Employee();
+```
+
+Steps:
+
+1. Memory is allocated on heap.
+2. All fields are assigned default values.
+3. Parent class constructor runs first.
+4. Then the child class constructor runs.
+5. Reference `e` now points to the fully initialized object.
+
+This ensures objects are always initialized in a predictable way.
+
+![methods](/images/java/methods/constructor4.png)
+
+## 8. Real-World Example
+
+```java
+class BankAccount {
+    String holder;
+    double balance;
+
+    BankAccount(String holder, double balance) {
+        this.holder = holder;
+        this.balance = balance;
+    }
+
+    void display() {
+        System.out.println(holder + " : " + balance);
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+        BankAccount b = new BankAccount("Amit", 5000);
+        b.display();
+    }
+}
+```
+
+Output:
+
+```
+Amit : 5000
+```
+
+## 9. Complete Constructor Examples
+
+### Example 1: Default + Parameterized
+
+```java
+class Person {
+    String name;
+    int age;
+
+    Person() {
+        this.name = "Unknown";
+        this.age = 0;
+    }
+
+    Person(String name, int age) {
+        this.name = name;
+        this.age = age;
+    }
+}
+```
+
+### Example 2: Overloading with Different Types
+
+```java
+class Demo {
+    Demo(int a) { }
+    Demo(double a) { }
+    Demo(String a) { }
+}
+```
+
+## 10. Common Mistakes
+
+### Mistake 1: Adding return type
+
+```java
+void Student() { } // Not a constructor — treated as a method
+```
+
+### Mistake 2: Calling constructor like a method
+
+```java
+Student(); // ERROR — constructors are called only by new
+```
+
+### Mistake 3: Forgetting that constructors do not inherit
+
+Child classes do NOT inherit parent constructors.
+
+## 11. Summary
+
+* Constructors are special methods used to initialize objects.
+* They have the same name as the class and no return type.
+* Types:
+
+  * Default constructor
+  * Parameterized constructor
+* Constructors can be overloaded.
+* Object creation triggers parent constructor first, then child constructor.
+* Constructors cannot be static, final, or abstract.
+
+This completes **Constructors in Java**.

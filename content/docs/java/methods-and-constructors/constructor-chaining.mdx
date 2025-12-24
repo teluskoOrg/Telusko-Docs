@@ -1,0 +1,279 @@
+---
+title: Constructor Chaining
+---
+
+## 1. Introduction
+
+**Constructor Chaining** in Java refers to the process of calling one constructor from another constructor within the same class or from a parent class.
+
+Java provides two ways to chain constructors:
+
+1. **Using `this()`** → Calls a constructor in the **same class**
+2. **Using `super()`** → Calls a constructor in the **parent class**
+
+Constructor chaining helps to avoid code duplication, improves readability, and ensures that object initialization happens in a controlled and structured manner.
+
+## 2. Why Constructor Chaining?
+
+Without constructor chaining, different constructors may repeat the same initialization code.
+
+Example (bad design):
+
+```java
+class Student {
+    String name;
+    int age;
+
+    Student() {
+        name = "Unknown";
+        age = 0;
+    }
+
+    Student(String n) {
+        name = n;
+        age = 0;
+    }
+}
+````
+
+Both constructors duplicate `age = 0`.
+
+Constructor chaining solves this by making constructors reuse each other.
+
+![methods](/images/java/methods/constructor1.png)
+
+## 3. Chaining Constructors Within the Same Class Using `this()`
+
+`this()` is used to call another constructor **in the same class**.
+
+### Rules for `this()`:
+
+* Must be the **first statement** inside a constructor
+* Only **one** `this()` call allowed
+* Cannot appear in methods (only constructors)
+
+### Example:
+
+```java
+class Student {
+
+    String name;
+    int age;
+
+    Student() {
+        this("Unknown", 0);  // calling parameterized constructor
+    }
+
+    Student(String name) {
+        this(name, 18);      // calling another constructor
+    }
+
+    Student(String name, int age) {
+        this.name = name;
+        this.age = age;
+    }
+}
+```
+
+Flow for `new Student()`:
+
+```
+Student()  →  Student(String, int)
+```
+
+Flow for `new Student("Amit")`:
+
+```
+Student(String)  →  Student(String, int)
+```
+## 4. Chaining Constructors from Parent Class Using `super()`
+
+`super()` calls a constructor from the **superclass**.
+
+### Rules for `super()`:
+
+* Must be **first statement** in child constructor
+* Java inserts `super()` automatically if not written
+* Used to ensure parent properties are initialized first
+
+### Example:
+
+```java
+class Parent {
+    Parent() {
+        System.out.println("Parent constructor");
+    }
+}
+
+class Child extends Parent {
+    Child() {
+        super();   // calls Parent()
+        System.out.println("Child constructor");
+    }
+}
+```
+
+Output:
+
+```
+Parent constructor
+Child constructor
+```
+![methods](/images/java/methods/constructor2.png)
+
+## 5. Mixing this() and super() — Important Rule
+
+You **cannot** use `this()` and `super()` inside the same constructor because both must be the **first** statement.
+
+Invalid:
+
+```java
+Child() {
+    this();   // ERROR
+    super();  // ERROR
+}
+```
+## 6. Real-World Example: Vehicle Inheritance
+
+```java
+class Vehicle {
+    String brand;
+
+    Vehicle(String brand) {
+        this.brand = brand;
+        System.out.println("Vehicle constructor");
+    }
+}
+
+class Car extends Vehicle {
+    int speed;
+
+    Car(String brand, int speed) {
+        super(brand); // calling parent constructor
+        this.speed = speed;
+        System.out.println("Car constructor");
+    }
+}
+```
+
+Creating object:
+
+```java
+Car c = new Car("Honda", 150);
+```
+
+Output:
+
+```
+Vehicle constructor
+Car constructor
+```
+
+Parent class always initializes before child class.
+
+## 7. Constructor Chaining Pattern for Clean Code
+
+### Step 1: One main constructor does all the initialization
+
+### Step 2: Other constructors call the main constructor using `this()`
+
+Example:
+
+```java
+class Book {
+    String title;
+    int pages;
+
+    Book() {
+        this("Unknown", 0);
+    }
+
+    Book(String title) {
+        this(title, 100);
+    }
+
+    Book(String title, int pages) {
+        this.title = title;
+        this.pages = pages;
+    }
+}
+```
+
+This eliminates all repeated initialization code.
+
+## 8. Complete Example Demonstrating Full Chaining
+
+```java
+class A {
+    A() {
+        this(10);
+        System.out.println("A() constructor");
+    }
+
+    A(int x) {
+        System.out.println("A(int) constructor: " + x);
+    }
+}
+
+class B extends A {
+    B() {
+        super(20);
+        System.out.println("B() constructor");
+    }
+
+    B(int y) {
+        this();
+        System.out.println("B(int) constructor: " + y);
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+        B obj = new B(50);
+    }
+}
+```
+
+Output:
+
+```
+A(int) constructor: 20
+B() constructor
+B(int) constructor: 50
+```
+
+Explanation:
+
+* `B(int)` calls `this()` → `B()`
+* `B()` calls `super(20)` → `A(int)`
+* Flow completes back down the chain
+
+## 9. Common Mistakes
+
+### Mistake 1: Calling this() after other statements
+
+```java
+Student() {
+    System.out.println("Hello");
+    this(10); // ERROR
+}
+```
+
+### Mistake 2: Using this() and super() together
+
+Not allowed.
+
+### Mistake 3: Confusing constructor chaining with method overloading
+
+Constructor chaining is specifically for constructors, not methods.
+
+## 10. Summary
+
+* Constructor chaining enables reuse of initialization code.
+* `this()` → Calls another constructor in the same class.
+* `super()` → Calls a constructor from the parent class.
+* Both must be the first statement in their constructors.
+* Helps avoid code duplication and keeps initialization structured.
+* Used heavily in real applications to maintain clean OOP patterns.
+
+This completes **Constructor Chaining in Java**.

@@ -1,0 +1,287 @@
+---
+title: Method Overloading
+---
+
+## 1. Introduction
+
+**Method Overloading** in Java allows a class to have **multiple methods with the same name**, as long as their **parameter lists are different**.  
+This is one form of **compile-time polymorphism** (also called static polymorphism).
+
+It makes methods more readable and flexible because the same method name can perform related actions with different kinds of inputs.
+
+Example from real life:
+
+- A calculator can **add()**  
+  - two integers  
+  - two doubles  
+  - three integers  
+  - etc.  
+
+Instead of naming them `addInt`, `addDouble`, `addThreeNumbers`, Java lets you create **multiple add() methods** with different parameter lists.
+
+## 2. What Is Method Overloading?
+
+Method overloading means:
+
+> Same method name, **different parameter list**.
+
+The compiler decides which method to call based on:
+
+1. Number of parameters  
+2. Type of parameters  
+3. Order of parameters  
+
+Return type is **not** considered for overload resolution.
+
+
+
+## 3. Rules of Method Overloading (Very Important)
+
+### A method is considered overloaded when:
+
+1. **Number of parameters differs**, OR  
+2. **Type of parameters differs**, OR  
+3. **Order of parameters differs**
+
+Examples:
+
+```java
+void display(int a) { }
+void display(double a) { }
+void display(int a, double b) { }
+void display(double a, int b) { }
+```
+
+### NOT allowed:
+
+Two methods differing **only by return type**.
+
+```java
+int test() { return 1; }
+double test() { return 2.0; } // ERROR
+```
+
+The compiler cannot distinguish them from the call.
+
+![methods](/images/java/methods/overloading.png)
+
+## 4. Examples of Valid Method Overloading
+
+### 4.1 Overloading by Changing Number of Parameters
+
+```java
+void greet() {
+    System.out.println("Hello");
+}
+
+void greet(String name) {
+    System.out.println("Hello " + name);
+}
+```
+
+Call:
+
+```java
+greet();           // calls first method
+greet("Rahul");    // calls second method
+```
+
+### 4.2 Overloading by Changing Data Type
+
+```java
+int add(int a, int b) {
+    return a + b;
+}
+
+double add(double a, double b) {
+    return a + b;
+}
+```
+
+Call:
+
+```java
+add(3, 4);        // calls int version
+add(3.5, 4.2);    // calls double version
+```
+### 4.3 Overloading by Changing Parameter Order
+
+```java
+void show(int a, String b) { }
+void show(String b, int a) { }
+```
+
+Both are allowed.
+
+## 5. Real-World Example: Banking System
+
+Imagine a bank where deposits can be made in different forms.
+
+```java
+class Bank {
+
+    void deposit(int amount) {
+        System.out.println(amount + " deposited");
+    }
+
+    void deposit(double amount) {
+        System.out.println(amount + " deposited (decimal amount)");
+    }
+
+    void deposit(int amount, String account) {
+        System.out.println(amount + " deposited to " + account);
+    }
+}
+```
+
+Call:
+
+```java
+Bank b = new Bank();
+b.deposit(500);
+b.deposit(250.75);
+b.deposit(1000, "Saving Account");
+```
+
+
+
+## 6. Type Promotion in Overloading
+
+Java may automatically **promote** smaller data types:
+
+* byte → short → int → long → float → double
+* char → int
+
+Example:
+
+```java
+void test(int a) {
+    System.out.println("int");
+}
+
+void test(double a) {
+    System.out.println("double");
+}
+
+test(5);     // prints "int"
+test('c');   // prints "int" because char → int
+test(5L);    // prints "double" because long → double
+```
+
+Promotion can influence which overloaded method is selected.
+
+
+
+## 7. Overloading main() Method
+
+Java allows overloading of the `main` method, but the JVM will call only the standard one:
+
+```java
+public static void main(String[] args) {
+    main(5);
+}
+
+public static void main(int x) {
+    System.out.println("Overloaded main: " + x);
+}
+```
+
+Output:
+
+```
+Overloaded main: 5
+```
+
+## 8. Constructor Overloading (Small Preview)
+
+Constructors can also be overloaded:
+
+```java
+class Student {
+    Student() { }
+    Student(String name) { }
+    Student(String name, int age) { }
+}
+```
+
+Complete details are covered in `constructors.mdx`.
+
+![methods](/images/java/methods/overloading.png)
+
+## 9. Common Mistakes Students Make
+
+### Mistake 1: Overloading by return type only
+
+```java
+int area() { }
+double area() { } // invalid
+```
+
+### Mistake 2: Assuming same parameter names means same signature
+
+```java
+void show(int x) { }
+void show(int y) { } // invalid, names don’t matter
+```
+
+### Mistake 3: Confusing overloading with overriding
+
+(Overriding requires inheritance and same signature.)
+
+## 10. Complete Example Program
+
+```java
+class Display {
+
+    void show() {
+        System.out.println("No parameters");
+    }
+
+    void show(int a) {
+        System.out.println("Integer: " + a);
+    }
+
+    void show(double a) {
+        System.out.println("Double: " + a);
+    }
+
+    void show(int a, double b) {
+        System.out.println(a + " and " + b);
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+        Display d = new Display();
+
+        d.show();
+        d.show(10);
+        d.show(5.5);
+        d.show(10, 12.75);
+    }
+}
+```
+
+Output:
+
+```
+No parameters
+Integer: 10
+Double: 5.5
+10 and 12.75
+```
+
+## 11. Summary
+
+* Method overloading means having multiple methods with the **same name** but **different parameter lists**.
+* Overloading provides flexibility and improves code readability.
+* It is a form of **compile-time polymorphism**.
+* Overloading can be achieved by changing:
+
+  * Number of parameters
+  * Types of parameters
+  * Order of parameters
+* Return type alone cannot overload a method.
+* Java may apply **type promotion** during method selection.
+
+This completes **Method Overloading in Java**.

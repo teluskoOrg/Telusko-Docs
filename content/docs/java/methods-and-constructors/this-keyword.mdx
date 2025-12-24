@@ -1,0 +1,276 @@
+---
+title: this Keyword
+---
+
+## 1. Introduction
+
+The **`this` keyword** in Java is a special reference variable that refers to the **current object** — the object on which a method or constructor is being invoked.
+
+Whenever you write code inside an instance method or constructor, `this` always points to **that specific object's memory**.
+
+`this` is used to:
+
+- Access instance variables  
+- Call instance methods  
+- Call constructors (constructor chaining)  
+- Pass the current object as an argument  
+- Return the current object  
+
+Understanding `this` is essential for writing clean, bug-free object-oriented code.
+
+## 2. Why Do We Need `this`?
+
+### 2.1 To Differentiate Between Instance Variables and Local Variables
+
+If a local variable (parameter) has the same name as an instance variable, Java prefers the **local variable**.  
+To access the instance variable, we must use `this`.
+
+### Example Without `this` (Incorrect)
+
+```java
+class Student {
+    String name;
+
+    Student(String name) {
+        name = name; // assigns local name to itself
+    }
+}
+````
+
+This assigns the local parameter to itself, leaving the instance variable unchanged.
+
+### Corrected Version Using `this`
+
+```java
+class Student {
+    String name;
+
+    Student(String name) {
+        this.name = name;  // this.name = instance variable
+    }
+}
+```
+
+Now the instance variable receives the correct value.
+
+![methods](/images/java/methods/this1.png)
+
+## 3. Using `this` to Call Instance Methods
+
+```java
+class Demo {
+    void show() {
+        System.out.println("Show method");
+    }
+
+    void display() {
+        this.show();   // calling show()
+    }
+}
+```
+
+Using `this` is optional here — calling `show()` directly also works.
+However, `this` clarifies that the call belongs to the **current object**.
+
+## 4. Using `this` to Call Another Constructor
+
+( **Constructor Chaining** — explained fully in `constructor-chaining.mdx` )
+
+You can call one constructor from another using:
+
+```java
+this(arguments);
+```
+
+Example:
+
+```java
+class Rectangle {
+    int length, width;
+
+    Rectangle() {
+        this(10, 20);  // calls parameterized constructor
+    }
+
+    Rectangle(int length, int width) {
+        this.length = length;
+        this.width = width;
+    }
+}
+```
+
+Rules:
+
+* `this()` call must be the **first statement** in a constructor.
+* Only **one** `this()` call is allowed per constructor.
+
+## 5. Using `this` to Return the Current Object
+
+```java
+class Test {
+    Test getObject() {
+        return this;
+    }
+}
+```
+
+Useful in:
+
+* Method chaining
+* Builder pattern
+
+Example of method chaining (popular in frameworks):
+
+```java
+obj.setName("Amit").setAge(24).save();
+```
+
+## 6. Passing `this` as an Argument
+
+You can pass the current object to another method or constructor.
+
+### Example
+
+```java
+class A {
+    void m1(B obj) {
+        System.out.println("Received object of B");
+    }
+
+    void m2() {
+        B b = new B(this); // passing current object A
+    }
+}
+
+class B {
+    A ref;
+
+    B(A a) {
+        ref = a;
+    }
+}
+```
+
+This is common in event listeners, callbacks, and dependency passing.
+
+
+
+## 7. Using `this` in Setters (Very Common)
+
+```java
+class Employee {
+    private String name;
+    private int age;
+
+    void setName(String name) {
+        this.name = name; // avoids confusion
+    }
+
+    void setAge(int age) {
+        this.age = age;
+    }
+}
+```
+
+Without `this`, you cannot distinguish between instance and local variables.
+
+![methods](/images/java/methods/this2.png)
+
+## 8. When Should You Use `this`?
+
+Use `this` when:
+
+* Instance variable names match parameter names
+* Calling another constructor
+* Passing current object to another method
+* Returning the current object
+* Clarifying access to instance context
+
+Avoid `this` in:
+
+* Static methods (because `this` does **not** exist there)
+
+## 9. When `this` Cannot Be Used
+
+`this` **cannot** be used inside:
+
+### 9.1 Static Methods
+
+```java
+static void test() {
+    this.show();   // ERROR
+}
+```
+
+Because static methods belong to the class, not to objects.
+
+### 9.2 Static Blocks
+
+```java
+static {
+    System.out.println(this); // ERROR
+}
+```
+
+### 9.3 Outside a Class
+
+(`this` exists only inside instance context)
+
+
+
+## 10. Complete Example
+
+```java
+class Car {
+
+    String model;
+    int speed;
+
+    Car(String model, int speed) {
+        this.model = model;
+        this.speed = speed;
+    }
+
+    void display() {
+        System.out.println("Model: " + this.model);
+        System.out.println("Speed: " + this.speed);
+    }
+
+    Car increaseSpeed(int value) {
+        this.speed += value;
+        return this; // enables method chaining
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+        Car c = new Car("Honda City", 120);
+
+        c.increaseSpeed(20).increaseSpeed(30);
+        c.display();
+    }
+}
+```
+
+Output:
+
+```
+Model: Honda City
+Speed: 170
+```
+
+## 11. Summary
+
+* `this` refers to the **current object** (the one calling the method).
+* Helps differentiate between **instance** and **local variables**.
+* Used for:
+
+  * Accessing instance members
+  * Calling instance methods
+  * Calling constructors (`this()`)
+  * Passing the current object
+  * Returning the current object
+* Cannot be used in static methods.
+* Fundamental in object-oriented programming and method/constructor chaining.
+
+This completes **this keyword in Java**.

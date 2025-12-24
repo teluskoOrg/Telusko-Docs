@@ -1,0 +1,247 @@
+---
+title: Copy Constructor
+---
+
+## 1. Introduction
+
+A **copy constructor** is a constructor that creates a new object by copying the values of another object of the same class.
+
+Java does **not** provide a built-in copy constructor (unlike C++),  
+but you can **create your own** to duplicate objects safely.
+
+Copy constructors are used when:
+
+- You want a **fresh object** with the same values  
+- You want to avoid sharing references (deep/shallow copy control)  
+- You want more control than Java's `clone()` method provides  
+
+## 2. What Is a Copy Constructor?
+
+A copy constructor takes **another object of the same class** as a parameter.
+
+### Syntax
+
+```java
+ClassName(ClassName obj) {
+    // copy values from obj
+}
+```
+
+## 3. Basic Example of Copy Constructor
+
+```java
+class Student {
+    String name;
+    int age;
+
+    Student(String name, int age) {
+        this.name = name;
+        this.age = age;
+    }
+
+    // Copy Constructor
+    Student(Student obj) {
+        this.name = obj.name;
+        this.age = obj.age;
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+
+        Student s1 = new Student("Amit", 21);
+        Student s2 = new Student(s1);  // copying object
+
+        System.out.println(s2.name + " " + s2.age);
+    }
+}
+```
+
+Output:
+
+```
+Amit 21
+```
+![methods](/images/java/methods/constructor5.png)
+
+## 4. Why Use a Copy Constructor Instead of clone()?
+
+Java has a `clone()` method, but copy constructors are preferred because:
+
+| Feature                           | clone()                                   | Copy Constructor |
+| --------------------------------- | ----------------------------------------- | ---------------- |
+| Complex                           | Yes (requires Clonable, overriding clone) | Simple           |
+| Type Safety                       | No (returns Object)                       | Yes              |
+| Customization                     | Harder                                    | Very easy        |
+| Readability                       | Low                                       | High             |
+| Control over deep vs shallow copy | Limited                                   | Full control     |
+
+Copy constructors are the **recommended way** to copy objects in Java.
+
+## 5. Shallow Copy vs Deep Copy
+
+### 5.1 Shallow Copy
+
+Only **references** are copied, not the actual objects.
+
+```java
+class Department {
+    String name;
+}
+
+class Employee {
+    String name;
+    Department dept;
+
+    Employee(Employee e) {
+        this.name = e.name;
+        this.dept = e.dept;  // shallow copy
+    }
+}
+```
+
+Both objects share the same `dept` reference → changes in one reflect in the other.
+
+### 5.2 Deep Copy
+
+Copies actual objects, not just references.
+
+```java
+class Employee {
+    String name;
+    Department dept;
+
+    Employee(Employee e) {
+        this.name = e.name;
+        this.dept = new Department();
+        this.dept.name = e.dept.name;  // deep copy
+    }
+}
+```
+
+Now both have separate `Department` objects—safer.
+
+## 6. Example Demonstrating Shallow vs Deep Copy
+
+```java
+class Address {
+    String city;
+
+    Address(String city) {
+        this.city = city;
+    }
+}
+
+class Person {
+    String name;
+    Address address;
+
+    // Deep copy constructor
+    Person(Person p) {
+        this.name = p.name;
+        this.address = new Address(p.address.city);
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+
+        Person p1 = new Person("Raj", new Address("Delhi"));
+        Person p2 = new Person(p1);  // deep copy
+
+        p2.address.city = "Mumbai";
+
+        System.out.println(p1.address.city); // Delhi (unchanged)
+        System.out.println(p2.address.city); // Mumbai
+    }
+}
+```
+
+## 7. When Should You Use a Copy Constructor?
+
+Use a copy constructor when:
+
+* You want a **safe clone** of an object
+* You need to avoid shared references
+* You want explicit control over how deep the copy is
+* You want easier, readable, maintainable duplication code
+
+Avoid when:
+
+* You prefer immutability instead (final fields)
+
+## 8. Adding Copy Constructor Alongside Other Constructors
+
+A class can have:
+
+* Default constructor
+* Parameterized constructor
+* Copy constructor
+
+```java
+class Car {
+    String model;
+    int price;
+
+    Car() { }
+
+    Car(String model, int price) {
+        this.model = model;
+        this.price = price;
+    }
+
+    Car(Car other) {        // copy constructor
+        this.model = other.model;
+        this.price = other.price;
+    }
+}
+```
+
+## 9. Complete Example Program Demonstrating Copy Constructor
+
+```java
+class Book {
+    String title;
+    int pages;
+
+    Book(String title, int pages) {
+        this.title = title;
+        this.pages = pages;
+    }
+
+    // Copy Constructor
+    Book(Book b) {
+        this.title = b.title;
+        this.pages = b.pages;
+    }
+
+    void show() {
+        System.out.println(title + " - " + pages);
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+
+        Book b1 = new Book("Java Guide", 450);
+        Book b2 = new Book(b1);
+
+        b1.show();
+        b2.show();
+    }
+}
+```
+
+## 10. Summary
+
+* A copy constructor creates a new object by copying another object.
+* Syntax: `ClassName(ClassName obj)`
+* Used for:
+
+  * Creating safe copies
+  * Custom deep/shallow copying
+  * Avoiding clone()
+* Must be written manually; Java does not generate one automatically.
+* Deep copy avoids side effects; shallow copy shares references.
+
+This completes **Copy Constructor in Java**.

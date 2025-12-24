@@ -1,0 +1,232 @@
+---
+title: Anonymous Object
+---
+
+## 1. Introduction
+
+An **anonymous object** in Java is an object that is **created without storing its reference in a variable**.
+
+Example:
+
+```java
+new Student().show();
+```
+
+Here:
+
+* The object is created
+* A method is called on it immediately
+* The object becomes **eligible for garbage collection** after the statement ends
+
+Anonymous objects are useful when:
+
+* You need a one-time object
+* You don't want to reuse the object
+* You want clean, compact code
+
+They are commonly used in:
+
+* Method calling
+* Passing objects as arguments
+* Anonymous inner classes
+* Event handling (especially in GUI frameworks)
+
+## 2. What Is an Anonymous Object?
+
+A normal object:
+
+```java
+Student s = new Student();
+s.show();
+```
+
+Anonymous object:
+
+```java
+new Student().show();
+```
+
+Difference:
+
+| Normal Object             | Anonymous Object           |
+| ------------------------- | -------------------------- |
+| Has reference variable    | Has no reference           |
+| Can be reused             | Cannot be reused           |
+| Stored until out of scope | Immediately becomes unused |
+| Uses more code            | Short and clean            |
+
+![methods](/images/java/methods/annonymous1.png)
+
+## 3. When Should You Use Anonymous Objects?
+
+Use them when:
+
+1. You only need the object **once**
+2. You want compact code
+3. The object does not need reuse
+4. You are calling **one or very few methods**
+
+Example:
+
+```java
+new Scanner(System.in).nextInt();
+```
+
+This Scanner object is created and directly used without a variable.
+
+## 4. Anonymous Object Example — Method Call
+
+```java
+class Demo {
+    void display() {
+        System.out.println("Display method called");
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+        new Demo().display();  // anonymous object
+    }
+}
+```
+
+The object is used once and discarded.
+
+## 5. Anonymous Object Passed as an Argument
+
+```java
+class Test {
+    void show(Student s) {
+        System.out.println("Student object received");
+    }
+}
+
+new Test().show(new Student());
+```
+
+No variable is created for the `Student` object.
+
+## 6. Anonymous Object with Constructor
+
+Used when constructors perform important initialization.
+
+```java
+new Car("Honda", 2024);
+```
+
+Even if no methods are called, the constructor runs and initializes the object.
+
+## 7. Anonymous Objects and Arrays
+
+You can create anonymous arrays as arguments.
+
+```java
+show(new int[] {10, 20, 30});
+```
+
+A full array object is created without storing it.
+
+## 8. Anonymous Inner Classes (Very Important)
+
+Anonymous objects are heavily used in **anonymous inner classes**, especially in GUI, threads, and event handling.
+
+Example:
+
+```java
+Thread t = new Thread(new Runnable() {
+    @Override
+    public void run() {
+        System.out.println("Thread running");
+    }
+});
+t.start();
+```
+
+Here, `new Runnable() {...}` is an **anonymous object** of an anonymous class.
+
+## 9. Anonymous Object vs Named Object
+
+| Feature                   | Named Object                             | Anonymous Object |
+| ------------------------- | ---------------------------------------- | ---------------- |
+| Has reference variable    | No variable                              |                  |
+| Can call multiple methods | One-time use                             |                  |
+| Lives longer              | Short-lived                              |                  |
+| Used in full programs     | Mostly used for arguments or quick tasks |                  |
+
+
+## 10. Anonymous Object and Garbage Collection
+
+Anonymous objects are not stored in any reference.
+So they become **eligible for garbage collection immediately** after use.
+
+Example:
+
+```java
+new Demo();
+```
+
+Since it's not stored, nothing points to it → GC collects it sooner.
+
+## 11. Real-World Uses
+
+### 11.1 Singleton-like operations
+
+```java
+new Logger().log("start");
+```
+
+### 11.2 Reading input
+
+```java
+int age = new Scanner(System.in).nextInt();
+```
+
+### 11.3 Comparing values
+
+```java
+new Integer(10).compareTo(20);
+```
+
+### 11.4 GUI Click Handlers
+
+```java
+button.setOnClickListener(new OnClickListener() {
+    public void onClick() {
+        System.out.println("Clicked");
+    }
+});
+```
+
+## 12. Complete Example Demonstrating Anonymous Objects
+
+```java
+class MathOp {
+    int square(int n) {
+        return n * n;
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+        int result = new MathOp().square(5); // anonymous object
+        System.out.println(result);
+    }
+}
+```
+
+Output:
+
+```
+25
+```
+
+## 13. Summary
+
+* Anonymous objects are created without reference variables.
+* Used when an object is needed **once**.
+* Saves memory (short-lived).
+* Cannot be reused.
+* Useful for method calls, passing arguments, and anonymous inner classes.
+* Becomes immediately eligible for garbage collection after use.
+
+This completes **Anonymous Object in Java**.

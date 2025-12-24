@@ -6,9 +6,9 @@
         "varargs-in-java.mdx",
         "static-method.mdx",
         "this-keyword.mdx",
-        "super-keyword.mdx",
         "constructors.mdx",
         "default-vs-parameterized-constructor.mdx",
+        "super-keyword.mdx",
         "constructor-chaining.mdx",
         "copy-constructor.mdx",
         "anonymous-object.mdx"
