@@ -3,6 +3,7 @@
         "arguments-in-function.mdx",
         "global-and-local-variables.mdx",
         "factorial.mdx",
-        "recursion.mdx"
+        "recursion.mdx",
+        "factorial-using-recursion.mdx"
     ]
 } 
