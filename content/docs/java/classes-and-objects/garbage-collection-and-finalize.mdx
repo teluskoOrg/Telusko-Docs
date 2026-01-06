@@ -1,0 +1,262 @@
+---
+title: Garbage Collection and finalize() 
+---
+
+## 1. Introduction
+
+Java manages memory automatically using a system called **Garbage Collection (GC)**.  
+The goal of garbage collection is to identify and remove **unused objects** from the heap, freeing memory and preventing memory leaks.
+
+Unlike languages such as C or C++, Java developers do **not** explicitly free memory.  
+The JVM automatically tracks which objects are no longer needed and cleans them up.
+
+This makes Java safer and reduces chances of memory-related bugs.
+
+## 2. What Is Garbage Collection?
+
+Garbage Collection is the process of:
+
+- Detecting objects in heap memory that are **no longer referenced**
+- Reclaiming memory occupied by those objects  
+- Preventing memory overflow  
+- Optimizing memory usage
+
+An object becomes eligible for GC when **no reference variable** is pointing to it.
+
+### Example:
+
+```java
+Student s = new Student();
+s = null;  // object eligible for GC
+````
+![garbage](/images/java/class-object/garbage1.png)
+
+## 3. When Does an Object Become Eligible for GC?
+
+### 3.1 Reference Set to null
+
+```java
+Employee e = new Employee();
+e = null;  // GC can clean the Employee object
+```
+
+### 3.2 Reference Reassigned
+
+```java
+Employee e1 = new Employee();
+Employee e2 = new Employee();
+
+e1 = e2; // first object loses reference → eligible for GC
+```
+
+### 3.3 Object Created Without Reference
+
+```java
+new Student(); // anonymous object → GC candidate
+```
+
+### 3.4 Out of Scope Variables
+
+```java
+void test() {
+    Employee e = new Employee();
+} // after test() ends → e disappears → object eligible for GC
+```
+
+
+
+## 4. How Garbage Collection Works Internally
+
+JVM uses **mark and sweep** (and other algorithms depending on GC type):
+
+1. **Mark Phase**
+
+   * JVM marks objects that are reachable from **root references** such as:
+
+     * Local variables
+     * Static variables
+     * Active threads
+
+2. **Sweep Phase**
+
+   * Unmarked (unreachable) objects are deleted.
+
+3. **Compaction Phase**
+
+   * Heap memory is rearranged to avoid fragmentation.
+
+
+
+## 5. Types of Garbage Collectors in JVM (High-level)
+
+* **Serial Garbage Collector**
+* **Parallel Garbage Collector**
+* **CMS (Concurrent Mark Sweep)** – obsolete
+* **G1 (Garbage First GC)** – modern default
+* **ZGC (Z Garbage Collector)** – ultra-low latency
+* **Shenandoah GC**
+
+Even though GC types differ, the **core idea** remains the same: remove unreachable objects.
+
+
+
+## 6. Calling Garbage Collector Manually (Not Guaranteed)
+
+You *can* request GC using:
+
+```java
+System.gc();
+```
+
+Or:
+
+```java
+Runtime.getRuntime().gc();
+```
+
+But JVM **may ignore** the request.
+JVM decides the best time to run GC.
+
+
+
+## 7. finalize() Method (Deprecated)
+
+### What is finalize()?
+
+`finalize()` was a method in the `Object` class that was meant to run **before** the object was garbage collected.
+
+Syntax:
+
+```java
+protected void finalize() {
+    // cleanup code
+}
+```
+
+But **finalize() is unreliable** and has been **deprecated** in Java 9 and removed in Java 18** because:
+
+* No guarantee it will run
+* Can cause performance issues
+* Can cause deadlocks
+* Can revive dead objects (bad design)
+
+### Example (Old Approach):
+
+```java
+class Demo {
+    @Override
+    protected void finalize() {
+        System.out.println("Object destroyed");
+    }
+}
+```
+
+
+
+### Why finalize() Should Not Be Used?
+
+* GC may never run `finalize()`
+* Multiple objects waiting for finalize() cause heap buildup
+* Difficult to predict
+* Replaced by:
+
+  * try-with-resources
+  * Cleaner API
+  * PhantomReference
+
+
+
+## 8. Object Resurrection (Bad Practice)
+
+If an object assigns its reference inside finalize():
+
+```java
+protected void finalize() {
+    Main.obj = this; // resurrecting object
+}
+```
+
+This is one reason why finalize() was removed—it breaks GC logic.
+
+
+
+## 9. Best Practices for Resource Cleanup
+
+Instead of finalize(), use:
+
+### 9.1 try-with-resources (Recommended)
+
+```java
+try (FileInputStream fis = new FileInputStream("file.txt")) {
+    // use file
+}
+```
+
+Automatically closes resources.
+
+### 9.2 Explicit close()
+
+```java
+Connection con = DriverManager.getConnection(...);
+con.close();
+```
+
+### 9.3 Cleaner API (Java 9+)
+
+Provides controlled cleanup without finalize() problems.
+
+![garbage](/images/java/class-object/garbage2.png)
+
+## 10. Complete Example Demonstrating GC Behavior
+
+```java
+class Test {
+
+    int id;
+
+    Test(int id) {
+        this.id = id;
+    }
+
+    @Override
+    protected void finalize() {
+        System.out.println("Finalize called for id: " + id);
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+        Test t1 = new Test(1);
+        Test t2 = new Test(2);
+
+        t1 = null;
+        t2 = null;
+
+        System.gc(); // Request GC
+    }
+}
+```
+
+Output (not guaranteed):
+
+```
+Finalize called for id: 1
+Finalize called for id: 2
+```
+
+
+
+## 11. Summary
+
+* Garbage Collection removes unused objects automatically.
+* An object becomes eligible for GC when no references point to it.
+* GC algorithms: marking, sweeping, compacting.
+* Calling `System.gc()` is only a request.
+* finalize() is **deprecated** and must not be used.
+* Use try-with-resources or Cleaner API instead.
+
+Understanding GC helps prevent memory leaks and improve JVM performance.
+
+This completes **Garbage Collection and finalize() in Java**.
+
+Written By: <a href="https://www.linkedin.com/in/shivasrivastava1/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer"> Shiva Srivastava <ExternalLink className="w-4 h-4" /></a>

@@ -1,0 +1,285 @@
+---
+title: Stack and Heap Memory
+---
+## 1. Introduction
+
+Java uses a structured memory model to store data during program execution.  
+Two of the most important memory areas in the JVM are:
+
+- **Stack Memory** → stores method calls, local variables, references  
+- **Heap Memory** → stores objects and instance variables  
+
+Understanding stack and heap memory is essential for mastering:
+
+- Object creation  
+- Performance optimization  
+- Garbage collection  
+- Reference handling  
+- Debugging memory-related issues  
+
+This is one of the most asked interview topics, and also a foundation for JVM internals.
+
+## 2. What Is Stack Memory?
+
+Stack memory is the part of JVM memory used for:
+
+- Method calls  
+- Local variables  
+- Reference variables  
+- Return values  
+- Primitive values inside methods  
+
+The stack follows **LIFO (Last In, First Out)** execution.  
+Each time a method is called, a **stack frame** is created.  
+When the method ends, the frame is removed automatically.
+
+### 2.1 Characteristics of Stack Memory
+
+- Very fast access  
+- Stores primitives and references  
+- Thread-specific (each thread has its own stack)  
+- Memory is freed automatically when methods finish  
+- Cannot store objects, only references to objects  
+
+### Example
+
+```java
+int a = 10;         // stored on stack
+Student s = new Student(); // reference stored on stack, object on heap
+````
+
+Here:
+
+* `a` → stack
+* `s` → stack (reference)
+* `new Student()` → heap
+
+### 2.2 Stack Frame Example
+
+```java
+void test() {
+    int x = 5;
+    int y = 10;
+}
+```
+
+When test() is called, a stack frame is created storing `x` and `y`.
+When test() ends, the frame is deleted.
+
+![stack](/images/java/class-object/stack1.png)
+
+## 3. What Is Heap Memory?
+
+The **heap** is the memory area used for storing:
+
+* Objects
+* Instance variables
+* Arrays
+* Inner class objects
+
+Heap memory is shared across all threads.
+
+Every time you use `new`, memory is allocated in the heap.
+
+
+
+### 3.1 Characteristics of Heap Memory
+
+* Slower than stack memory
+* Stores actual object data
+* Managed by Garbage Collector
+* Shared across threads
+* Flexible storage size
+
+
+
+### Example
+
+```java
+Student s1 = new Student();
+Student s2 = new Student();
+```
+
+`s1` and `s2` point to two different objects in the heap.
+
+
+
+## 4. How Stack and Heap Work Together
+
+Consider:
+
+```java
+class Demo {
+    int num;
+}
+
+public class Main {
+    public static void main(String[] args) {
+        Demo d = new Demo();
+        d.num = 10;
+    }
+}
+```
+
+Memory allocation:
+
+* `d` → stored on **stack**
+* `new Demo()` → stored on **heap**
+* `num = 10` → stored inside the object on **heap**
+
+## 5. What Goes on Stack vs Heap?
+
+| Stored in Stack     | Stored in Heap                |
+| ------------------- | ----------------------------- |
+| Local variables     | Objects                       |
+| Primitive variables | Instance variables            |
+| Method arguments    | Arrays                        |
+| Reference variables | Inner classes                 |
+| Return values       | String objects (mutable ones) |
+
+## 6. Example to Understand Deeply
+
+### Example Code
+
+```java
+class Car {
+    int speed;
+}
+
+public class Test {
+    public static void main(String[] args) {
+        int a = 5;
+        Car c1 = new Car();
+        Car c2 = c1;
+
+        c1.speed = 100;
+    }
+}
+```
+
+### Memory Explanation
+
+* `a` → stack
+* `c1`, `c2` → stack
+* `new Car()` → heap
+* `speed = 100` → inside Car object in heap
+
+Both `c1` and `c2` point to the **same object**.
+
+
+
+## 7. Stack Overflow vs Heap Overflow
+
+### 7.1 Stack Overflow
+
+Occurs when:
+
+* Too many nested method calls (infinite recursion)
+
+Example:
+
+```java
+void call() {
+    call(); // infinite recursion → StackOverflowError
+}
+```
+
+### 7.2 Heap Overflow
+
+Occurs when:
+
+* Creating too many objects without releasing memory
+* Not enough heap space
+
+Example:
+
+```java
+while (true) {
+    new int[1000000];
+}
+```
+
+Throws:
+
+```
+java.lang.OutOfMemoryError: Java heap space
+```
+
+
+
+## 8. Garbage Collection and Heap
+
+Heap memory is managed by the **Garbage Collector**, which removes objects that are no longer referenced by any variable.
+
+Example:
+
+```java
+new Student(); // no reference → eligible for GC immediately
+```
+
+More about this in **garbage-collection-and-finalize.mdx**.
+
+
+
+## 9. Stack and Heap with Multi-threading
+
+* Each thread gets its **own stack**
+* All threads share **one common heap**
+
+This design helps:
+
+* Thread isolation (stack)
+* Object sharing (heap)
+
+
+
+## 10. Complete Visualization Example
+
+```java
+class Person {
+    String name;
+}
+
+public class Main {
+    public static void main(String[] args) {
+        Person p = new Person();
+        p.name = "John";
+    }
+}
+```
+
+### Stack Memory:
+
+* Reference variable `p`
+
+### Heap Memory:
+
+Object:
+
+```
+Person {
+   name: "John"
+}
+```
+
+
+
+## 11. Summary
+
+* **Stack** → stores method frames, primitives, and object references.
+* **Heap** → stores objects and instance data.
+* Stack works on **LIFO**, heap is dynamically allocated.
+* Stack is faster; heap is slower but more flexible.
+* Garbage Collector manages only **heap memory**, not stack.
+* Each thread has its own stack; heap is shared globally.
+
+Understanding stack and heap is essential for:
+
+* Debugging
+* Writing efficient code
+* Avoiding memory leaks
+* Mastering JVM internals
+
+This completes **Stack and Heap Memory in Java**.
+
+Written By: <a href="https://www.linkedin.com/in/shivasrivastava1/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer"> Shiva Srivastava <ExternalLink className="w-4 h-4" /></a>
