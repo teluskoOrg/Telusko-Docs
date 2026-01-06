@@ -1,0 +1,161 @@
+---
+title: Higher Order Function
+---
+
+<Steps>
+<Video id="lkbgOf1jD8k" />
+
+---
+
+
+## Introduction to Higher-Order Functions
+
+In Python, a higher-order function is a function that can **accept another function as an argument** or **return a function as its result**.
+This is possible because Python treats functions as **first-class citizens**, meaning functions behave like regular objects.
+
+As a result, functions can be:
+* Assigned to variables
+* Passed as parameters
+* Returned from other functions
+* Stored in data structures
+
+This capability makes Python well-suited for functional programming concepts.
+
+
+---
+
+
+## Why Higher-Order Functions Matter
+
+Higher-order functions allow you to:
+
+* Write **generic and reusable code**
+* Separate **what to do** from **how to do it**
+* Avoid writing multiple similar functions
+* Dynamically change behavior by passing different functions
+
+Instead of writing separate logic for squaring, cubing, or other operations, a single higher-order function can handle all cases.
+
+
+---
+
+
+## Basic Example: Passing a Function as an Argument
+
+A function can receive another function as a parameter and execute it dynamically.
+
+```python
+def square(num):
+    return num * num
+
+def cube(num):
+    return num * num * num
+
+def operate(num, operation):
+    return operation(num)
+
+value = 5
+result = operate(value, square)
+print(result)
+```
+
+**Output:**
+
+```
+25
+```
+
+Here:
+
+* `operate` is a **higher-order function**
+* `square` is passed as an argument
+* `operation(num)` dynamically executes the passed function
+
+Changing the behavior requires **no change** to the higher-order function:
+
+```python
+result = operate(value, cube)
+print(result)
+```
+
+**Output:**
+
+```
+125
+```
+
+
+---
+
+
+## Higher-Order Function with Multiple Values
+
+Higher-order functions can also process **collections of data**.
+
+```python
+def square(num):
+    return num * num
+
+def cube(num):
+    return num * num * num
+
+def operate(nums, operation):
+    for i in nums:
+        print(operation(i))
+
+nums = [5, 6, 7]
+operate(nums, cube)
+```
+
+**Output:**
+
+```
+125
+216
+343
+```
+
+Here:
+
+* A list of values is passed
+* The same function works for **any operation**
+* Only the behavior changes, not the structure of the code
+
+
+---
+
+
+## Key Characteristics
+
+* The higher-order function does **not care about the logic** of the operation
+* It only knows **when and how to call** the passed function
+* This enables **abstraction and flexibility**
+
+### Real-World Use Cases
+
+Higher-order functions are widely used in:
+
+* Data transformation pipelines
+* Callback functions
+* Event handling
+* Functional utilities
+* Clean and scalable code design
+
+
+![Higher_order_functiton](/images/python/higher_order_function.png)
+
+
+---
+
+
+## Summary
+
+* Higher-order functions accept other functions as arguments.
+* They rely on Python’s first-class function support.
+* They enable abstraction, flexibility, and code reuse.
+* The behavior can be changed dynamically without modifying core logic.
+* Commonly used in functional programming and real-world applications.
+
+</Steps>
+
+Written By: <a href="https://www.linkedin.com/in/muskangarg03/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer"> Muskan Garg <ExternalLink className="w-4 h-4" /></a>
