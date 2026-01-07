@@ -1,5 +1,6 @@
 {   "title":"More on Functions",
     "pages":[
-        "higher-order-function.mdx"
+        "higher-order-function.mdx",
+        "anonymous-function-using-lambda.mdx"
     ]
 } 

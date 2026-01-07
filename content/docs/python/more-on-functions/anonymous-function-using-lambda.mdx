@@ -1,0 +1,206 @@
+---
+title: Anonymous Function using Lambda
+---
+
+<Steps>
+<Video id="ElMx0m0nMgg" />
+
+---
+
+
+## Introduction to Anonymous Functions
+
+An **anonymous function** is a function that is defined **without a name**.
+In Python, such functions are created using the **`lambda` keyword**.
+
+Unlike regular functions defined using `def`, anonymous functions:
+
+* Are usually **short-lived**
+* Are written in **a single line**
+* Focus on **one specific operation**
+
+They are mainly used when a function is required **temporarily** and defining a full function would be unnecessary.
+
+
+---
+
+
+## What Is a Lambda Function?
+
+A **lambda function** is Python’s way of creating an anonymous function.
+It allows you to define a function using a **single expression** instead of a full function block.
+
+Lambda functions:
+
+* Do not have a name by default
+* Return a value automatically
+* Contain only one expression
+* Improve code brevity and clarity when used correctly
+
+### Lambda Functions and First-Class Functions
+
+In Python, **functions are first-class citizens**, meaning:
+
+* Functions can be assigned to variables
+* Functions can be passed as arguments
+* Functions can be returned from other functions
+  
+
+---
+
+
+## Lambda Function Syntax
+
+```python
+lambda parameters: expression
+```
+
+**Explanation:**
+
+* `lambda` → keyword used to define the function
+* `parameters` → input values (one or more)
+* `expression` → a single expression whose result is returned
+
+- No `return` keyword
+
+- No function body or indentation
+
+
+---
+
+
+## Regular Function vs Lambda Function
+
+#### Regular Function Example
+
+```python
+def square(num):
+    return num * num
+
+print(square(5))
+```
+
+#### Lambda Function Equivalent
+
+```python
+square = lambda num: num * num
+print(square(5))
+```
+
+**Output:**
+
+```
+25
+```
+
+
+---
+
+
+## Assigning Lambda Functions to Variables
+
+Although lambda functions are anonymous, they can be assigned to variables and used like named functions.
+
+```python
+fun = lambda num: num * num
+print(fun(5))
+```
+
+**Output:**
+
+```
+25
+```
+
+Here:
+
+* `fun` references the lambda function
+* The function remains anonymous but is callable through the variable
+
+
+---
+
+
+## Lambda Functions with Multiple Parameters
+
+Lambda functions can accept **multiple parameters**, just like regular functions.
+
+```python
+add = lambda a, b: a + b
+print(add(4, 5))
+```
+
+**Output:**
+
+```
+9
+```
+
+This is useful for quick arithmetic or comparison operations.
+
+
+---
+
+
+## Lambda Functions with Higher-Order Functions
+
+Lambda functions are commonly used with **higher-order functions**, which accept other functions as arguments.
+
+```python
+def operate(num, operation):
+    return operation(num)
+
+result = operate(5, lambda x: x * x)
+print(result)
+```
+
+**Output:**
+
+```
+25
+```
+
+Here:
+
+* The lambda function is passed directly
+* No separate function definition is required
+* Code becomes more compact and expressive
+
+
+---
+
+
+## Advantages vs Limitations of Lambda Functions
+
+### Advantages:
+* Reduce code length
+* Improve readability for simple logic
+* Eliminate unnecessary function definitions
+* Ideal for temporary and one-time use functions
+* Frequently used with `map()`, `filter()`, and `reduce()`
+  
+
+### Limitations:
+* Only **one expression** allowed
+* Cannot contain multiple statements
+* Not suitable for complex logic
+* Overuse can reduce readability
+
+![Lambda_Functions](/images/python/lambda_function.png)
+
+---
+
+ 
+## Summary
+
+* Lambda functions are **anonymous, single-expression functions**
+* Anonymous functions are defined using the `lambda` keyword
+* They can automatically return the result of an expression
+* They can take one or multiple parameters
+* Lambda functions are often used with higher-order functions
+* Lambda functions are best suited for **short, simple, and temporary operations**
+
+
+</Steps>
+
+Written By: <a href="https://www.linkedin.com/in/muskangarg03/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer"> Muskan Garg <ExternalLink className="w-4 h-4" /></a>
