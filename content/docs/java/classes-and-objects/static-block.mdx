@@ -1,0 +1,262 @@
+---
+title: Static Block
+---
+
+## 1. Introduction
+
+In Java, a **static block** (also called a static initialization block) is a special block of code that runs **automatically when the class is loaded into the JVM**, before any object is created and even before the `main()` method runs.
+
+Static blocks are used to:
+
+- Initialize static variables  
+- Perform class-level setup  
+- Load configurations  
+- Execute code only once for the entire program  
+
+Understanding static blocks is essential for mastering class loading, static initialization, and JVM behavior.
+
+## 2. What Is a Static Block?
+
+A static block is declared using the `static` keyword:
+
+```java
+static {
+    // code here
+}
+```
+
+### Key Characteristics
+
+* Executes **only once** when the class is loaded
+* Runs **before main()**
+* Used for static initialization
+* Executes **in the order they appear** if multiple static blocks exist
+
+### Example
+
+```java
+class Demo {
+    static {
+        System.out.println("Static Block Executed");
+    }
+
+    public static void main(String[] args) {
+        System.out.println("Main Method Executed");
+    }
+}
+```
+
+Output:
+
+```
+Static Block Executed
+Main Method Executed
+```
+
+Static block runs first because class loading happens before main().
+
+![static-block](/images/java/class-object/static-block1.png)
+
+## 3. Why Use Static Blocks?
+
+Static blocks are useful when you need:
+
+### 3.1 Complex Initialization of Static Variables
+
+Example:
+
+```java
+static int data;
+
+static {
+    data = 10 * 5;  // complex calculation
+}
+```
+
+### 3.2 Loading Configuration Files
+
+Example:
+
+```java
+static Properties config = new Properties();
+
+static {
+    config.load(new FileInputStream("config.properties"));
+}
+```
+
+### 3.3 Initializing static final variables
+
+```java
+static final int MAX;
+
+static {
+    MAX = 100;  // allowed for final variables
+}
+```
+
+### 3.4 Calling static helper methods during class load
+
+
+
+## 4. Multiple Static Blocks
+
+Java allows multiple static blocks.
+Execution happens **top to bottom**, in the order they appear.
+
+```java
+class Test {
+    static {
+        System.out.println("Block 1");
+    }
+
+    static {
+        System.out.println("Block 2");
+    }
+}
+```
+
+Output:
+
+```
+Block 1
+Block 2
+```
+
+## 5. Static Block vs Static Method
+
+| Feature           | Static Block    | Static Method    |
+| ----------------- | --------------- | ---------------- |
+| Runs when         | Class is loaded | Method is called |
+| How many times?   | Once            | Multiple times   |
+| Accept arguments? | No              | Yes              |
+| Return something? | No              | Yes              |
+| Purpose           | Initialization  | Reusable logic   |
+
+Static blocks are intended for one-time setup only.
+
+## 6. Static Block with Object Creation
+
+Even if no objects are created, static blocks still run.
+
+```java
+class A {
+    static {
+        System.out.println("Static Block of A");
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+        // No object created
+    }
+}
+```
+
+Output:
+
+```
+Static Block of A
+```
+
+Because class A was loaded.
+
+
+
+## 7. Static Block and Class.forName()
+
+Static blocks also run when the class is loaded dynamically using `Class.forName()`.
+
+```java
+Class.forName("Test");
+```
+
+This causes the static block inside `Test` to execute immediately.
+
+
+
+## 8. Using Static Blocks to Load Native Libraries
+
+```java
+static {
+    System.loadLibrary("mylib");
+}
+```
+
+This ensures the library is loaded only once.
+
+
+
+## 9. Common Mistakes
+
+### Mistake 1: Trying to access instance variables
+
+Static block cannot access non-static variables:
+
+```java
+int x = 10;
+
+static {
+    System.out.println(x); // ERROR
+}
+```
+
+### Mistake 2: Using static blocks unnecessarily
+
+If simple assignment works, no need for a static block.
+
+### Mistake 3: Expecting static block to run multiple times
+
+It runs **only once** per class loading.
+
+
+
+## 10. Complete Example Demonstrating Static Block Behavior
+
+```java
+class DatabaseConnection {
+
+    static String url;
+    static String username;
+    static String password;
+
+    static {
+        System.out.println("Loading configuration...");
+        url = "jdbc:mysql://localhost/test";
+        username = "root";
+        password = "1234";
+    }
+
+    static void connect() {
+        System.out.println("Connecting to " + url);
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+        DatabaseConnection.connect();
+    }
+}
+```
+
+Output:
+
+```
+Loading configuration...
+Connecting to jdbc:mysql://localhost/test
+```
+
+
+
+## 11. Summary
+
+* Static blocks execute **once** when the class loads.
+* They run **before main()** and before any object creation.
+* Used for initializing static variables and configurations.
+* Multiple static blocks execute in order.
+* Cannot access instance members.
+* Useful for complex initialization and setup tasks.
+
+This completes **Static Block in Java**.
+
+Written By: <a href="https://www.linkedin.com/in/shivasrivastava1/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer"> Shiva Srivastava <ExternalLink className="w-4 h-4" /></a>

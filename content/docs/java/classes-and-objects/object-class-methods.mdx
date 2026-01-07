@@ -1,0 +1,291 @@
+---
+title: Object Class Methods
+---
+
+## 1. Introduction
+
+In Java, **every class implicitly inherits from the `Object` class**, which is the root (top-most) class in the Java class hierarchy.
+
+This means:
+
+- All Java objects have the methods defined in `Object`  
+- These methods provide core functionality like comparison, hashing, cloning, threading support, etc.  
+- Many of these methods are overridden by classes to provide meaningful behavior  
+
+Understanding the `Object` class is essential for OOP, collections, multithreading, and interview preparation.
+
+## 2. List of Key Methods of the Object Class
+
+The most commonly used and important methods are:
+
+1. `toString()`  
+2. `equals(Object obj)`  
+3. `hashCode()`  
+4. `getClass()`  
+5. `clone()`  
+6. `finalize()` (deprecated)  
+7. `wait()`  
+8. `notify()`  
+9. `notifyAll()`  
+
+Each serves a different purpose and is used in various scenarios.
+
+![object](/images/java/class-object/object1.png)
+
+## 3. toString() Method
+
+### Purpose
+
+`toString()` returns a string representation of the object.
+
+Default implementation:
+
+```java
+public String toString() {
+    return getClass().getName() + "@" + Integer.toHexString(hashCode());
+}
+````
+
+### Example:
+
+```java
+class Student {
+    String name;
+}
+
+public class Main {
+    public static void main(String[] args) {
+        Student s = new Student();
+        System.out.println(s);   // calls toString() automatically
+    }
+}
+```
+
+Output (default):
+
+```
+Student@5acf9800
+```
+
+### Overriding toString()
+
+```java
+class Student {
+    String name;
+    int age;
+
+    @Override
+    public String toString() {
+        return name + " (" + age + ")";
+    }
+}
+```
+
+
+
+## 4. equals() Method
+
+### Purpose
+
+Checks if two objects are **meaningfully equal**.
+
+Default implementation compares **memory addresses** (reference equality).
+
+```java
+public boolean equals(Object obj) {
+    return (this == obj);
+}
+```
+
+### Overriding equals()
+
+To compare object **content**, override it:
+
+```java
+class Student {
+    String name;
+    int age;
+
+    @Override
+    public boolean equals(Object obj) {
+        Student s = (Student) obj;
+        return this.name.equals(s.name) && this.age == s.age;
+    }
+}
+```
+
+
+
+## 5. hashCode() Method
+
+### Purpose
+
+Provides integer hash value for the object.
+Used heavily in **HashMap**, **HashSet**, **HashTable**.
+
+Relationship with equals():
+
+* If two objects are equal via equals(), their hashCode() **must be equal**.
+* If not equal, hashCodes **may differ**.
+
+### Example Override
+
+```java
+@Override
+public int hashCode() {
+    return name.hashCode() + age;
+}
+```
+
+
+
+## 6. Relationship Between equals() and hashCode()
+
+Very important rule:
+
+* If `equals()` is overridden, `hashCode()` **must also be overridden**.
+
+Because HashMap requires:
+
+```java
+if a.equals(b) → a.hashCode() == b.hashCode()
+```
+Not following this rule leads to bugs in hashing collections.
+
+## 7. getClass() Method
+
+Returns the runtime class of the object.
+
+```java
+Student s = new Student();
+System.out.println(s.getClass().getName());
+```
+
+Output:
+
+```
+Student
+```
+
+Used in reflection, debugging, and frameworks.
+
+
+
+## 8. clone() Method
+
+`clone()` creates and returns a **copy** of the object.
+
+To use clone:
+
+1. Implement `Cloneable` interface
+2. Override `clone()` method
+
+Example:
+
+```java
+class Student implements Cloneable {
+    int age;
+
+    @Override
+    protected Object clone() throws CloneNotSupportedException {
+        return super.clone();
+    }
+}
+```
+
+Deep cloning requires manually copying nested objects.
+
+(This is fully explained in `cloneable-interface.mdx`.)
+
+
+
+## 9. finalize() Method (Deprecated)
+
+Called by GC before object deletion.
+Not reliable → deprecated.
+
+Do not use finalize().
+
+
+
+## 10. wait(), notify(), notifyAll()
+
+Used for **inter-thread communication**.
+
+These methods:
+
+* Must be called inside synchronized blocks
+* Belong to Object class because every object can be used as a monitor lock
+
+Full details are covered in concurrency topics (advanced).
+
+
+
+## 11. Complete Example Demonstrating Multiple Object Methods
+
+```java
+class Employee implements Cloneable {
+    String name;
+    int id;
+
+    Employee(String name, int id) {
+        this.name = name;
+        this.id = id;
+    }
+
+    @Override
+    public String toString() {
+        return name + " : " + id;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        Employee e = (Employee) obj;
+        return this.id == e.id && this.name.equals(e.name);
+    }
+
+    @Override
+    public int hashCode() {
+        return id + name.hashCode();
+    }
+
+    @Override
+    protected Object clone() throws CloneNotSupportedException {
+        return super.clone();
+    }
+}
+
+public class Main {
+    public static void main(String[] args) throws Exception {
+
+        Employee e1 = new Employee("John", 101);
+        Employee e2 = new Employee("John", 101);
+
+        System.out.println(e1.toString());
+        System.out.println(e1.equals(e2));
+        System.out.println(e1.hashCode());
+        
+        Employee e3 = (Employee) e1.clone();
+        System.out.println(e3);
+    }
+}
+```
+
+
+
+## 12. Summary
+
+* All classes in Java inherit the `Object` class.
+* `toString()` → string representation of object
+* `equals()` → content comparison
+* `hashCode()` → used in hashing collections
+* `getClass()` → runtime class information
+* `clone()` → copies object (requires Cloneable)
+* `wait()`, `notify()`, `notifyAll()` → used in multithreading
+* `finalize()` → deprecated
+
+Object class methods are fundamental and widely used across Java applications.
+
+This completes **Object Class Methods**.
+
+Written By: <a href="https://www.linkedin.com/in/shivasrivastava1/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer"> Shiva Srivastava <ExternalLink className="w-4 h-4" /></a>

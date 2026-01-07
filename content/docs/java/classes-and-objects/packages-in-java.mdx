@@ -1,0 +1,253 @@
+---
+title: Packages
+---
+
+## 1. Introduction
+
+A **package** in Java is a mechanism to group related classes, interfaces, and sub-packages.  
+Packages help in:
+
+- Organizing code  
+- Avoiding name conflicts  
+- Providing access protection  
+- Building modular applications  
+
+Java packages are similar to folders in a file system, allowing clean structure and easy maintenance.
+
+## 2. Types of Packages in Java
+
+Java provides two types of packages:
+
+1. **Built-in Packages** (predefined)  
+2. **User-Defined Packages** (created by developers)
+
+### 2.1 Built-in Packages
+
+Examples:
+
+- `java.lang` → Core classes (String, Math, Integer)  
+- `java.util` → Utility classes (ArrayList, HashMap, Date)  
+- `java.io` → Input/output classes  
+- `java.time` → Date and time API  
+- `java.net` → Networking  
+- `java.sql` → Database connectivity  
+
+These packages are part of the JDK.
+
+### 2.2 User-Defined Packages
+
+Developers create packages to organize large projects.
+
+Example:
+
+```java
+package com.example.project;
+```
+![package](/images/java/class-object/package1.png)
+
+## 3. Creating a Package
+
+### Step 1: Declare package at the top of the Java file
+
+```java
+package mypackage;
+
+public class Student {
+    public void display() {
+        System.out.println("Inside Student class");
+    }
+}
+```
+
+### Step 2: Compile with package directory creation
+
+```bash
+javac -d . Student.java
+```
+
+`-d .` instructs the compiler to create directories based on package name.
+
+### Step 3: Use the package
+
+```java
+import mypackage.Student;
+
+public class Main {
+    public static void main(String[] args) {
+        Student s = new Student();
+        s.display();
+    }
+}
+```
+
+
+
+## 4. Using import Statement
+
+To use a class from another package, import it:
+
+```java
+import mypackage.Student;
+```
+
+OR import all:
+
+```java
+import mypackage.*;
+```
+
+Importing improves readability but does not increase runtime memory.
+
+
+
+## 5. Sub-packages
+
+Packages inside other packages are known as **sub-packages**.
+
+Example:
+
+```
+com.company.product
+```
+
+Directory structure:
+
+```
+com/
+   company/
+       product/
+           Product.java
+```
+
+Organizing large projects becomes easier with sub-packages.
+
+
+## 6. Access Modifiers and Packages
+
+Packages play an important role in **access control**.
+
+| Modifier              | Same Class | Same Package | Subclass | Outside Package |
+| --------------------- | ---------- | ------------ | -------- | --------------- |
+| public                | Yes        | Yes          | Yes      | Yes             |
+| protected             | Yes        | Yes          | Yes      | No              |
+| default (no modifier) | Yes        | Yes          | No       | No              |
+| private               | Yes        | No           | No       | No              |
+
+Package-level (default) access is restricted to classes inside the same package.
+
+
+
+## 7. Static Import
+
+Java allows importing static members:
+
+```java
+import static java.lang.Math.PI;
+import static java.lang.Math.sqrt;
+
+System.out.println(PI);
+System.out.println(sqrt(25));
+```
+
+
+
+## 8. Real-World Use of Packages
+
+Large applications follow layered architecture using packages:
+
+```
+com.company.app
+      ├── controller
+      ├── service
+      ├── model
+      ├── repository
+      └── config
+```
+
+Each layer contains logically grouped classes, improving:
+
+* Maintainability
+* Readability
+* Scalability
+
+
+
+## 9. Package Naming Conventions
+
+Follow industry style:
+
+* Domain in reverse order → `com.google.api`
+* Use lowercase
+* No special characters
+* Short and meaningful
+
+Examples:
+
+* `com.amazon.payment`
+* `org.springframework.core`
+* `com.myapp.utils`
+
+
+
+## 10. Complete Example Demonstrating Package Use
+
+### File: `mypack/Message.java`
+
+```java
+package mypack;
+
+public class Message {
+    public void print() {
+        System.out.println("Hello from mypack");
+    }
+}
+```
+
+### File: `Main.java`
+
+```java
+import mypack.Message;
+
+public class Main {
+    public static void main(String[] args) {
+        Message m = new Message();
+        m.print();
+    }
+}
+```
+
+Compile:
+
+```bash
+javac -d . Message.java Main.java
+```
+
+Run:
+
+```bash
+java Main
+```
+
+Output:
+
+```
+Hello from mypack
+```
+
+
+
+## 11. Summary
+
+* Packages group related classes and avoid naming conflicts.
+* Two types: built-in and user-defined.
+* Use `package` to declare a package and `import` to use classes.
+* Packages improve code organization and readability.
+* Sub-packages help structure large applications.
+* Access modifiers behave differently across packages.
+
+This completes **Packages in Java**.
+
+Next topic:
+**classes-and-objects-practical.mdx** if you want the next file in sequence.
+
+Written By: <a href="https://www.linkedin.com/in/shivasrivastava1/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer"> Shiva Srivastava <ExternalLink className="w-4 h-4" /></a>

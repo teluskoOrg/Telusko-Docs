@@ -1,0 +1,276 @@
+---
+title: Cloneable Interface
+---
+
+## 1. Introduction
+
+Cloning in Java allows you to create an **exact copy** of an existing object.  
+To enable cloning, Java provides the **Cloneable interface** and the **clone() method**.
+
+Key rule:
+
+### A class must implement `Cloneable` to allow its objects to be cloned.
+
+If not, invoking `clone()` throws:
+
+```
+java.lang.CloneNotSupportedException
+
+```
+
+Cloneable is a **marker interface**—it contains **no methods**.  
+Its purpose is to tell the JVM and the `Object` class that the class has given permission for cloning.
+
+
+
+## 2. What Is the Cloneable Interface?
+
+Defined in `java.lang`:
+
+```java
+public interface Cloneable { }
+```
+
+Characteristics:
+
+* Marker interface (no abstract methods)
+* Represents permission to perform object cloning
+* Used along with `Object.clone()` method
+
+Without this interface, cloning is not allowed.
+
+![cloneable](/images/java/class-object/cloneable1.png)
+
+## 3. clone() Method in Object Class
+
+The clone() method is defined in the `Object` class:
+
+```java
+protected native Object clone() throws CloneNotSupportedException;
+```
+
+Important notes:
+
+* It is **protected**, so you must override it to use publicly.
+* Throws `CloneNotSupportedException` unless the class implements Cloneable.
+* Performs **shallow copying** by default.
+
+
+
+## 4. Enabling Cloning: Steps
+
+### Step 1 — Implement Cloneable interface
+
+```java
+class Student implements Cloneable {
+}
+```
+
+### Step 2 — Override clone() method
+
+```java
+@Override
+public Object clone() throws CloneNotSupportedException {
+    return super.clone();
+}
+```
+
+### Step 3 — Clone the object
+
+```java
+Student s2 = (Student) s1.clone();
+```
+
+
+
+## 5. Shallow Copy vs Deep Copy
+
+### 5.1 Shallow Copy (Default)
+
+Shallow copy duplicates:
+
+* **Primitive values**
+* **Reference addresses** (not the actual objects they point to)
+
+Example:
+
+```java
+class A implements Cloneable {
+    int x;
+    B obj;
+
+    @Override
+    public Object clone() throws CloneNotSupportedException {
+        return super.clone();  // shallow
+    }
+}
+```
+
+Both original and cloned objects share the same nested object.
+
+
+
+### 5.2 Deep Copy
+
+Deep copy duplicates:
+
+* Primitive values
+* **New copies of reference objects**
+
+Example:
+
+```java
+class A implements Cloneable {
+    int x;
+    B obj;
+
+    @Override
+    public Object clone() throws CloneNotSupportedException {
+        A temp = (A) super.clone();
+        temp.obj = new B(obj.value); // manually copying nested object
+        return temp;
+    }
+}
+```
+
+Deep copies are safer because modifications in one object do not affect the other.
+
+## 6. Example: Shallow Copy
+
+```java
+class Student implements Cloneable {
+    int id;
+    String name;
+
+    Student(int id, String name) {
+        this.id = id;
+        this.name = name;
+    }
+
+    @Override
+    public Object clone() throws CloneNotSupportedException {
+        return super.clone(); // default shallow copy
+    }
+}
+```
+
+Usage:
+
+```java
+Student s1 = new Student(1, "Amit");
+Student s2 = (Student) s1.clone();
+```
+
+Both are independent objects with identical data.
+
+
+
+## 7. Example: Deep Copy
+
+```java
+class Address {
+    String city;
+
+    Address(String city) {
+        this.city = city;
+    }
+}
+
+class Student implements Cloneable {
+    String name;
+    Address addr;
+
+    Student(String name, Address addr) {
+        this.name = name;
+        this.addr = addr;
+    }
+
+    @Override
+    public Object clone() throws CloneNotSupportedException {
+        Student s = (Student) super.clone();
+        s.addr = new Address(this.addr.city); // deep copy
+        return s;
+    }
+}
+```
+
+Now changes to nested objects won’t propagate.
+
+
+
+## 8. clone() vs Copy Constructor
+
+| Feature                   | clone()         | Copy Constructor       |
+| ------------------------- | --------------- | ---------------------- |
+| Requires Cloneable?       | Yes             | No                     |
+| Type safety               | Low             | High                   |
+| Implementation complexity | Higher          | Simple                 |
+| Shallow/Deep              | Default shallow | Depends on constructor |
+| Popularity                | Lower           | Higher                 |
+
+Copy constructors are often preferred in industry.
+
+
+
+## 9. Rules for Using clone()
+
+1. Class must implement `Cloneable`.
+2. Override `clone()` and make it `public`.
+3. Handle `CloneNotSupportedException`.
+4. Default cloning is shallow.
+5. Deep cloning must be manually implemented.
+
+
+
+## 10. Complete Example Demonstrating Cloneable
+
+```java
+class Employee implements Cloneable {
+    int id;
+    String name;
+
+    Employee(int id, String name) {
+        this.id = id;
+        this.name = name;
+    }
+
+    @Override
+    public Object clone() throws CloneNotSupportedException {
+        return super.clone();
+    }
+}
+
+public class Main {
+    public static void main(String[] args) throws Exception {
+        Employee e1 = new Employee(1001, "John");
+        Employee e2 = (Employee) e1.clone();
+
+        System.out.println(e1.id + " - " + e1.name);
+        System.out.println(e2.id + " - " + e2.name);
+    }
+}
+```
+
+Output:
+
+```
+1001 - John
+1001 - John
+```
+
+Two separate objects created successfully.
+
+
+
+## 11. Summary
+
+* Cloneable is a **marker interface** that enables object cloning.
+* clone() must be overridden from the Object class.
+* Default implementation performs **shallow copy**.
+* Deep copy must be coded manually.
+* Copy constructors are often cleaner alternatives.
+* clone() is powerful but should be used carefully.
+
+This completes **Cloneable Interface in Java**.
+
+Written By: <a href="https://www.linkedin.com/in/shivasrivastava1/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer"> Shiva Srivastava <ExternalLink className="w-4 h-4" /></a>
