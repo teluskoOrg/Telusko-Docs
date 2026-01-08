@@ -1,0 +1,184 @@
+---
+title: Filter Function
+---
+
+<Steps>
+<Video id="VIC99LKNopg" />
+
+---
+
+
+When working with data, especially large datasets, it is common to:
+
+* Select specific values based on conditions
+* Remove unwanted elements
+* Extract meaningful subsets of data
+
+Python provides the **`filter()` function** to perform such operations efficiently and cleanly.
+
+
+## What is the `filter()` Function?
+
+The **`filter()` function** is a built-in Python function used to **extract elements from an iterable** (such as a list or tuple) based on a condition.
+
+It works by:
+
+* Applying a function to each element
+* Keeping only those elements for which the function returns **True**
+* Discarding all others
+
+
+---
+
+
+## Syntax of `filter()`
+
+```python
+filter(function, iterable)
+```
+
+### Explanation:
+
+* **function** → A function that returns `True` or `False`
+* **iterable** → A collection of elements (list, tuple, etc.)
+* **return value** → A `filter` object (iterator)
+
+To view the result, the filter object is usually converted into a list.
+
+![Working_of_Filter](/images/python/filter_function.png)
+
+
+---
+
+
+## Using `filter()` with a Custom Function
+
+### Example 1: Function Always Returning `True`
+
+```python
+nums = [4, 2, 9, 7, 5, 1, 6, 8]
+
+def is_even(n):
+    return True
+
+evens = list(filter(is_even, nums))
+print(evens)
+```
+
+**Output:**
+
+```
+[4, 2, 9, 7, 5, 1, 6, 8]
+```
+
+- All values are included because the function always returns `True`.
+
+
+### Example 2: Function Always Returning `False`
+
+```python
+def is_even(n):
+    return False
+
+evens = list(filter(is_even, nums))
+print(evens)
+```
+
+**Output:**
+
+```
+[]
+```
+
+- No values are included because the function always returns `False`.
+
+
+### Example 3: Filtering Even Numbers
+
+```python
+def is_even(n):
+    return n % 2 == 0
+
+evens = list(filter(is_even, nums))
+print(evens)
+```
+
+**Output:**
+
+```
+[4, 2, 6, 8]
+```
+
+- Only values satisfying the condition are included.
+
+
+---
+
+
+## Using `filter()` with Lambda Functions
+
+Lambda functions allow filtering logic to be written **inline**, without defining a separate function.
+
+### Example Using Lambda
+
+```python
+nums = [4, 2, 9, 7, 5, 1, 6, 8]
+
+evens = list(filter(lambda n: n % 2 == 0, nums))
+print(evens)
+```
+
+**Output:**
+
+```
+[4, 2, 6, 8]
+```
+
+### Benefits:
+
+* More concise
+* Improves readability for simple conditions
+* Ideal for one-time filtering logic
+
+
+---
+
+
+## Lazy Evaluation in `filter()`
+
+The `filter()` function uses **lazy evaluation**, meaning elements are processed **one at a time** rather than all at once.
+
+Results are produced only when requested, which helps **optimize memory usage** and improves performance when working with large datasets.
+
+
+---
+
+
+## Advantages of Using `filter()`
+
+* Removes the need for explicit loops
+* Produces cleaner and more readable code
+* Efficient for large collections due to lazy evaluation
+* Works seamlessly with lambda functions
+* Keeps the original data unchanged
+
+![Working_of_Filter_Method](/images/python/filter_method.png)
+
+
+---
+
+
+## Summary
+
+* `filter()` selects elements based on a boolean condition
+* Accepts a function and an iterable as input
+* Returns an iterator (commonly converted to a list)
+* Supports concise logic using lambda expressions
+* Processes data efficiently using lazy evaluation
+* Frequently used alongside `map()` and `reduce()`
+
+The `filter()` function is a powerful and elegant tool for **clean, efficient, and readable data filtering in Python**.
+
+</Steps>
+
+Written By: <a href="https://www.linkedin.com/in/muskangarg03/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer"> Muskan Garg <ExternalLink className="w-4 h-4" /></a>
