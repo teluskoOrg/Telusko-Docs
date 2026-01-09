@@ -1,0 +1,178 @@
+---
+title: Map and Reduce Function
+---
+
+<Steps>
+<Video id="5IbXBarcOjw" />
+
+---
+
+Python supports **functional programming concepts**, where functions are treated as first-class objects.
+The built-in functions `filter()`, `map()`, and `reduce()` help process collections in a **clean, concise, and efficient** manner.
+
+These functions are commonly used for:
+* Data transformation
+* Data filtering
+* Data aggregation
+
+
+## Overview of Map, Filter, and Reduce
+
+### `filter()`
+
+* Selects elements from an iterable based on a **condition**
+* Keeps only values for which the function returns `True`
+* Returns a **filter object**
+
+### `map()`
+
+* Transforms each element of an iterable
+* Applies the same function to every element independently
+* Returns a **map object**
+
+### `reduce()`
+
+* Combines all elements of an iterable into **a single value**
+* Uses a function that takes **two arguments**
+* Available in the functools module
+
+![Advantages_of_Map_Reduce_Filter](/images/python/filter_map_reduce.png)
+
+---
+
+
+## Real-World Problem Statement
+
+Given a list of numbers:
+
+1. **Extract even numbers**
+2. **Double each even number**
+3. **Calculate the sum of the doubled values**
+
+<Step>
+### Step 1: Filtering Even Numbers
+
+```python
+nums = [4, 2, 9, 7, 5, 1, 6, 8]
+
+evens = list(filter(lambda n: n % 2 == 0, nums))
+print("Evens:", evens)
+```
+
+**Output:**
+
+```
+Evens: [4, 2, 6, 8]
+```
+
+✔ `filter()` keeps only values that satisfy the condition
+✔ Lambda function avoids defining a separate function
+
+</Step>
+
+<Step>
+### Step 2: Mapping (Doubling the Values)
+
+**Using a Named Function**
+
+```python
+def double_it(n):
+    return n * 2
+
+doubles = list(map(double_it, evens))
+print("Doubles:", doubles)
+```
+
+**Using Lambda**
+
+```python
+doubles = list(map(lambda n: n * 2, evens))
+print("Doubles:", doubles)
+```
+
+**Output:**
+
+```
+Doubles: [8, 4, 12, 16]
+```
+
+✔ `map()` applies the function to each element
+✔ Each value is transformed independently
+
+</Step>
+
+<Step>
+### Step 3: Reducing (Summing the Values)
+
+**Using a Named Function**
+
+```python
+from functools import reduce
+
+def sum_it(a, b):
+    return a + b
+
+total = reduce(sum_it, doubles)
+print("Total:", total)
+```
+
+**Using Lambda**
+
+```python
+total = reduce(lambda a, b: a + b, doubles)
+print("Total:", total)
+```
+
+**Output:**
+
+```
+Total: 40
+```
+
+✔ `reduce()` combines values step by step
+✔ Final result is a **single value**
+
+</Step>
+
+
+## Complete Example
+
+```python
+from functools import reduce
+
+nums = [4, 2, 9, 7, 5, 1, 6, 8]
+
+evens = list(filter(lambda n: n % 2 == 0, nums))
+doubles = list(map(lambda n: n * 2, evens))
+total = reduce(lambda a, b: a + b, doubles)
+
+print("Evens:", evens)
+print("Doubles:", doubles)
+print("Total:", total)
+```
+
+**Output:**
+
+```
+Evens: [4, 2, 6, 8]
+Doubles: [8, 4, 12, 16]
+Total: 40
+```
+
+![Functions_Usage](/images/python/filter_map_reduce_usage.png)
+
+
+---
+
+## Summary
+
+* `filter()` selects elements from a collection based on a condition, keeping only the values that satisfy the given logic.
+* `map()` transforms each element in a collection by applying a function, producing a new set of modified values.
+* `reduce()` aggregates all elements of a collection into a single result by repeatedly combining values.
+* Lambda functions enable compact, one-line function definitions, making filter(), map(), and reduce() more concise and readable.
+
+Together, these functions form a powerful functional programming pipeline for clean, efficient, and expressive data processing in Python.
+
+</Steps>
+
+Written By: <a href="https://www.linkedin.com/in/muskangarg03/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer"> Muskan Garg <ExternalLink className="w-4 h-4" /></a>

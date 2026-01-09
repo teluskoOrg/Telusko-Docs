@@ -2,6 +2,7 @@
     "pages":[
         "higher-order-function.mdx",
         "anonymous-function-using-lambda.mdx",
-        "filter-function.mdx"
+        "filter-function.mdx",
+        "map-reduce-function.mdx"
     ]
 } 
