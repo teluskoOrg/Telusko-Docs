@@ -3,6 +3,7 @@
         "higher-order-function.mdx",
         "anonymous-function-using-lambda.mdx",
         "filter-function.mdx",
-        "map-reduce-function.mdx"
+        "map-reduce-function.mdx",
+        "inner-function.mdx"
     ]
 } 

@@ -1,0 +1,263 @@
+---
+title: Inner Function
+---
+
+<Steps>
+<Video id="BFSoFngd0UQ" />
+
+---
+
+# Inner Functions in Python
+
+## What is an Inner Function?
+
+An **inner function** is a function defined **inside another function**.
+It is **local to the outer function** and cannot be accessed directly from outside its scope.
+
+* Inner functions help organize code logically.
+* They are commonly used for **helper logic**, **encapsulation**, and **decorators**.
+
+
+### Scope and Accessibility
+
+* An inner function is **only accessible within its outer function**.
+* Trying to call it directly from outside results in a `NameError`.
+
+### Example
+
+```python
+def outer():
+    print("In outer function")
+    def inner():
+        print("In inner function")
+
+outer()
+inner()
+```
+
+**Output**
+
+```
+In outer function
+NameError: name 'inner' is not defined
+```
+
+This happens because `inner()` exists only inside `outer()`.
+
+
+---
+
+<Step>
+## Calling an Inner Function from the Outer Function
+
+An inner function can be called **within the outer function itself**.
+
+```python
+def outer():
+    print("In Outer function")
+    def inner():
+        print("In Inner function")
+    inner()
+
+outer()
+```
+
+**Output**
+
+```
+In Outer function
+In Inner function
+```
+
+
+</Step>
+
+---
+
+<Step>
+## Returning the Result of an Inner Function
+
+When the **outer function calls the inner function and returns its result**, the inner function is executed immediately, and its return value is passed back to the caller.
+
+* The inner function runs during the execution of the outer function.
+* The outer function does not return the function, only the final value produced by the inner function.
+
+```python
+def outer():
+    print("In Outer function")
+    def inner():
+        print("In Inner function")
+        return 5
+    return inner()
+
+result = outer()
+print(result)
+```
+
+**Output**
+
+```
+In Outer function
+In Inner function
+5
+```
+
+**If no value is returned, Python returns `None` by default.**
+```python
+def outer():
+    print("In Outer function")
+    def inner():
+        print("In Inner function")
+
+    return inner()
+
+result = outer()
+print(result)
+```
+
+**Output**
+
+```
+In Outer function
+In Inner function
+None
+```
+
+> Use this approach when the inner function is only needed to compute a value and does not need to be reused later.
+
+</Step>
+
+
+---
+
+<Step>
+## Returning the Inner Function Itself (Closures)
+
+When the outer function **returns the inner function without parentheses**, it returns a **function reference**, not its execution result.
+* The inner function is **not executed immediately.**
+* The returned function can be stored in a variable and called later.
+* This creates a **closure**, where the inner function retains access to the outer function’s variables even after the outer function has finished executing.
+
+```python
+def outer():
+    print("In Outer function")
+    def inner():
+        print("In Inner function")
+    return inner
+
+func = outer()
+print(func)
+```
+
+**Output**
+
+```
+In Outer function
+<function outer.<locals>.inner at 0x...>
+```
+
+Here, `func` now holds a reference to the inner function.
+
+> Returning a function enables **delayed execution** and preserves the outer function’s context.
+
+</Step>
+
+
+---
+
+<Step>
+## Calling the Returned Inner Function
+
+Once an inner function is returned and assigned to a variable, it behaves like a normal function.
+* The function can be invoked multiple times.
+* It retains access to variables from the outer function (closure behavior).
+* This enables flexible and reusable logic.
+
+```python
+def outer():
+    print("In Outer function")
+    def inner():
+        print("In Inner function")
+    return inner
+
+func = outer()
+func()
+```
+
+**Output**
+
+```
+In Outer function
+In Inner function
+```
+
+> Calling a returned inner function allows execution **outside the original scope**, while still maintaining access to the outer function’s data.
+
+</Step>
+
+
+---
+
+<Step>
+## Inner Functions with Parameters
+
+Inner functions can accept **parameters**, just like regular functions.
+* Parameters allow dynamic input during execution.
+* Combined with closures, this allows functions to operate on both:
+    - Values passed during the outer function call
+    - Values passed during the inner function call
+
+This design supports customizable behavior and is widely used in decorators and functional programming patterns.
+
+```python
+def outer():
+    print("In Outer function")
+    def inner(num):
+        print("In Inner function", num)
+    return inner
+
+func = outer()
+func(5)
+```
+
+**Output**
+
+```
+In Outer function
+In Inner function 5
+```
+
+> Parameters make inner functions adaptable and reusable while preserving outer scope data.
+
+
+### Closures and Variable Access
+
+When an inner function is returned, it forms a **closure**, meaning:
+
+* It **remembers and can access variables** from the outer function even after the outer function has finished execution.
+
+To **modify** outer variables, use the `nonlocal` keyword.
+
+</Step>
+
+
+---
+
+
+![Inner_Functions](/images/python/inner_function_python.png)
+
+
+---
+
+
+## Summary
+
+* Inner functions are defined inside outer functions to **encapsulate logic** and avoid polluting the global namespace.
+* They are **accessible only within the outer function**, improving code safety and control.
+* Inner functions can be **called immediately or returned and stored** for later execution.
+* Returning an inner function creates a **closure**, preserving access to outer variables.
+* They are commonly used in **decorators, callbacks, and functional programming** for reusable and flexible designs.
+
+</Steps>
+
+Written By: <a href="https://www.linkedin.com/in/muskangarg03/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer"> Muskan Garg <ExternalLink className="w-4 h-4" /></a>
