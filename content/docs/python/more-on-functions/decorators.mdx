@@ -1,0 +1,252 @@
+---
+title: Decorators
+---
+
+<Steps>
+<Video id="vAFl6tvrxOo" />
+
+---
+
+
+## What is a Decorator?
+
+A **decorator** in Python is a special function used to **modify or extend the behavior of another function without changing its original code**.
+
+In simple terms:
+
+* A decorator **wraps** an existing function
+* Adds **extra functionality** before or after the function runs
+* Keeps the original function logic untouched
+
+This makes decorators a powerful tool for writing **clean, reusable, and maintainable code**.
+
+
+<Step>
+### Structure of a Decorator
+
+A decorator typically has **three layers**:
+
+1. **Outer function** – accepts the target function
+2. **Wrapper function** – adds extra behavior
+3. **Return statement** – returns the wrapper
+
+This structure enables function replacement without modifying original code.
+
+</Step>
+
+
+<Step>
+### Functions as First-Class Objects
+
+Decorators are possible in Python because functions are **first-class objects**, meaning:
+* Functions can be passed as arguments
+* Functions can be returned from other functions
+* Functions can be assigned to variables
+
+This flexibility enables functions to wrap and enhance other functions dynamically
+
+</Step>
+
+
+<Step>
+### Why Decorators Are Used
+
+Decorators help solve common programming problems such as:
+* Eliminating repeated code
+* Separating core logic from auxiliary behavior
+* Applying the same functionality across multiple functions
+* Improving readability and maintainability
+
+They are especially useful for implementing cross-cutting concerns like logging, validation, and security checks.
+
+</Step>
+
+
+---
+
+
+## Basic Problem Example (Without Decorators)
+
+Consider functions like `sub()` and `divide()` where the larger number should always come first:
+
+```python
+def sub(a, b):
+    if a < b:
+        a, b = b, a
+    return a - b
+
+def divide(a, b):
+    if a < b:
+        a, b = b, a
+    return a / b
+```
+
+Here, **the same logic is repeated** in both functions.
+
+
+---
+
+
+## Creating a Simple Decorator
+
+A decorator:
+1. Accepts a function as input
+2. Defines an inner wrapper function
+3. Adds extra behavior inside the wrapper
+4. Returns the wrapper function
+
+![Decorators_in_Python](/images/python/decorators_python.png)
+
+
+### Example: `greater_first` Decorator
+
+This decorator ensures the larger number is always the first argument.
+
+```python
+def greater_first(func):
+    def wrap(a, b):
+        if a < b:
+            a, b = b, a
+        return func(a, b)
+    return wrap
+```
+
+
+### Applying a Decorator Using `@` Syntax
+
+```python
+@greater_first
+def sub(a, b):
+    return a - b
+
+@greater_first
+def divide(a, b):
+    return a / b
+```
+
+**Output:**
+
+```python
+print(divide(2, 4))  # 2.0
+print(sub(2, 4))     # 2
+```
+
+> This syntax is equivalent to:
+
+```python
+sub = greater_first(sub)
+divide = greater_first(divide)
+```
+
+
+---
+
+
+## Adding Logging Using Decorators
+
+Decorators are commonly used for **logging function calls**.
+
+
+### Logging Decorator Example
+
+```python
+def log_deco(func):
+    def wrap(a, b):
+        print("Values:", a, b)
+        result = func(a, b)
+        print("Result:", result)
+        return result
+    return wrap
+```
+
+```python
+@log_deco
+def sub(a, b):
+    return a - b
+```
+
+**Output:**
+
+```
+Values: 2 4
+Result: 2
+```
+
+
+### Decorators Are Function-Specific
+
+A decorator affects **only the function it is applied to**.
+
+```python
+@log_deco
+def sub(a, b):
+    return a - b
+
+def divide(a, b):
+    return a / b
+```
+
+Here:
+
+* `sub()` is logged
+* `divide()` behaves normally
+
+
+---
+
+
+## Making Decorators Generic with `*args` and `**kwargs`
+
+To allow a decorator to work with **any number of arguments**, use `*args` and `**kwargs`.
+
+```python
+def log_deco(func):
+    def wrap(*args, **kwargs):
+        print("Values:", args)
+        result = func(*args, **kwargs)
+        print("Result:", result)
+        return result
+    return wrap
+```
+
+This makes the decorator reusable for:
+
+* Different argument counts
+* Different function signatures
+
+
+### Example
+
+```python
+@log_deco
+def add(a, b, c):
+    return a + b + c
+```
+
+**Output:**
+
+```
+Values: (5, 7, 6)
+Result: 18
+```
+
+
+---
+
+
+![Usage_of_Decoratos](/images/python/decoratos_usecase.png)
+
+
+---
+
+
+## Summary
+* Decorators allow you to modify or extend a function’s behavior without altering its original source code.
+* They are implemented using inner functions and closures, enabling additional logic to wrap existing functions.
+* Decorators are applied using the @decorator_name syntax, providing a clear and readable way to enhance functions.
+* They promote code reuse, separation of concerns, and cleaner program design by eliminating repetitive logic.
+* Decorators are a core feature of advanced Python programming, widely used in frameworks, libraries, and real-world applications.
+
+</Steps>
+
+Written By: <a href="https://www.linkedin.com/in/muskangarg03/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer"> Muskan Garg <ExternalLink className="w-4 h-4" /></a>

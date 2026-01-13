@@ -4,6 +4,7 @@
         "anonymous-function-using-lambda.mdx",
         "filter-function.mdx",
         "map-reduce-function.mdx",
-        "inner-function.mdx"
+        "inner-function.mdx",
+        "decorators.mdx"
     ]
 } 
