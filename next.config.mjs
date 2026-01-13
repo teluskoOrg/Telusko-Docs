@@ -5,7 +5,6 @@ const withMDX = createMDX();
 /** @type {import('next').NextConfig} */
 const config = {
   reactStrictMode: true,
-  output: 'standalone',
   images: {
     domains: ["img.youtube.com"],
   },
