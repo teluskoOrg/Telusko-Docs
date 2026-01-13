@@ -1,0 +1,223 @@
+---
+title: Access Modifiers
+---
+
+## 1. Introduction
+
+Access modifiers in Java define the **visibility** and **accessibility** of classes, methods, variables, and constructors.  
+They help implement security, encapsulation, and proper structuring of code.
+
+Java provides four primary access modifiers:
+
+1. **public**  
+2. **protected**  
+3. **default** (no modifier)  
+4. **private**  
+
+Each modifier controls how members of a class can be accessed within the program.
+
+
+
+## 2. Types of Access Modifiers
+
+### 2.1 public
+
+- Accessible from **anywhere**  
+- No restrictions  
+- Commonly used for APIs, utility classes, and entry points  
+
+Example:
+
+```java
+public class Student {
+    public String name;
+}
+````
+
+
+
+### 2.2 private
+
+* Accessible **only within the same class**
+* Most restrictive
+* Used to implement **encapsulation**
+
+Example:
+
+```java
+class Student {
+    private int age; // cannot access from outside class
+}
+```
+
+Using private forces use of **getters & setters**, enabling controlled access.
+
+
+
+### 2.3 default (package-private)
+
+If no modifier is written, Java uses **default access**.
+
+* Accessible within the **same package**
+* Not accessible from outside its package
+
+Example:
+
+```java
+class Student { // default class
+    String course; // default variable
+}
+```
+
+
+
+### 2.4 protected
+
+* Accessible in:
+
+  * Same class
+  * Same package
+  * Subclasses in **other packages** through inheritance
+
+Example:
+
+```java
+class A {
+    protected int value;
+}
+```
+
+Subclass in another package can access it using inheritance.
+
+
+
+![encapsulation](/images/java/encapsulation/access1.png)
+
+
+
+## 3. Accessibility Comparison Table
+
+| Modifier  | Same Class | Same Package | Subclass (Different Package) | Outside Package |
+| --------- | ---------- | ------------ | ---------------------------- | --------------- |
+| public    | Yes        | Yes          | Yes                          | Yes             |
+| protected | Yes        | Yes          | Yes                          | No              |
+| default   | Yes        | Yes          | No                           | No              |
+| private   | Yes        | No           | No                           | No              |
+
+
+
+## 4. Why Access Modifiers Are Important
+
+1. **Encapsulation**
+   Prevents direct access to internal data.
+
+2. **Security**
+   Restricts unauthorized usage.
+
+3. **API Design**
+   Exposes only what is necessary.
+
+4. **Code Maintainability**
+   Reduces accidental misuse of internal code.
+
+
+
+## 5. Practical Examples
+
+### Example 1 — private and getters/setters
+
+```java
+class Student {
+    private int age;
+
+    public void setAge(int age) {
+        if(age > 0)
+            this.age = age;
+    }
+
+    public int getAge() {
+        return age;
+    }
+}
+```
+
+
+
+### Example 2 — protected across packages
+
+```java
+package pkg1;
+
+public class A {
+    protected int marks = 90;
+}
+```
+
+Subclass in another package:
+
+```java
+package pkg2;
+import pkg1.A;
+
+public class B extends A {
+    public void display() {
+        System.out.println(marks); // allowed
+    }
+}
+```
+
+
+
+### Example 3 — default access
+
+```java
+package pack1;
+
+class A {
+    int x = 10; // default
+}
+```
+
+Cannot access default members from another package:
+
+```java
+package pack2;
+
+import pack1.A; // ERROR - cannot import default class
+```
+
+
+
+## 6. Choosing the Right Modifier
+
+| Use Case                           | Recommended Modifier |
+| ---------------------------------- | -------------------- |
+| Helper methods not meant for users | private              |
+| Class-level constants              | public static final  |
+| API methods                        | public               |
+| Fields related to inheritance      | protected            |
+| Internal package utilities         | default              |
+
+
+
+## 7. Common Mistakes
+
+1. Making fields public → breaks encapsulation
+2. Assuming protected is available everywhere
+3. Using default unintentionally
+4. Overusing public for everything
+
+
+
+## 8. Summary
+
+* Access modifiers control **visibility and accessibility**.
+* private → strongest restriction
+* public → no restriction
+* default → package-level access
+* protected → package + subclass access
+* Essential for **encapsulation**, **API design**, and **secure coding**.
+
+This completes **Access Modifiers in Java**.
+
+Written By: <a href="https://www.linkedin.com/in/shivasrivastava1/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer"> Shiva Srivastava <ExternalLink className="w-4 h-4" /></a>

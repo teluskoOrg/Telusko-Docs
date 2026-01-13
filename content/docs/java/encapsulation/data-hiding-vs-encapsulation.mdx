@@ -1,0 +1,195 @@
+---
+title: Data Hiding vs Encapsulation
+---
+
+## 1. Introduction
+
+In Java and object-oriented programming, two concepts often appear together:
+
+- **Data Hiding**
+- **Encapsulation**
+
+Although they are closely related, they are **not the same**.  
+Understanding the difference is essential for writing secure, maintainable, and clean object-oriented code.
+
+This chapter explains both concepts in depth and demonstrates how they work together to protect data and control access.
+
+
+
+## 2. What Is Data Hiding?
+
+**Data Hiding** means restricting direct access to the internal data of a class.  
+The goal is to protect sensitive information from being misused or modified incorrectly.
+
+### Key Points
+
+- Achieved using **private access modifiers**
+- Prevents external code from directly accessing fields
+- Enforces security and ensures correct usage
+- Encourages controlled access through methods
+
+### Example (Data Hiding)
+
+```java
+class BankAccount {
+    private double balance; // hidden data
+
+    public void deposit(double amt) {
+        if (amt > 0) balance += amt;
+    }
+
+    public double getBalance() {
+        return balance;
+    }
+}
+````
+
+Here, `balance` is hidden from outside access.
+No other class can do:
+
+```java
+acc.balance = 5000; // Not allowed
+```
+
+The data remains protected.
+
+
+
+![encapsulation](/images/java/encapsulation/data-hiding1.png)
+
+
+
+## 3. What Is Encapsulation?
+
+**Encapsulation** is the process of bundling:
+
+* Data (fields)
+* Behavior (methods)
+
+together into a single unit (a class) and controlling how that data is accessed or modified.
+
+### Key Points
+
+* Encapsulation = Data + Methods bundled together
+* Use **public getters and setters** to control access
+* Provides validation and control logic
+* Ensures the object’s internal state remains consistent
+
+### Example (Encapsulation)
+
+```java
+class Student {
+    private int age;
+
+    public void setAge(int age) {
+        if (age > 0 && age <= 120) {
+            this.age = age;
+        }
+    }
+
+    public int getAge() {
+        return age;
+    }
+}
+```
+
+This class **encapsulates** the field `age` and exposes safe access methods.
+
+
+
+## 4. Difference Between Data Hiding and Encapsulation
+
+Although related, they serve different purposes.
+
+### **Data Hiding → Security**
+
+### **Encapsulation → Implementation + Control**
+
+| Feature     | Data Hiding                           | Encapsulation                        |
+| ----------- | ------------------------------------- | ------------------------------------ |
+| Definition  | Restricting access to data            | Binding data and methods together    |
+| Achieved by | private variables                     | class structure + getters/setters    |
+| Purpose     | Protect data from unauthorized access | Manage and control data operations   |
+| Focus       | Security                              | Implementation and behavior          |
+| Example     | Making fields private                 | Using getters/setters to modify data |
+
+
+
+### Example Demonstrating Both Concepts Together
+
+```java
+class Employee {
+    private double salary; // data hidden
+
+    // Encapsulation via controlled access
+    public void setSalary(double salary) {
+        if (salary > 0) this.salary = salary;
+    }
+
+    public double getSalary() {
+        return salary;
+    }
+}
+```
+
+* `salary` is hidden → **data hiding**
+* Controlled operations through methods → **encapsulation**
+
+Both concepts work together to create a secure and controlled class design.
+
+
+## 5. Why Both Are Needed
+
+### 5.1 Prevent Misuse
+
+Without data hiding, anyone can corrupt the state:
+
+```java
+student.age = -10; // invalid
+```
+
+### 5.2 Ensure Valid State
+
+Encapsulation allows validation:
+
+```java
+setAge(-10); // will not modify age
+```
+
+### 5.3 Improve Maintainability
+
+Internal implementation can change without breaking external code.
+
+### 5.4 Enhances Code Robustness
+
+Objects remain consistent and predictable.
+
+
+
+## 6. Common Misunderstandings
+
+### Misconception 1: Data hiding and encapsulation are the same.
+
+No.
+Data hiding is a **feature**, encapsulation is a **process**.
+
+### Misconception 2: Encapsulation is only about getters/setters.
+
+Encapsulation is the principle of combining data and behavior — getters/setters are just one way to implement it.
+
+### Misconception 3: You can have data hiding without encapsulation.
+
+Yes, but encapsulation usually builds on top of data hiding to provide controlled access.
+
+
+
+## 7. Summary
+
+* **Data hiding** protects internal data using access modifiers like **private**.
+* **Encapsulation** bundles data and methods, providing controlled access through public interfaces.
+* Data hiding ensures **security**, while encapsulation ensures **control and consistency**.
+* Both concepts work together to create reliable and maintainable object-oriented systems.
+
+This completes **Data Hiding vs Encapsulation**.
+
+Written By: <a href="https://www.linkedin.com/in/shivasrivastava1/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer"> Shiva Srivastava <ExternalLink className="w-4 h-4" /></a>

@@ -1,0 +1,230 @@
+---
+title: Immutable Class
+---
+
+## 1. Introduction
+
+An **immutable object** is an object whose state **cannot be changed after it is created**.  
+Strings in Java are the best-known example of immutability.
+
+Creating immutable classes is a key practice in:
+
+- Safe multithreading  
+- Security  
+- Functional programming  
+- Cache implementations  
+- Preventing accidental modification of shared objects  
+
+Java provides the ability to design custom immutable classes using certain rules.
+
+
+
+## 2. What Is an Immutable Class?
+
+An immutable class is a class where:
+
+- All fields are fixed after object creation  
+- No method can modify object state  
+- Any modification creates a **new object** instead of changing the old one  
+
+Example of immutable objects:  
+`String`, `Integer`, `LocalDate`, `BigDecimal`
+
+
+
+### Benefits of Immutability
+
+- Thread-safe without synchronization  
+- Easy to use, reason about, and test  
+- Reduces bugs caused by unexpected changes  
+- Ideal for use as keys in HashMap  
+- More secure for sensitive data  
+
+
+![encapsulation](/images/java/encapsulation/immutable1.png)
+
+
+## 3. Rules for Creating an Immutable Class
+
+To make a class immutable, follow these rules:
+
+### 1. Declare the class as **final**
+Prevents subclassing, which might add mutable behavior.
+
+### 2. Make all fields **private**
+Prevents direct modification.
+
+### 3. Make all fields **final**
+Ensures fields are assigned once.
+
+### 4. No setters
+Do not provide any setter methods.
+
+### 5. Initialize fields in the constructor only
+
+### 6. Perform **deep copy** of mutable fields
+
+### 7. Return copies instead of actual objects for getters
+
+
+
+## 4. Example: Immutable Class (Basic)
+
+```java
+final class Student {
+    private final int id;
+    private final String name;
+
+    public Student(int id, String name) {
+        this.id = id;
+        this.name = name;
+    }
+
+    public int getId() { return id; }
+
+    public String getName() { return name; }
+}
+````
+
+This class is fully immutable.
+
+
+
+## 5. Example: Immutable Class with Mutable Fields
+
+If a class contains mutable types (arrays, lists, custom objects), we must return **copies**.
+
+Example:
+
+```java
+final class Employee {
+    private final String name;
+    private final Address address; // mutable object
+
+    public Employee(String name, Address address) {
+        this.name = name;
+        this.address = new Address(address.getCity()); // deep copy
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public Address getAddress() {
+        return new Address(address.getCity()); // return copy
+    }
+}
+```
+
+The original Address object remains protected.
+
+
+
+### Importance of Deep Copy
+
+Without deep copy:
+
+```java
+Address a = emp.getAddress();
+a.setCity("New York"); // modifies Employee’s internal state → breaks immutability
+```
+
+So getters must always return **a new object**, not the original.
+
+
+
+### Image prompt
+
+"Visual showing a mutable Address object outside the immutable Employee, but Employee safely returns cloned copies to prevent modifications."
+
+
+
+## 6. Advantages of Immutable Classes
+
+### 6.1 Thread Safety
+
+Immutable objects can be shared across threads without fear of race conditions.
+
+### 6.2 Caching and Optimization
+
+JVM can safely reuse immutable objects (as seen with String pool).
+
+### 6.3 Predictability
+
+No unexpected changes → fewer bugs.
+
+### 6.4 Security
+
+State remains protected from malicious or accidental modification.
+
+
+
+## 7. Disadvantages of Immutable Classes
+
+* More object creation → higher memory use
+* Can be less efficient for frequently updated data
+* Deep copying can be expensive for large objects
+
+These disadvantages are often outweighed by safety and clarity.
+
+
+
+## 8. Real-World Examples of Immutable Classes
+
+* `String`
+* `Integer`, `Double`, `Boolean`
+* `LocalDate`, `LocalTime`, `LocalDateTime`
+* `BigInteger`, `BigDecimal`
+* Enum types
+
+All widely used for thread-safe, predictable behavior.
+
+
+
+## 9. Complete Example Demonstrating Immutability
+
+```java
+final class Person {
+    private final String name;
+    private final int age;
+    private final Address address;
+
+    public Person(String name, int age, Address address) {
+        this.name = name;
+        this.age = age;
+        this.address = new Address(address.getCity());
+    }
+
+    public String getName() { return name; }
+
+    public int getAge() { return age; }
+
+    public Address getAddress() {
+        return new Address(address.getCity());
+    }
+}
+```
+
+Attempt to modify:
+
+```java
+Person p = new Person("John", 25, new Address("Delhi"));
+Address a = p.getAddress();
+a.setCity("Mumbai");
+```
+
+Person still holds "Delhi", proving immutability.
+
+
+
+## 10. Summary
+
+* Immutable classes cannot be modified after creation.
+* Must use private final fields, no setters, and deep copies.
+* Immutable objects are thread-safe, secure, and predictable.
+* Widely used in Java core libraries.
+* Perfect for safe shared data and functional programming patterns.
+
+This completes **Immutable Class in Java**.
+
+Written By: <a href="https://www.linkedin.com/in/shivasrivastava1/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer"> Shiva Srivastava <ExternalLink className="w-4 h-4" /></a>

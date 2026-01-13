@@ -14,7 +14,7 @@
         "methods-and-constructors",
 
         "classes-and-objects",
-        "DISABLED-encapsulation",
+        "encapsulation",
         "DISABLED-inheritance",
         "DISABLED-polymorphism",
         "DISABLED-abstraction-and-interfaces",
