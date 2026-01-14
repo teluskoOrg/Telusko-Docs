@@ -5,6 +5,7 @@
         "filter-function.mdx",
         "map-reduce-function.mdx",
         "inner-function.mdx",
-        "decorators.mdx"
+        "decorators.mdx",
+        "modules-and-packages.mdx"
     ]
 } 
