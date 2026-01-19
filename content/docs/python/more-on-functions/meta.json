@@ -6,6 +6,7 @@
         "map-reduce-function.mdx",
         "inner-function.mdx",
         "decorators.mdx",
-        "modules-and-packages.mdx"
+        "modules-and-packages.mdx",
+        "special-variable-name.mdx"
     ]
 } 

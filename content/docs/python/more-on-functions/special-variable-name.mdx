@@ -1,0 +1,160 @@
+---
+title: Special Variable Name 
+---
+
+
+<Steps>
+<Video id="QjI-g_HRmMw" />
+
+---
+
+
+## What Is `__name__`?
+
+`__name__` is a **special built-in variable** in Python that stores the **name of the current module**.
+Its value changes depending on **how the Python file is executed**.
+
+* If a file is **run directly**, `__name__` is set to `"__main__"`
+* If a file is **imported as a module**, `__name__` is set to the **module’s filename** (without `.py`)
+
+This behavior allows Python programs to **distinguish between direct execution and import usage**.
+
+
+---
+
+
+## Why Is `__name__` Important?
+
+When a Python file is imported:
+
+* All top-level statements execute immediately.
+* This can cause unexpected output or side effects.
+
+To avoid this, Python provides the `__name__` check to control what code runs in different contexts.
+
+
+**`__name__` and `globals()`**
+
+```python
+print(globals())
+print(__name__)
+```
+
+* `globals()` displays all global variables in the current module
+* `__name__` appears as part of the global namespace
+* Helps in debugging and understanding runtime context
+
+
+---
+
+
+## The `if __name__ == "__main__":` Guard
+
+This construct ensures that certain code runs **only when the file is executed directly**, not when imported.
+
+```python
+if __name__ == "__main__":
+    # code runs only when file is executed directly
+```
+
+### Key Benefits:
+
+* Prevents unwanted execution during imports
+* Keeps modules clean and reusable
+* Separates **test/debug code** from reusable logic
+
+### Example
+
+**`calc.py`**
+
+```python
+print("In calc", __name__)
+```
+
+**`demo.py`**
+
+```python
+import calc
+print("In demo", __name__)
+```
+
+**Output:**
+
+```text
+$ python calc.py
+In calc __main__
+
+$ python demo.py
+In calc calc
+In demo __main__
+```
+
+**Explanation:**
+
+* `calc.py` run directly → `__name__ == "__main__"`
+* `calc.py` imported → `__name__ == "calc"`
+* `demo.py` is the entry point → `__name__ == "__main__"`
+
+
+---
+
+
+## Practical Use Case: Protecting Test Code
+
+### `calc.py`
+
+```python
+def add():
+    return "addition"
+
+def sub():
+    return "subtraction"
+
+if __name__ == "__main__":
+    print(add())
+    print(sub())
+```
+
+### `demo.py`
+
+```python
+from calc import *
+
+result = add()
+print("In demo", result)
+```
+
+### Output:
+
+```text
+$ python calc.py
+addition
+subtraction
+
+$ python demo.py
+In demo addition
+```
+
+### Explanation:
+
+* Test code runs **only** when `calc.py` is executed directly
+* Importing `calc` does not trigger test output
+
+![Special_Variable_in_Python](/images/python/special_variable.png)
+
+
+---
+
+
+## Summary
+
+* `__name__` identifies the **execution context** of a Python module at runtime.
+* A value of `"__main__"` indicates that the script is being **executed directly** as the program’s entry point.
+* Helps **prevent unintended code execution** when modules are imported into other programs.
+* Promotes **clean separation** between reusable logic and test or execution-specific code.
+* Enables writing **modular, reusable, and maintainable** Python applications following best practices.
+
+
+</Steps>
+
+Written By: <a href="https://www.linkedin.com/in/muskangarg03/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer"> Muskan Garg <ExternalLink className="w-4 h-4" /></a>
