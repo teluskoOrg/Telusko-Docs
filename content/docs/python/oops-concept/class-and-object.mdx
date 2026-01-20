@@ -1,0 +1,203 @@
+---
+title: Class and Object
+---
+
+<Steps>
+<Video id="8AScQuqLp9U" />
+
+---
+
+
+## Introduction to Object-Oriented Programming (OOP)
+
+Object-Oriented Programming (OOP) is a programming paradigm that models real-world problems using **objects**. Python supports both functional and object-oriented programming, but OOP is especially effective for building **large, real-life, and scalable applications**.
+
+In OOP:
+
+* Real-world entities are represented as objects
+* Objects contain both **data** and **behavior**
+* Programs become more structured, reusable, and easier to maintain
+
+
+---
+
+
+## What Is a Class?
+
+A **class** is a **blueprint** or template used to create objects.
+
+It defines:
+
+* **Properties (attributes):** Data or characteristics
+* **Behaviors (methods):** Actions the object can perform
+
+> Example:
+> A `Computer` class defines what a computer *has* (RAM, processor) and what it *does* (display configuration).
+
+A single class can be used to create **multiple objects**, all sharing the same structure.
+
+
+---
+
+
+## What Is an Object?
+
+An **object** is a **runtime instance of a class**.
+
+* Objects are created using the class name followed by parentheses
+* Each object has its own identity and memory
+* Objects can access class-defined methods and data
+
+```python
+comp1 = Computer()
+comp2 = Computer()
+```
+
+Here, `comp1` and `comp2` are **two different objects** created from the same class.
+
+
+---
+
+![Importance_of_class_object](/images/python/class_and_object.png)
+
+---
+
+
+## Creating a Class in Python
+
+In Python, classes are defined using the `class` keyword.
+
+```python
+class Computer:
+    pass
+```
+
+* `pass` indicates an empty class
+* Defining a class does **not** create an object
+
+
+### Instantiating an Object
+
+To create an object:
+
+* Use **round brackets** after the class name
+* This process is called **instantiation**
+
+```python
+comp1 = Computer()
+```
+
+❌ This does NOT create an object:
+
+```python
+comp1 = Computer
+```
+
+It only assigns the class reference.
+
+
+### Objects and Types in Python
+
+Python is fundamentally object-oriented.
+
+Examples:
+
+```python
+a = 10
+print(type(a))        # <class 'int'>
+print(type(comp1))    # <class '__main__.Computer'>
+```
+
+* Integers belong to the `int` class
+* Custom objects belong to their defined class
+
+
+---
+
+
+## Defining Methods in a Class
+
+Methods are defined using `def` inside a class.
+
+```python
+class Computer:
+    def config(self):
+        print("i7, 16GB, 1TB")
+```
+
+### Calling Methods
+
+Methods can be called in two ways:
+
+**Using the object (recommended):**
+
+```python
+com1 = Computer()
+com1.config()
+```
+
+**Using the class (explicitly passing the object):**
+
+```python
+Computer.config(com1)
+```
+
+In both cases:
+
+The object is passed as `self` automatically when using `object.method().`
+
+### The Role of `self`
+
+* `self` refers to the current object instance
+* It allows methods to:
+    * Access object data
+    * Modify object attributes
+* Enables multiple objects to share the same method logic while operating on different data
+
+```python
+class Computer:
+    def config(self):
+        print("i7, 16GB, 1TB")
+
+com1 = Computer()
+com2 = Computer()
+
+com1.config()
+com2.config()
+
+```
+Both objects use the same method but remain independent.
+
+
+---
+
+
+## Multiple Objects from One Class
+
+* A single class can create multiple objects
+* Each object:
+    * Has its own memory location
+    * Maintains independent state
+* Methods are shared, data is separate
+
+This is similar to:
+* Multiple remotes controlling different devices
+* Multiple humans sharing behaviors but having different identities
+
+![Objects_in_Python](/images/python/python_object.png)
+
+---
+
+
+## Summary
+
+* A class is a blueprint while an object is its instance.
+* Objects are created using constructor syntax `ClassName()`.
+* `self` represents the current object.
+* Methods operate on object-specific data.
+* Multiple objects share the same class but hold independent state.
+* Python treats everything as an object at its core.
+
+</Steps>
+
+Written By: <a href="https://www.linkedin.com/in/muskangarg03/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer"> Muskan Garg <ExternalLink className="w-4 h-4" /></a>

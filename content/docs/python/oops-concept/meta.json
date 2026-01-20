@@ -1,5 +1,6 @@
-{   "title":"OOPs Conepts",
+{   "title":"OOPs Concepts",
     "pages":[
-        "introduction-to-oops.mdx"
+        "introduction-to-oops.mdx",
+        "class-and-object.mdx"
     ]
 } 
