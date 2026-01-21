@@ -7,6 +7,13 @@ const config = {
   reactStrictMode: true,
   images: {
     domains: ["img.youtube.com"],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'dyz1pdcuffwr5.cloudfront.net',
+        pathname: '/**',
+      },
+    ],
   },
 };
 
