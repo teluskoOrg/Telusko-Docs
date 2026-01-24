@@ -1,0 +1,235 @@
+---
+title: HAS-A vs IS-A Relationship
+---
+
+## 1. Introduction
+
+Object-Oriented Programming (OOP) models real-world entities using **relationships** between classes.  
+Two fundamental relationships in Java are:
+
+- **IS-A Relationship (Inheritance)**
+- **HAS-A Relationship (Composition / Aggregation)**
+
+Understanding these relationships helps you design clean, maintainable, and scalable systems.
+
+## 2. IS-A Relationship (Inheritance)
+
+### Definition
+
+IS-A represents **inheritance**.  
+It means one class **is a type of** another class.
+
+Example:
+
+```
+
+Dog IS-A Animal
+Car IS-A Vehicle
+Manager IS-A Employee
+
+````
+
+In Java, IS-A is implemented using the `extends` keyword.
+
+### Example
+
+```java
+class Animal {
+    void eat() { }
+}
+
+class Dog extends Animal {
+    void bark() { }
+}
+````
+
+Dog **inherits** from Animal.
+Therefore, Dog *is an* Animal.
+
+
+
+### When to Use IS-A?
+
+Use IS-A when:
+
+* The subclass is a specialized version of the parent class
+* The relationship is logically correct
+* You want to enable polymorphism and method overriding
+
+Example:
+
+```
+Circle IS-A Shape
+SavingsAccount IS-A BankAccount
+```
+
+
+
+### Pitfall: Misusing IS-A
+
+Not every relationship should be inheritance.
+
+Example:
+
+```
+Bird IS-A Animal  → correct  
+Bird HAS-A Wing   → correct  
+Bird IS-A Wing    → incorrect
+```
+
+
+
+## 3. HAS-A Relationship (Composition / Aggregation)
+
+### Definition
+
+HAS-A means **one class contains another class** as a field.
+
+It represents:
+
+* **Composition** (strong ownership)
+* **Aggregation** (weak ownership)
+
+Examples:
+
+```
+Car HAS-A Engine  
+Library HAS-A Book  
+Student HAS-A Address
+```
+
+### Example: Composition
+
+```java
+class Engine {
+    void start() { }
+}
+
+class Car {
+    private Engine engine = new Engine(); // HAS-A relationship
+}
+```
+
+Car *has an* Engine.
+
+
+
+## 4. Composition vs Aggregation (Under HAS-A)
+
+### 4.1 Composition (Strong HAS-A)
+
+* Child cannot exist without parent
+* Lifecycle is tightly dependent
+* Example: House HAS-A Room
+
+Code:
+
+```java
+class Room { }
+
+class House {
+    private Room room = new Room();
+}
+```
+
+If the House object is destroyed, the Room object is also destroyed.
+
+
+
+### 4.2 Aggregation (Weak HAS-A)
+
+* Child can exist independently
+* Loose relationship
+* Example: Department HAS-A Student
+
+```java
+class Student { }
+
+class Department {
+    private List<Student> students;
+}
+```
+
+Students can exist even without a Department.
+
+![inheritance](/images/java/inheritance/has1.png)
+
+## 5. Differences Between IS-A and HAS-A
+
+| Feature      | IS-A            | HAS-A                   |
+| ------------ | --------------- | ----------------------- |
+| Meaning      | Inheritance     | Composition/Aggregation |
+| Keyword      | extends         | Field inside class      |
+| Relationship | Parent-child    | Whole-part              |
+| Reuse        | Behavior reuse  | Object reuse            |
+| Example      | Dog IS-A Animal | Car HAS-A Engine        |
+
+
+
+## 6. Real-World Examples
+
+### Example 1 — University System
+
+```
+Professor IS-A Employee  
+Department HAS-A Professor  
+University HAS-A Department
+```
+
+### Example 2 — Banking System
+
+```
+SavingsAccount IS-A BankAccount  
+Customer HAS-A Address  
+ATM HAS-A CashDispenser
+```
+
+### Example 3 — Applications
+
+```
+Button IS-A UIComponent  
+Window HAS-A Button  
+```
+
+![inheritance](/images/java/inheritance/has2.png)
+
+## 7. When to Use Which?
+
+### Use IS-A (Inheritance) when:
+
+* The subclass *is a* special version of the parent class
+* You need polymorphism
+* You want to override behavior
+
+### Use HAS-A (Composition) when:
+
+* You want to build functionality by combining objects
+* Relationship is part-whole
+* You want flexibility (composition is more flexible than inheritance)
+
+
+
+## 8. Best Practices
+
+* Prefer **HAS-A (composition)** over **IS-A** when possible
+  (Composition is more flexible and avoids tight coupling)
+
+* Use inheritance cautiously to avoid deep hierarchies
+
+* Check logical correctness:
+  If you can say **X is a Y**, use inheritance.
+  If you say **X has a Y**, use composition.
+
+
+
+## 9. Summary
+
+* **IS-A** represents inheritance; implemented using `extends`.
+* **HAS-A** represents composition/aggregation; implemented using fields.
+* IS-A is used for specialization; HAS-A for combining objects.
+* Composition is generally preferred over inheritance due to flexibility.
+* Understanding both relationships is essential for good object-oriented design.
+
+This completes **HAS-A vs IS-A Relationship in Java**.
+
+Written By: <a href="https://www.linkedin.com/in/shivasrivastava1/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer"> Shiva Srivastava <ExternalLink className="w-4 h-4" /></a>

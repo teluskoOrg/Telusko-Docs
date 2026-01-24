@@ -1,0 +1,274 @@
+---
+title: Need of Inheritance
+---
+
+## 1. Introduction
+
+Inheritance is one of the four major pillars of Object-Oriented Programming (OOP), alongside:
+
+- Encapsulation  
+- Polymorphism  
+- Abstraction  
+
+**Inheritance allows one class to acquire the properties and behaviors of another class.**
+
+But before learning how inheritance works, it is important to understand *why* inheritance is needed.
+
+Java introduces inheritance to improve:
+
+- Code reusability  
+- Maintainability  
+- Avoiding duplication  
+- Logical class structuring  
+- Extensibility of applications  
+
+This chapter focuses on the *purpose* and *necessity* of inheritance.
+
+
+
+## 2. What Is Inheritance?
+
+Inheritance is the mechanism where one class (child/subclass) **inherits** fields and methods of another class (parent/superclass).
+
+Syntax:
+
+```java
+class Child extends Parent {
+}
+````
+
+
+
+## 3. Why Do We Need Inheritance?
+
+### 3.1 To Avoid Code Duplication
+
+Without inheritance, you might write the same fields and methods repeatedly.
+
+Example:
+
+```java
+class Car {
+    void start() { }
+    void stop() { }
+}
+
+class Bike {
+    void start() { }
+    void stop() { }
+}
+```
+
+Both Car and Bike share common behaviors.
+Instead, inheritance allows:
+
+```java
+class Vehicle {
+    void start() { }
+    void stop() { }
+}
+
+class Car extends Vehicle { }
+class Bike extends Vehicle { }
+```
+
+Now Car and Bike automatically gain start() and stop() functionality.
+
+
+
+### 3.2 To Improve Code Reusability
+
+Instead of rewriting logic, the child class **reuses** the parent class code.
+
+Benefits:
+
+* Less code
+* Faster development
+* Reduced errors
+* Easier updates
+
+If a bug is fixed in the parent class, all subclasses benefit immediately.
+
+
+
+### 3.3 To Create a Logical Class Hierarchy
+
+Example hierarchy:
+
+```
+Animal
+ ├── Dog
+ ├── Cat
+ └── Horse
+```
+
+All animals share common attributes:
+
+* eat()
+* sleep()
+
+But each subclass adds its own behavior.
+
+Hierarchy makes the application easier to understand and maintain.
+
+
+
+### 3.4 Supports Polymorphism
+
+Inheritance enables **method overriding**, which is essential for runtime polymorphism.
+
+Example:
+
+```java
+class Animal {
+    void sound() { System.out.println("Animal sound"); }
+}
+
+class Dog extends Animal {
+    @Override
+    void sound() { System.out.println("Bark"); }
+}
+```
+
+Now you can do:
+
+```java
+Animal a = new Dog();
+a.sound(); // Bark
+```
+
+This flexibility is impossible without inheritance.
+
+![inheritance](/images/java/inheritance/need1.png)
+
+### 3.5 To Support Extensible Systems
+
+Software grows over time.
+
+Inheritance helps you extend existing functionality:
+
+```java
+class OnlineAccount {
+    void login() { }
+}
+
+class PremiumAccount extends OnlineAccount {
+    void accessPremiumContent() { }
+}
+```
+
+You don’t rewrite login() for every new account type.
+
+
+
+### 3.6 Maintainability and Upgradability
+
+Imagine 10 classes share a method.
+
+Without inheritance:
+
+* Fixing a bug = fixing in 10 places
+* Updating logic = repeating updates everywhere
+
+With inheritance:
+
+* Fix once in superclass → applied to all subclasses
+
+This drastically reduces maintenance efforts.
+
+
+
+## 4. Real-World Examples of Why Inheritance Is Needed
+
+### Example 1 — Company Employees
+
+```
+Employee
+ ├── Manager
+ ├── Developer
+ └── Intern
+```
+
+All employees share:
+
+* name
+* id
+* salary
+
+But each subclass has specific functionality.
+
+
+
+### Example 2 — UI Components
+
+```
+Component
+ ├── Button
+ ├── TextField
+ └── Checkbox
+```
+
+All components need rendering and event-handling logic.
+
+
+
+### Example 3 — Game Characters
+
+```
+Character
+ ├── Warrior
+ ├── Archer
+ └── Mage
+```
+
+Common behaviors:
+
+* attack()
+* defend()
+
+Each subclass extends the behavior.
+
+![inheritance](/images/java/inheritance/need2.png)
+
+## 5. Key Advantages of Using Inheritance
+
+| Benefit          | Description                                 |
+| ---------------- | ------------------------------------------- |
+| Code Reusability | Avoids duplication of repeated code         |
+| Maintainability  | Fix/update logic in one place               |
+| Organization     | Creates a clean class hierarchy             |
+| Flexibility      | Supports polymorphism and method overriding |
+| Extensibility    | Systems can grow easily with new subclasses |
+
+
+
+## 6. Misconceptions About Inheritance
+
+### Misconception 1: Inheritance is always needed
+
+No — often **composition** is better than inheritance.
+
+### Misconception 2: Inheritance automatically solves all duplication
+
+Only good for **shared behavior**, not unrelated features.
+
+### Misconception 3: Use inheritance everywhere
+
+Inheritance should be used only when:
+
+* Relationship is **IS-A**
+* Behavior of superclass applies to subclass
+
+
+
+## 7. Summary
+
+* Inheritance allows one class to acquire the properties and methods of another.
+* It reduces code duplication and improves reusability.
+* It helps build logical hierarchies and enables polymorphism.
+* It improves maintainability and supports long-term software growth.
+* Inheritance should be used judiciously and only where appropriate.
+
+This completes **Need of Inheritance in Java**.
+
+Written By: <a href="https://www.linkedin.com/in/shivasrivastava1/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer"> Shiva Srivastava <ExternalLink className="w-4 h-4" /></a>

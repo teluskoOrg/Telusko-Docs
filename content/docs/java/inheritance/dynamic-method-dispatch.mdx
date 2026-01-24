@@ -1,0 +1,218 @@
+---
+title: Dynamic Method Dispatch
+---
+
+## 1. Introduction
+
+**Dynamic Method Dispatch**, also known as **Runtime Polymorphism**, is one of the most powerful features of Java’s object-oriented programming model.
+
+It allows Java to decide **which overridden method to call at runtime**, not at compile time.
+
+This mechanism enables:
+
+- Polymorphism  
+- Flexible and extensible code  
+- Clean hierarchical designs  
+- Overriding behavior selection based on object type  
+
+Understanding dynamic dispatch is critical for mastering inheritance and polymorphism.
+
+
+
+## 2. What Is Dynamic Method Dispatch?
+
+Dynamic Method Dispatch is the process where a superclass reference variable refers to a subclass object, and the method that gets executed is determined by **the actual object** the reference variable points to.
+
+### Key Idea:
+
+> The reference type determines what you can access,  
+> but the **object type** determines which overridden method runs.
+
+
+
+## 3. Basic Example
+
+```java
+class A {
+    void show() {
+        System.out.println("A show");
+    }
+}
+
+class B extends A {
+    @Override
+    void show() {
+        System.out.println("B show");
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+        A obj = new B(); // upcasting
+        obj.show();      // B show (decided at runtime)
+    }
+}
+````
+
+Although `obj` is of type A, the actual object is B.
+So, B’s `show()` method is executed.
+
+![inheritance](/images/java/inheritance/dynamic1.png)
+
+
+## 4. Why Does Java Use Dynamic Dispatch?
+
+Because Java supports **method overriding**.
+Overridden methods allow subclasses to modify parent behavior.
+
+If the method were resolved at compile time, overriding would not work.
+
+Dynamic dispatch ensures:
+
+* Flexible behavior
+* Extensibility
+* Clean abstraction between parent and child classes
+
+
+
+## 5. Multiple Subclasses Example
+
+```java
+class Animal {
+    void sound() {
+        System.out.println("Animal makes sound");
+    }
+}
+
+class Dog extends Animal {
+    void sound() {
+        System.out.println("Dog barks");
+    }
+}
+
+class Cat extends Animal {
+    void sound() {
+        System.out.println("Cat meows");
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+        Animal a;
+
+        a = new Dog();
+        a.sound(); // Dog barks
+
+        a = new Cat();
+        a.sound(); // Cat meows
+    }
+}
+```
+
+This allows writing code that works with many different subclasses seamlessly.
+
+
+
+## 6. Rules of Dynamic Method Dispatch
+
+### 6.1 Only works with method **overriding**
+
+Not applicable to:
+
+* Method overloading
+* Static methods
+* Constructors
+* Private methods
+* Final methods
+
+### 6.2 Reference type decides what methods are *visible*
+
+Example:
+
+```java
+Animal a = new Dog();
+a.sound();    // allowed (in parent)
+a.bark();     // ERROR (not in parent)
+```
+
+### 6.3 Object type decides which overridden method executes
+
+
+
+## 7. Real-World Use Case
+
+### Example: Payment Processing
+
+```java
+class Payment {
+    void process() {
+        System.out.println("Generic payment");
+    }
+}
+
+class CreditCard extends Payment {
+    void process() {
+        System.out.println("Credit card payment");
+    }
+}
+
+class UPI extends Payment {
+    void process() {
+        System.out.println("UPI payment");
+    }
+}
+```
+
+Runtime selection:
+
+```java
+Payment p = new UPI();
+p.process(); // UPI payment
+```
+
+You can add new payment types without changing existing code.
+
+
+
+## 8. Method Dispatch Flow Diagram
+
+1. Compiler checks reference type methods → ensures method exists
+2. JVM checks object type at runtime
+3. JVM invokes the overridden version in the actual object
+
+## 9. What Is Not Decided at Runtime
+
+* Overloaded methods (resolved at compile time)
+* Static methods (resolved based on reference type)
+* Variables (never polymorphic)
+
+Example:
+
+```java
+class A {
+    static void display() { System.out.println("A display"); }
+}
+
+class B extends A {
+    static void display() { System.out.println("B display"); }
+}
+
+A obj = new B();
+obj.display();  // A display (static binding)
+```
+
+Static methods do NOT participate in dynamic dispatch.
+
+
+
+## 10. Summary
+
+* Dynamic Method Dispatch enables runtime polymorphism.
+* Superclass reference → subclass object.
+* Runtime decides which overridden method runs.
+* Essential for flexible, extensible application designs.
+* Static methods, overloaded methods, and variables do NOT support dynamic dispatch.
+
+This completes **Dynamic Method Dispatch in Java**.
+
+Written By: <a href="https://www.linkedin.com/in/shivasrivastava1/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer"> Shiva Srivastava <ExternalLink className="w-4 h-4" /></a>

@@ -1,0 +1,189 @@
+---
+title: Upcasting and Downcasting
+---
+## 1. Introduction
+
+When working with inheritance, Java allows you to treat an object of a subclass as if it were an object of its parent class.  
+This is known as **type casting in inheritance**, and it is divided into:
+
+- **Upcasting** → Casting child to parent (safe)  
+- **Downcasting** → Casting parent to child (requires explicit cast, not always safe)
+
+Casting plays a major role in **polymorphism**, **method overriding**, and **runtime object handling**.
+
+## 2. Upcasting (Child → Parent)
+
+### Definition
+
+Upcasting means assigning a child object to a parent reference.
+
+```java
+Parent p = new Child(); // upcasting
+````
+
+### Why Upcasting Is Safe?
+
+* A child **is-a** parent (IS-A relationship)
+* Child object contains everything the parent has
+* No explicit cast required
+
+### Example
+
+```java
+class Animal {
+    void sound() { System.out.println("Animal sound"); }
+}
+
+class Dog extends Animal {
+    void bark() { System.out.println("Bark"); }
+    @Override
+    void sound() { System.out.println("Dog sound"); }
+}
+
+public class Main {
+    public static void main(String[] args) {
+        Animal a = new Dog(); // upcasting
+        a.sound();            // Dog sound (polymorphism)
+    }
+}
+```
+
+Upcasting allows **runtime polymorphism** — the child method overrides the parent method.
+
+
+
+### Limitations of Upcasting
+
+```java
+Animal a = new Dog();
+a.bark();   // ERROR: bark() not accessible
+```
+
+Because the reference type controls what you can access.
+
+![inheritance](/images/java/inheritance/upcasting1.png)
+
+## 3. Downcasting (Parent → Child)
+
+### Definition
+
+Downcasting means assigning a parent reference to a child reference.
+
+```java
+Child c = (Child) p; // downcasting
+```
+
+### Important:
+
+* Requires **explicit cast**
+* Not always safe
+* Can throw **ClassCastException** at runtime
+* Should only be done when the object is truly of the child type
+
+### Example
+
+```java
+Animal a = new Dog(); // upcast
+Dog d = (Dog) a;      // downcast (safe)
+d.bark();             // works
+```
+
+### Unsafe Downcasting Example
+
+```java
+Animal a = new Animal();
+Dog d = (Dog) a; // ERROR at runtime: ClassCastException
+```
+
+Because the actual object is **not** a Dog.
+
+
+
+## 4. Checking Safe Downcasting Using instanceof
+
+Before downcasting, always check:
+
+```java
+if (a instanceof Dog) {
+    Dog d = (Dog) a;
+    d.bark();
+}
+```
+
+Output:
+
+```
+Bark
+```
+
+This avoids runtime exceptions.
+
+![inheritance](/images/java/inheritance/upcasting2.png)
+
+## 5. Upcasting + Downcasting in Polymorphism
+
+### Example
+
+```java
+Animal a = new Dog(); // upcasting
+Dog d = (Dog) a;      // downcasting
+d.bark();
+```
+
+Upcasting gives the object a parent reference;
+Downcasting restores the child-specific features.
+
+
+
+## 6. Real-World Example
+
+### Example: Payment System
+
+```java
+class Payment {
+    void pay() {
+        System.out.println("General payment");
+    }
+}
+
+class CreditCard extends Payment {
+    void creditOffer() {
+        System.out.println("Special credit card offer");
+    }
+}
+```
+
+Usage:
+
+```java
+Payment p = new CreditCard(); // upcasting
+p.pay();
+
+CreditCard c = (CreditCard) p; // downcasting
+c.creditOffer();
+```
+
+
+
+## 7. Differences Between Upcasting and Downcasting
+
+| Feature                 | Upcasting           | Downcasting           |
+| ----------------------- | ------------------- | --------------------- |
+| Direction               | Child → Parent      | Parent → Child        |
+| Explicit cast required? | No                  | Yes                   |
+| Safety                  | Always safe         | Not always safe       |
+| Access                  | Parent methods only | Child methods too     |
+| Purpose                 | Polymorphism        | Regain child features |
+
+
+
+## 8. Summary
+
+* **Upcasting** is safe and automatic; enables polymorphism.
+* **Downcasting** is explicit and risky; must ensure type compatibility.
+* `instanceof` should be used to prevent ClassCastException.
+* Upcasting restricts access to parent-level features; downcasting restores child-specific methods.
+
+This completes **Upcasting and Downcasting in Java**.
+
+Written By: <a href="https://www.linkedin.com/in/shivasrivastava1/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer"> Shiva Srivastava <ExternalLink className="w-4 h-4" /></a>

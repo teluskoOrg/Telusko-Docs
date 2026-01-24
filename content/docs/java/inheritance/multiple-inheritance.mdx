@@ -1,0 +1,175 @@
+---
+title: Multiple Inheritance
+---
+## 1. Introduction
+
+**Multiple Inheritance** refers to a feature where a class can inherit properties and behaviors from **more than one parent class**.
+
+Example (hypothetical):
+
+```java
+class C extends A, B; // Not allowed in Java
+```
+
+Unlike C++, Java **does not support multiple inheritance using classes**.
+This restriction was introduced deliberately to avoid ambiguity and maintain simplicity in the language.
+
+However, Java does support **multiple inheritance using interfaces**, which is the preferred and safe way to achieve it.
+
+
+
+## 2. Why Java Does Not Support Multiple Inheritance?
+
+The main reason is to avoid **ambiguity**, commonly called the **Diamond Problem**.
+
+### Diamond Problem Example (Conceptual)
+
+```
+     A
+    / \
+   B   C
+    \ /
+     D
+```
+
+If B and C both have a method:
+
+```java
+void show() { }
+```
+
+And class D inherits from both B and C:
+
+```java
+class D extends B, C; // If this were allowed
+```
+
+Then calling:
+
+```java
+d.show();
+```
+
+Which show() should be inherited?
+
+* B’s?
+* C’s?
+
+This ambiguity creates complexity and confusion.
+
+To prevent such complications, Java designers disabled multiple inheritance using classes.
+
+![inheritance](/images/java/inheritance/multiple1.png)
+
+## 3. Multiple Inheritance Through Interfaces (Supported in Java)
+
+While Java restricts multiple inheritance for classes, it **allows** a class to implement multiple interfaces.
+
+Example:
+
+```java
+interface A {
+    void m1();
+}
+
+interface B {
+    void m2();
+}
+
+class C implements A, B {
+    public void m1() { }
+    public void m2() { }
+}
+```
+
+Output behavior is predictable and unambiguous because interfaces contain **abstract methods** only (until Java 8+ added default and static methods).
+
+This allows Java to enjoy the benefits of multiple inheritance without the complications.
+
+
+
+## 4. How Interfaces Solve the Ambiguity Issue
+
+Interfaces provide **method declarations**, not method implementations (except default/static methods).
+Therefore, the class implementing multiple interfaces **must override** the conflicting methods.
+
+### Example With Conflicting Default Methods
+
+```java
+interface A {
+    default void show() { System.out.println("A show"); }
+}
+
+interface B {
+    default void show() { System.out.println("B show"); }
+}
+
+class C implements A, B {
+    @Override
+    public void show() {
+        A.super.show(); // explicitly choose one
+    }
+}
+```
+
+Java forces the programmer to specify which version to use — removing ambiguity.
+
+
+
+## 5. Multiple Inheritance Through Interfaces: Practical Example
+
+```java
+interface Printer {
+    void print();
+}
+
+interface Scanner {
+    void scan();
+}
+
+class MultiFunctionMachine implements Printer, Scanner {
+    public void print() {
+        System.out.println("Printing...");
+    }
+
+    public void scan() {
+        System.out.println("Scanning...");
+    }
+}
+```
+
+Now the class inherits capabilities of both interfaces without conflict.
+
+
+
+## 6. Key Differences Between Class and Interface Multiple Inheritance
+
+| Feature                       | Classes                 | Interfaces                                     |
+| ----------------------------- | ----------------------- | ---------------------------------------------- |
+| Multiple inheritance allowed? | No                      | Yes                                            |
+| Method implementation         | Yes (creates ambiguity) | Only abstract method definitions (no conflict) |
+| Ambiguity risk                | High                    | Low                                            |
+| Supported keywords            | extends (only 1 parent) | implements (multiple parents allowed)          |
+
+
+
+## 7. Advantages of Multiple Inheritance via Interfaces
+
+* No ambiguity
+* Cleaner design
+* Flexible architecture
+* Better decoupling of behaviors
+* Supports mix-in styles (adding capabilities)
+
+![inheritance](/images/java/inheritance/multiple2.png)
+
+## 8. Summary
+
+* Java **does not allow multiple inheritance through classes** to avoid ambiguity (diamond problem).
+* Java **supports multiple inheritance through interfaces**, providing flexibility with safety.
+* Interfaces allow combining multiple behaviors without method conflicts.
+* If conflicts arise (default methods), Java forces explicit resolution.
+
+This completes **Multiple Inheritance in Java**.
+
+Written By: <a href="https://www.linkedin.com/in/shivasrivastava1/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer"> Shiva Srivastava <ExternalLink className="w-4 h-4" /></a>

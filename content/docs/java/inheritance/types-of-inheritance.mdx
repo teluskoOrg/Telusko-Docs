@@ -1,0 +1,232 @@
+---
+title: Types of Inheritance
+---
+
+## 1. Introduction
+
+Inheritance allows classes to acquire properties and behaviors of other classes.  
+Java supports several forms of inheritance, but **not all** types seen in other OOP languages (like C++).
+
+Understanding different types of inheritance helps in designing clear and logical class structures.
+
+
+
+## 2. Types of Inheritance
+
+Java supports the following types:
+
+1. **Single Inheritance**  
+2. **Multilevel Inheritance**  
+3. **Hierarchical Inheritance**  
+4. **Hybrid Inheritance** (Supported through interfaces)
+
+Java does **not** support:
+
+- **Multiple inheritance through classes**  
+  (to avoid ambiguity known as the “diamond problem”)
+
+Let’s explore each supported type in detail.
+
+
+
+## 3. Single Inheritance
+
+A class inherits from only one parent class.
+
+```
+
+A
+│
+└── B
+
+````
+
+Example:
+
+```java
+class A {
+    void show() {
+        System.out.println("A show");
+    }
+}
+
+class B extends A {
+    void display() {
+        System.out.println("B display");
+    }
+}
+````
+
+Here, class B inherits from class A.
+
+
+
+## 4. Multilevel Inheritance
+
+A class is derived from another subclass, forming a chain.
+
+```
+A
+│
+└── B
+    │
+    └── C
+```
+
+Example:
+
+```java
+class A {
+    void m1() { }
+}
+
+class B extends A {
+    void m2() { }
+}
+
+class C extends B {
+    void m3() { }
+}
+```
+
+Class C inherits from B and indirectly from A.
+
+
+![inheritance](/images/java/inheritance/type1.png)
+
+
+## 5. Hierarchical Inheritance
+
+Multiple classes inherit from the same parent class.
+
+```
+        A
+      / | \
+     B  C  D
+```
+
+Example:
+
+```java
+class Animal {
+    void eat() { }
+}
+
+class Dog extends Animal {
+}
+
+class Cat extends Animal {
+}
+
+class Horse extends Animal {
+}
+```
+
+All subclasses share common methods from `Animal`.
+
+
+
+## 6. Hybrid Inheritance
+
+Hybrid inheritance is a **combination** of two or more types of inheritance.
+
+Java **supports hybrid inheritance using interfaces**, not classes.
+
+Example:
+
+```
+   A         Interface X
+   │            │
+   B            │
+    \          /
+         C
+```
+
+Example with interfaces:
+
+```java
+interface X {
+    void m1();
+}
+
+class A {
+    void m2() { }
+}
+
+class B extends A implements X {
+    public void m1() { }
+}
+```
+
+Java prevents multiple inheritance of classes to avoid ambiguity but allows hybrid patterns using interfaces.
+
+
+
+## 7. Multiple Inheritance (Not Supported in Classes)
+
+Java does not allow:
+
+```java
+class C extends A, B; // ERROR
+```
+
+Reason: **Diamond Problem**
+
+If both A and B have the same method, the JVM cannot decide which version C should inherit.
+
+Java solves this by:
+
+* Allowing multiple inheritance through **interfaces**, not classes.
+
+![inheritance](/images/java/inheritance/type2.png)
+
+## 8. Summary Table of Inheritance Types
+
+| Type         | Supported in Java (Classes) | Supported via Interfaces | Description                    |
+| ------------ | --------------------------- | ------------------------ | ------------------------------ |
+| Single       | Yes                         | Yes                      | One parent, one child          |
+| Multilevel   | Yes                         | Yes                      | Chain of inheritance           |
+| Hierarchical | Yes                         | Yes                      | One parent, many children      |
+| Hybrid       | No                          | Yes                      | Combination (using interfaces) |
+| Multiple     | No                          | Yes                      | Supported only via interfaces  |
+
+
+
+## 9. Real-World Examples
+
+### Single Inheritance
+
+```
+Vehicle → Car
+```
+
+### Multilevel Inheritance
+
+```
+Person → Employee → Manager
+```
+
+### Hierarchical Inheritance
+
+```
+Account → SavingsAccount, CurrentAccount, LoanAccount
+```
+
+### Hybrid Inheritance (via interfaces)
+
+```
+Drivable, Electric → ElectricCar
+```
+
+
+
+## 10. Summary
+
+* Java supports **single, multilevel, hierarchical**, and **hybrid (via interfaces)** inheritance.
+* Java does **not** support multiple inheritance of classes to avoid ambiguity.
+* Interfaces provide flexibility for hybrid and multi-type inheritance.
+* Understanding these forms helps in designing cleaner class structures and relationships.
+
+This completes **Types of Inheritance in Java**.
+
+Written By: <a href="https://www.linkedin.com/in/shivasrivastava1/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer"> Shiva Srivastava <ExternalLink className="w-4 h-4" /></a>

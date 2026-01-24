@@ -15,7 +15,7 @@
 
         "classes-and-objects",
         "encapsulation",
-        "DISABLED-inheritance",
+        "inheritance",
         "DISABLED-polymorphism",
         "DISABLED-abstraction-and-interfaces",
         "DISABLED-inner-classes",

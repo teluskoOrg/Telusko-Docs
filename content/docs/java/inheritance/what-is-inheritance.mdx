@@ -1,0 +1,238 @@
+---
+title: What Is Inheritance
+---
+
+## 1. Introduction
+
+Inheritance is one of the core features of Object-Oriented Programming (OOP).  
+It allows a new class (called **child**, **subclass**, or **derived class**) to **acquire the properties and behaviors** of an existing class (called **parent**, **base**, or **superclass**).
+
+This promotes:
+
+- Code reusability  
+- Polymorphism  
+- Cleaner design  
+- Better maintainability  
+
+In Java, inheritance is implemented using the `extends` keyword.
+
+## 2. Definition of Inheritance
+
+**Inheritance** is the mechanism in Java where one class **inherits** fields and methods of another class.
+
+### Syntax:
+
+```java
+class Child extends Parent {
+    // new properties and methods
+}
+````
+
+Here:
+
+* `Parent` → superclass
+* `Child` → subclass
+
+The child class automatically gets:
+
+* All **non-private** fields
+* All **non-private** methods
+
+
+
+## 3. Simple Example of Inheritance
+
+```java
+class Animal {
+    void eat() {
+        System.out.println("Animal eats");
+    }
+}
+
+class Dog extends Animal {
+    void bark() {
+        System.out.println("Dog barks");
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+        Dog d = new Dog();
+        d.eat();  // inherited from Animal
+        d.bark(); // own method
+    }
+}
+```
+
+Output:
+
+```
+Animal eats
+Dog barks
+```
+
+The `Dog` class inherited the `eat()` method from `Animal`.
+
+![inheritance](/images/java/inheritance/what1.png)
+
+
+## 4. Key Terminology
+
+### 4.1 Superclass (Parent Class)
+
+The class whose properties are inherited.
+
+### 4.2 Subclass (Child Class)
+
+The class that inherits properties from the parent.
+
+### 4.3 Inheritance Hierarchy
+
+Structure showing parent-child relationships.
+
+Example:
+
+```
+Fruit
+ ├── Mango
+ ├── Apple
+ └── Orange
+```
+
+### 4.4 IS-A Relationship
+
+Inheritance must satisfy an **IS-A** relationship:
+
+* A Dog **is an** Animal
+* A Car **is a** Vehicle
+
+If the relationship doesn't make logical sense, inheritance should not be used.
+
+
+
+## 5. What Gets Inherited?
+
+A subclass inherits:
+
+* All **non-private fields**
+* All **non-private methods**
+* All **protected members**
+* Default members (if in same package)
+
+It does **not** inherit:
+
+* Constructors
+* Private fields/methods
+* Static methods (they are accessible but not inherited)
+* Final methods cannot be overridden
+
+
+
+## 6. Accessing Superclass Members
+
+The subclass can access superclass members (except private ones):
+
+```java
+class A {
+    protected int value = 10;
+}
+
+class B extends A {
+    void display() {
+        System.out.println(value); // allowed
+    }
+}
+```
+
+Private members are accessible only via:
+
+* Getters/setters
+* Public methods
+
+
+
+## 7. Constructor Behavior in Inheritance
+
+Constructors are **not inherited**, but when a subclass is created, the superclass constructor is called automatically.
+
+Example:
+
+```java
+class A {
+    A() {
+        System.out.println("Parent Constructor");
+    }
+}
+
+class B extends A {
+    B() {
+        System.out.println("Child Constructor");
+    }
+}
+```
+
+Output:
+
+```
+Parent Constructor
+Child Constructor
+```
+
+
+
+## 8. Real-World Examples of Inheritance
+
+### 8.1 Vehicles
+
+```
+Vehicle
+ ├── Car
+ ├── Bike
+ └── Truck
+```
+
+All vehicles have:
+
+* start()
+* stop()
+
+Each subclass extends behavior.
+
+### 8.2 Application Users
+
+```
+User
+ ├── Admin
+ ├── Guest
+ └── RegisteredUser
+```
+
+Shared properties: id, name, login()
+
+![inheritance](/images/java/inheritance/what2.png)
+
+
+
+## 9. Why Inheritance Matters
+
+| Benefit         | Description                                        |
+| --------------- | -------------------------------------------------- |
+| Reusability     | Use superclass code in subclasses                  |
+| Maintainability | Fixing a bug in superclass fixes all subclasses    |
+| Extensibility   | Add new subclasses without modifying existing code |
+| Polymorphism    | Enables method overriding and dynamic dispatch     |
+
+
+
+## 10. Summary
+
+* Inheritance allows one class to derive properties and methods from another.
+* Implemented using the `extends` keyword.
+* Supports **IS-A** relationship.
+* Subclasses inherit all non-private members of the parent.
+* Provides foundation for **polymorphism** and **overriding**.
+* Helps in designing structured, reusable, and maintainable code.
+
+This completes **What Is Inheritance**.
+
+Written By: <a href="https://www.linkedin.com/in/shivasrivastava1/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer"> Shiva Srivastava <ExternalLink className="w-4 h-4" /></a>

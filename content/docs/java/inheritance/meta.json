@@ -1,0 +1,13 @@
+{
+    "root": false,
+    "pages": [
+        "need-of-inheritance.mdx",
+        "what-is-inheritance.mdx",
+        "types-of-inheritance.mdx",
+        "multiple-inheritance.mdx",
+        "super-keyword-in-inheritance.mdx",
+        "upcasting-and-downcasting.mdx",
+        "dynamic-method-dispatch.mdx",
+        "has-a-vs-is-a-relationship.mdx"
+    ]
+}
