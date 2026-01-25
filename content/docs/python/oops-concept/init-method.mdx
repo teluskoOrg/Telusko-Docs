@@ -1,0 +1,169 @@
+---
+title: Init Method
+---
+
+<Steps>
+<Video id="cx8Wjsbq9j8" />
+
+---
+
+
+## Understanding `init` method
+
+* `__init__` is a special method in Python. It is **automatically called** when a new object of a class is created.
+* Its main purpose is to **initialize instance variables** for the object.
+
+![init_constructor](https://dyz1pdcuffwr5.cloudfront.net/Python/init_python.png)
+
+
+---
+
+
+## Why `__init__` is Needed?
+
+* To assign **initial values** to object attributes
+* To allow **dynamic configuration** of objects
+* To ensure each object can have **its own unique data**
+
+Without `__init__`, attributes must be added manually after object creation.
+
+![init_characteristics](https://dyz1pdcuffwr5.cloudfront.net/Python/init_characteristics.png)
+
+
+---
+
+
+## Understanding `self`
+
+* `self` refers to the **current object**
+* It allows access to:
+  * Instance variables
+  * Other methods of the same object
+* Variables created using `self` become **object attributes**
+
+```python
+self.cpu = cpu
+```
+
+> This creates an **instance variable**, not a local variable.
+
+![Class_and_instance_variables](https://dyz1pdcuffwr5.cloudfront.net/Python/class_and_instance_variables.png)
+
+
+---
+
+
+## Example:  `__init__` Without Parameters
+
+```python
+class Computer:
+    def __init__(self):
+        print("init called")
+        self.cpu = "i5"
+
+    def config(self):
+        print("i7", "16GB", "1TB")
+
+com1 = Computer()
+com2 = Computer()
+
+print(com1.cpu)
+com1.config()
+```
+
+### Output:
+
+```
+init called
+init called
+i5
+i7 16GB 1TB
+```
+
+### Explanation:
+
+* `__init__` runs **once per object**
+* `cpu` is an instance variable
+* Both objects get their own `cpu` value
+
+
+---
+
+
+## Example: `__init__` With Parameters
+
+The __init__ method enables **per-object customization**, allowing each object of a class to maintain its **own configuration and data.**
+* Each object stores **unique values** in its instance variables
+* Instance variables hold **object-specific data**
+* Different objects of the same class can behave differently based on initialization values
+  
+```python
+class Computer:
+    def __init__(self, cpu, ram, ssd):
+        print("init called")
+        self.cpu = cpu
+        self.ram = ram
+        self.ssd = ssd
+
+    def config(self):
+        print(self.cpu, self.ram, self.ssd)
+
+com1 = Computer("i5", "16GB", "512GB")
+com2 = Computer("i9", "96GB", "2TB")
+
+print(com1.cpu)
+com1.config()
+com2.config()
+```
+
+### Output:
+
+```
+init called
+init called
+i5 16GB 512GB
+i9 96GB 2TB
+```
+
+> Each object (com1, com2) has its own independent configuration, even though they belong to the same class.
+
+
+---
+
+
+## Dynamic Attribute Creation
+
+Python allows attributes to be added to objects at runtime, even if they are **not predefined in the class.**
+
+Example:
+
+```python
+obj.webcam = "External"
+```
+
+This highlights **Python’s dynamic language** nature, where objects can be extended after creation.
+
+
+### Real-World Analogy
+
+* Buying a laptop:
+
+  * Some laptops come with a webcam
+  * Some require an external webcam
+* Similarly, Python objects can have **different attributes** depending on how they are initialized
+
+
+---
+
+
+## Summary
+
+* `__init__` initializes objects after creation and is **not a constructor**.
+* `self` refers to the current object and is used to define **instance variables**.
+* Instance variables are object-specific, while **class variables are shared**.
+* `__init__` enables dynamic, flexible, and maintainable object creation in Python.
+
+
+</Steps>
+
+Written By: <a href="https://www.linkedin.com/in/muskangarg03/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer"> Muskan Garg <ExternalLink className="w-4 h-4" /></a>

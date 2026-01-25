@@ -1,6 +1,7 @@
 {   "title":"OOPs Concepts",
     "pages":[
         "introduction-to-oops.mdx",
-        "class-and-object.mdx"
+        "class-and-object.mdx",
+        "init-method.mdx"
     ]
 } 
