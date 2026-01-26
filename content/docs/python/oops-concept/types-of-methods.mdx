@@ -1,0 +1,194 @@
+---
+title: Types of Methods
+---
+
+<Steps>
+<Video id="mZd_XCxW0cw" />
+
+---
+
+
+# Types of Methods in Python
+
+
+In Python, methods define the **behavior of a class** and determine how data is accessed and modified.
+Based on **what they operate on**—object data, class-level data, or no data at all—Python provides **three types of methods**:
+
+1. Instance Methods
+2. Class Methods
+3. Static Methods
+
+
+---
+
+## Variables and Their Scope
+
+Before exploring method types, it is important to understand **variable scope**:
+
+![Class_Instance_Variables](https://dyz1pdcuffwr5.cloudfront.net/Python/class_instance_variables.png)
+
+
+---
+
+<Step>
+## Instance Methods
+
+### What Are Instance Methods?
+
+* Instance methods are the **most common type of methods**
+* They use `self` as the first parameter
+* They operate on **instance variables**
+* Each object maintains its own independent state
+
+### Example
+
+```python
+class Computer:
+    brand = "Telusko AI"
+
+    def __init__(self, cpu, ram, ssd):
+        print("init called")
+        self.cpu = cpu
+        self.ram = ram
+        self.ssd = ssd
+
+    def config(self):
+        print("config :", self.cpu, self.ram, self.ssd)
+
+com1 = Computer("i5", "16GB", "512GB")
+com2 = Computer("i9", "96GB", "2TB")
+
+com1.config()
+com2.config()
+print(Computer.brand)
+```
+
+### Output
+
+```
+init called
+init called
+config : i5 16GB 512GB
+config : i9 96GB 2TB
+Telusko AI
+```
+
+### Key Points
+
+* `self` refers to the current object
+* Instance methods work with **object-specific data**
+* Changes affect **only that object**
+
+</Step>
+
+---
+
+<Step>
+## Class Methods
+
+### What Are Class Methods?
+
+* Defined using the `@classmethod` decorator
+* Use `cls` as the first parameter (by convention)
+* Work with **class variables**
+* The class itself is passed automatically, not an object
+
+### Example
+
+```python
+class Computer:
+    brand = "Telusko AI"
+
+    def __init__(self, cpu, ram, ssd):
+        self.cpu = cpu
+        self.ram = ram
+        self.ssd = ssd
+
+    def config(self):
+        print("config :", self.cpu, self.ram, self.ssd)
+
+    @classmethod
+    def info(cls):
+        return cls.brand
+
+print(Computer.info())
+```
+
+### Output
+
+```
+Telusko AI
+```
+
+### Key Points
+
+* Class methods operate on **shared data**
+* Modifying class variables affects **all objects**
+* Often used for **factory methods** or class-level information
+
+</Step>
+
+---
+
+<Step>
+## Static Methods
+
+### What Are Static Methods?
+
+* Defined using the `@staticmethod` decorator
+* Do **not** receive `self` or `cls`
+* Independent of both object and class state
+* Used as **utility or helper functions**
+
+### Example
+
+```python
+class Computer:
+    @staticmethod
+    def gb_to_bytes(gb):
+        return gb * (1024 ** 3)
+
+print(Computer.gb_to_bytes(16))
+```
+
+### Output
+
+```
+17179869184
+```
+
+### Key Points
+
+* No access to instance or class variables
+* Logically related to the class
+* Improves code organization and readability
+
+</Step>
+
+---
+
+
+## Impact of Variable Scope
+
+* Modifying a **class variable** using the class name affects all objects
+* Modifying an **instance variable** using `self` affects only that object
+* Instance and class variables exist in **separate namespaces**
+
+![Method_Types](https://dyz1pdcuffwr5.cloudfront.net/Python/methods_python.png)
+
+
+---
+
+
+## Summary
+
+* Python provides **three types of methods**: instance, class, and static.
+* Instance methods operate on **object-specific (instance) data** using `self`.
+* Class methods operate on **shared class-level data** using `cls`.
+* Static methods act as **utility functions**, independent of class and object state.
+* Using the appropriate method type results in **cleaner, more maintainable, and well-structured object-oriented code**.
+
+
+</Steps>
+
+Written By: <a href="https://www.linkedin.com/in/muskangarg03/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer"> Muskan Garg <ExternalLink className="w-4 h-4" /></a>

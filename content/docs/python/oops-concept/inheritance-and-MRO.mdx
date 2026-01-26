@@ -1,0 +1,273 @@
+---
+title: Inheritance and MRO
+---
+
+<Steps>
+<Video id="fAkjyuNEVxs" />
+
+---
+
+
+Inheritance is one of the core pillars of **Object-Oriented Programming (OOP)** in Python.
+It allows a new class (child) to **reuse, extend, and customize** the behavior of an existing class (parent), promoting code reusability and logical organization.
+
+Python supports multiple forms of inheritance and uses a well-defined mechanism called **Method Resolution Order (MRO)** to decide which method is executed when multiple classes define methods with the same name.
+
+
+---
+
+
+## What is Inheritance?
+
+* Inheritance allows a class to **acquire methods and properties** of another class
+* The existing class is called the **parent (base) class**
+* The new class is called the **child (derived) class**
+* Child classes can access parent methods, but parents cannot access child methods
+
+![Benefits_of_Inheritance](https://dyz1pdcuffwr5.cloudfront.net/Python/inheritance_benefits.png)
+
+
+---
+
+
+## Types of Inheritance in Python
+
+| Type         | Description                              |
+| ------------ | ---------------------------------------- |
+| Single-Level | One child inherits from one parent       |
+| Multi-Level  | Parent → Child → Grandchild              |
+| Multiple     | One child inherits from multiple parents |
+
+
+---
+
+<Step>
+## Single-Level Inheritance
+
+A child class inherits from a single parent class.
+
+![Single_Inheritance](https://dyz1pdcuffwr5.cloudfront.net/Python/single_inheritance.png)
+
+### Example
+
+```python
+class A:
+    def f1(self):
+        print("f1 works")
+
+    def f2(self):
+        print("f2 works")
+
+class B(A):
+    def f3(self):
+        print("f3 works")
+
+    def f4(self):
+        print("f4 works")
+
+obj = B()
+obj.f1()
+```
+
+### Output
+
+```
+f1 works
+```
+
+### Explanation
+
+* `A` is the parent class
+* `B` is the child class
+* `B` inherits methods `f1()` and `f2()` from `A`
+
+</Step>
+
+---
+
+
+## Access Rules in Inheritance
+
+* A **child class can access all parent methods**
+* A **parent class cannot access child methods**
+* Sibling classes **cannot access each other’s methods**
+
+### Example
+
+```python
+class C(A):
+    def f5(self):
+        print("f5 works")
+
+obj = B()
+obj.f5()
+```
+
+### Output
+
+```
+AttributeError: 'B' object has no attribute 'f5'
+```
+
+
+---
+
+<Step>
+## Multi-Level Inheritance
+
+A class inherits from another child class, forming a hierarchy.
+
+![Multi_Level_Inheritance](https://dyz1pdcuffwr5.cloudfront.net/Python/multilevel_inheritance.png)
+
+### Example
+
+```python
+class A:
+    def f1(self):
+        print("f1 works")
+
+    def f2(self):
+        print("f2 works")
+
+class B(A):
+    def f3(self):
+        print("f3 works")
+
+    def f4(self):
+        print("f4 works")
+
+class C(A):
+    def f5(self):
+        print("f5 works")
+
+obj = B()
+obj.f4()
+```
+
+### Output
+
+```
+f4 works
+```
+
+* Properties flow from **grandparent to parent to child**
+* Commonly used for hierarchical relationships
+
+</Step>
+
+---
+
+<Step>
+## Multiple Inheritance
+
+A child class inherits from **multiple parent classes**.
+
+![Multiple_Inheritance](https://dyz1pdcuffwr5.cloudfront.net/Python/multiple_inheritance.png)
+
+### Example
+
+```python
+class A:
+    def show(self):
+        print("in A show")
+
+class B:
+    def show(self):
+        print("in B show")
+
+class C(A, B):
+    pass
+
+obj = C()
+obj.show()
+```
+
+### Output
+
+```
+in A show
+```
+
+### Explanation
+
+* Both `A` and `B` define `show()`
+* Python selects the method based on **MRO**
+
+</Step>
+
+---
+
+
+## Method Resolution Order (MRO)
+
+### What is MRO?
+
+* MRO defines the **order in which Python searches classes** for a method
+* Python searches:
+
+  1. The child class
+  2. Parent classes from **left to right**
+  3. Grandparents (if any)
+   
+
+### MRO Depends on Inheritance Order
+
+**Example**
+
+```python
+class C(B, A):
+    pass
+
+obj = C()
+obj.show()
+```
+
+**Output**
+
+```
+in B show
+```
+
+➡ Changing the order of parent classes changes the method selected.
+
+
+### Explicit Parent Method Call
+
+If needed, you can directly call a specific parent’s method.
+
+```python
+B.show(obj)
+```
+
+**Output**
+
+```
+in B show
+```
+
+This bypasses MRO and calls the method explicitly.
+
+
+---
+
+
+## How Python Resolves Method Conflicts?
+
+> Child class methods take **highest priority**, if not found, Python checks parent classes **in MRO order**
+
+![conflicts_in_methods](https://dyz1pdcuffwr5.cloudfront.net/Python/methods_conflict_python.png)
+
+
+---
+
+
+## Summary
+
+* Inheritance is a powerful feature in Python that enables structured code reuse and extensibility.
+* Child classes can access parent methods, not vice versa.
+* Python supports single-level, multi-level, and multiple inheritance.
+* When multiple inheritance is used, Python relies on Method Resolution Order (MRO) to determine which method to execute, ensuring predictable and consistent behavior in complex class hierarchies.
+
+</Steps>
+
+Written By: <a href="https://www.linkedin.com/in/muskangarg03/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer"> Muskan Garg <ExternalLink className="w-4 h-4" /></a>

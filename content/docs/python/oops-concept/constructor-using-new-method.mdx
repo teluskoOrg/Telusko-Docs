@@ -1,0 +1,256 @@
+---
+title: Constructor using `new` method
+---
+
+<Steps>
+<Video id="fnDt3bAh5AY" />
+
+---
+
+
+## Introduction
+
+In Python, **object creation and object initialization are intentionally separated into two distinct steps**, providing a level of flexibility that many programming languages do not offer.
+
+* **Object creation** is handled by the `__new__` method, which is responsible for allocating memory and returning a new instance of a class.
+* **Object initialization** is handled by the `__init__` method, which configures the already-created object by assigning initial values to its attributes.
+
+This separation allows Python to give developers **fine-grained control over how and when objects are created**, enabling advanced use cases such as customized object creation, immutable data handling, and design patterns like the Singleton.
+
+
+---
+
+
+## What is `__new__`?
+
+* `__new__` is a **special method** responsible for **creating a new object**
+* It is the **true constructor** in Python
+* It is called **before `__init__`**
+* It receives the class object as its first parameter, commonly named `cls` by convention
+* It must **return an instance of the class**
+
+```python
+__new__(cls)
+```
+
+If `__new__` does not return an object, Python **cannot proceed** with initialization.
+
+![New_method_usage](https://dyz1pdcuffwr5.cloudfront.net/Python/new_method.png)
+
+
+---
+
+
+## Sequence of Object Creation
+
+When an object is created using:
+
+```python
+obj = ClassName()
+```
+
+The execution order is:
+
+1. `__new__(cls)` → creates the object
+2. `__init__(self)` → initializes the object
+3. Other instance methods can then be called
+
+![New_with_object](https://dyz1pdcuffwr5.cloudfront.net/Python/new_object.png)
+
+
+---
+
+<Step>
+## Basic Example Without `__new__`
+
+```python
+class Abc:
+    def __init__(self):
+        print("init called")
+
+    def show(self):
+        print("in show")
+
+obj1 = Abc()
+obj1.show()
+```
+
+### Output:
+
+```
+init called
+in show
+```
+
+This is the **standard object creation flow**, where Python internally calls `__new__` for you.
+
+</Step>
+
+
+---
+
+<Step>
+## Creating an Object Using `__new__` Directly
+
+```python
+obj2 = Abc.__new__(Abc)
+obj2.show()
+```
+
+### Output:
+
+```
+in show
+```
+
+### Explanation:
+
+* `__init__` is **not called**
+* Object is created, but not initialized
+* Methods that do not depend on instance variables still work
+
+</Step>
+
+---
+
+<Step>
+## Defining a Custom `__new__` Method 
+
+```python
+class Abc:
+    def __new__(cls):
+        print("Constructor called")
+
+    def __init__(self):
+        print("init called")
+
+    def show(self):
+        print("in show")
+
+obj = Abc()
+obj.show()
+```
+
+### Output:
+
+```
+Constructor called
+AttributeError: 'NoneType' object has no attribute 'show'
+```
+
+### Why This Fails?
+
+* `__new__` **did not return an object**
+* Python receives `None`
+* `__init__` is never called
+* Method calls fail
+
+</Step>
+
+---
+
+<Step>
+## Correct Way to Implement `__new__`
+
+A custom `__new__` must always return an object using `super().__new__(cls)`.
+
+```python
+class Abc:
+    def __new__(cls):
+        print("Constructor called")
+        return super(Abc, cls).__new__(cls)
+
+    def __init__(self):
+        print("init called")
+
+    def show(self):
+        print("in show")
+
+obj1 = Abc()
+obj1.show()
+```
+
+### Output:
+
+```
+Constructor called
+init called
+in show
+```
+
+</Step>
+
+---
+
+<Step>
+## Manually Calling `__init__` with `__new__`
+
+```python
+obj2 = Abc.__new__(Abc)
+obj2.__init__()
+obj2.show()
+```
+
+### Output:
+
+```
+Constructor called
+init called
+in show
+```
+
+This shows that:
+
+* `__new__` creates the object
+* `__init__` must be called explicitly if skipped
+
+</Step>
+
+---
+
+<Step>
+## Singleton Pattern Using `__new__` 
+
+* Ensures **only one instance** of a class exists
+* Repeated object creation returns the **same instance**
+* Achieved by storing and reusing the object inside `__new__`
+
+```python
+class Singleton:
+    _instance = None
+
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+        return cls._instance
+```
+
+### Role of `super()` in `__new__`
+
+* Delegates object creation to the parent class
+* Maintains proper behavior in inheritance chains
+* Ensures correct memory allocation
+
+```python
+return super().__new__(cls)
+```
+
+</Step>
+
+
+---
+
+
+## Summary 
+
+* `__new__` is Python’s **actual constructor** and runs **before `__init__`**.
+* It is responsible for **creating and returning the object**, while `__init__` only initializes it.
+* A custom `__new__` must return a valid instance; otherwise, object behavior breaks.
+* `__init__` should be used for **normal initialization**, while `__new__` is reserved for advanced cases.
+* `__new__` is essential for **special object-creation logic**, such as the Singleton pattern.
+
+
+
+</Steps>
+
+Written By: <a href="https://www.linkedin.com/in/muskangarg03/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer"> Muskan Garg <ExternalLink className="w-4 h-4" /></a>

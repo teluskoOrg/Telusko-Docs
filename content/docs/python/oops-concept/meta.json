@@ -2,6 +2,9 @@
     "pages":[
         "introduction-to-oops.mdx",
         "class-and-object.mdx",
-        "init-method.mdx"
+        "init-method.mdx",
+        "constructor-using-new-method.mdx",
+        "types-of-methods.mdx",
+        "inheritance-and-MRO.mdx"
     ]
 } 
