@@ -5,6 +5,7 @@
         "init-method.mdx",
         "constructor-using-new-method.mdx",
         "types-of-methods.mdx",
-        "inheritance-and-MRO.mdx"
+        "inheritance-and-MRO.mdx",
+        "init-and-super-with-inheritance.mdx"
     ]
 } 

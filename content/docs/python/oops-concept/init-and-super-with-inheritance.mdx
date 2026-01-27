@@ -1,0 +1,218 @@
+---
+title: init And super With Inheritance
+---
+
+<Steps>
+<Video id="AyD2VfCDX2o" />
+
+
+---
+
+
+# `__init__` and `super()` with Inheritance in Python
+
+Python is an object-oriented language where everything revolves around classes and objects.
+To understand how objects are created and initialized in an inheritance hierarchy, it is essential to understand __init__, inheritance, and super() together, as they work as a single system.
+
+
+## Universal Parent Class: `object`
+
+In Python, **every class is a child of the built-in `object` class**, even if it is not explicitly mentioned.
+
+```python
+class A:
+    pass
+```
+
+Internally, Python treats it as:
+
+```python
+class A(object):
+    pass
+```
+
+This is why all Python classes have access to methods like:
+
+* `__init__`
+* `__str__`
+* `__eq__`
+* `__hash__`
+
+
+---
+
+
+## Inheritance and Method Availability
+When a class inherits from another class, it **automatically gains access to all non-private methods** of the parent class.
+
+```python
+class A(object):
+    def f1(self):
+        print("f1 works")
+
+obj1 = A()
+obj1.f1()
+```
+
+### Output
+
+```
+f1 works
+```
+
+Here:
+
+* `A` inherits from `object`
+* `f1()` is accessed directly from class `A`
+
+
+---
+
+
+## How `__init__` Works with Inheritance?
+
+
+When an object of a child class is created, Python follows this lookup order:
+
+1. Python looks for `__init__` in the **child class**
+2. If not found, it searches in the **parent class**
+3. If found, it is executed
+
+![Role_of_init](https://dyz1pdcuffwr5.cloudfront.net/Python/init_role.png)
+
+
+### Case 1: Child Class Does NOT Have `__init__`
+
+```python
+class A:
+    def __init__(self):
+        print("in A init")
+
+class B(A):
+    pass
+
+obj = B()
+```
+
+**Output**
+
+```
+in A init
+```
+
+**Explanation**
+
+* `B` does not define `__init__`
+* Python automatically calls `A.__init__()`
+
+
+### Case 2: Child Class HAS Its Own `__init__`
+
+When a child class defines `__init__`, it **overrides** the parent’s `__init__`.
+
+```python
+class A:
+    def __init__(self):
+        print("in A init")
+
+class B(A):
+    def __init__(self):
+        print("in B init")
+
+obj = B()
+```
+
+**Output**
+
+```
+in B init
+```
+
+> Parent `__init__` is **not executed** automatically.
+
+
+---
+
+
+## Introducing `super()`
+
+### What is `super()`?
+
+* `super()` returns a **proxy object** of the parent class
+* It allows access to **parent class methods**
+* It follows Python’s **Method Resolution Order (MRO)**
+
+![Role_of_super](https://dyz1pdcuffwr5.cloudfront.net/Python/super_role.png)
+
+
+### Calling Parent Methods Using `super()`
+
+Parent methods can be accessed using:
+
+* `self.method_name()`
+* `super().method_name()`
+
+Both work, but `super()` is preferred for:
+
+* Clarity
+* Multiple inheritance safety
+
+
+### Example: Calling Parent `__init__` Using `super()`
+
+```python
+class A:
+    def __init__(self):
+        print("in A init")
+
+    def f1(self):
+        print("f1 works")
+
+class B(A):
+    def __init__(self):
+        super().__init__()
+        print("in B init")
+
+    def f2(self):
+        super().f1()
+        print("f2 works")
+
+obj1 = B()
+obj1.f2()
+```
+
+**Output**
+
+```
+in A init
+in B init
+f1 works
+f2 works
+```
+
+**Explanation**
+
+When `obj1 = B()` is executed:
+
+1. Python searches for `__init__` in `B`
+2. Finds it → executes `B.__init__`
+3. `super().__init__()` calls `A.__init__`
+4. Parent initialization runs
+5. Child initialization completes
+
+
+---
+
+
+## Summary
+
+* Every Python class inherits from `object`, enabling built-in behavior and methods.
+* Inheritance allows child classes to reuse parent methods and functionality.
+* Defining `__init__` in a child class overrides the parent’s initialization.
+* `super()` is required to execute parent initialization and access parent methods safely.
+* Proper use of `__init__` and `super()` is essential for clean, scalable object-oriented design in Python.
+
+
+</Steps>
+
+Written By: <a href="https://www.linkedin.com/in/muskangarg03/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer"> Muskan Garg <ExternalLink className="w-4 h-4" /></a>
