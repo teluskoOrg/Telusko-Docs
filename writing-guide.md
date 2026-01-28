@@ -185,7 +185,7 @@ This renders an embedded YouTube player.
 
 # Use Image like this
 ```mdx
-![Test](/images/python/p2.png)
+![Test](https://dyz1pdcuffwr5.cloudfront.net/Python/p2.png)
 ```
 
 
@@ -344,7 +344,7 @@ Welcome to Python!
 <Video id="PqFKRqpHrjw" />
 
 ## CPU Diagram
-![Test](/images/python/p2.png)
+![Test](https://dyz1pdcuffwr5.cloudfront.net/Python/p2.png)
 
 <Steps>
   <Step>
