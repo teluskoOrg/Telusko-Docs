@@ -1,5 +1,6 @@
 // export const dynamic = 'force-dynamic';
-export const revalidate = 60 * 15; // cache for 15 mins (we can change it based on our requirements)
+export const revalidate = 900; // cache for 15 mins (we can change it based on our requirements)
+// export const dynamicParams = true;
 
 import { getPageImage, source } from '@/lib/source';
 import {
