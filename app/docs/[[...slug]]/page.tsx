@@ -1,3 +1,6 @@
+export const dynamic = 'force-dynamic';
+export const revalidate = 60 * 15; // cache for 15 mins (we can change it based on our requirements)
+
 import { getPageImage, source } from '@/lib/source';
 import {
   DocsBody,
@@ -62,9 +65,9 @@ export default async function Page(props: PageProps<'/docs/[[...slug]]'>) {
   );
 }
 
-export async function generateStaticParams() {
-  return source.generateParams();
-}
+// export async function generateStaticParams() {
+//   return source.generateParams();
+// }
 
 export async function generateMetadata(
   props: PageProps<'/docs/[[...slug]]'>,
