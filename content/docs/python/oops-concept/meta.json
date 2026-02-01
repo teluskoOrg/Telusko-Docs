@@ -6,6 +6,8 @@
         "constructor-using-new-method.mdx",
         "types-of-methods.mdx",
         "inheritance-and-MRO.mdx",
-        "init-and-super-with-inheritance.mdx"
+        "init-and-super-with-inheritance.mdx",
+        "polymorphism-and-duck-typing.mdx",
+        "operator-overloading.mdx"
     ]
 } 

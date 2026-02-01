@@ -1,0 +1,221 @@
+---
+title: Polymorphism and Duck Typing
+---
+
+<Steps>
+<Video id="hysoJfB-f_Y" />
+
+
+---
+
+
+## What is Polymorphism?
+
+**Polymorphism** means *“many forms”*.
+
+In Python, polymorphism allows **the same method or function name to behave differently depending on the object that is passed to it**.
+
+Instead of checking an object’s type, Python focuses on **what the object can do**.
+
+In simple terms:
+
+> *Different objects can respond to the same method call in different ways.*
+
+
+### Polymorphism in Python is Behavior-Based
+
+Unlike some statically typed languages, Python does **not require inheritance** or strict type matching to achieve polymorphism.
+
+Python supports polymorphism through:
+
+* **Dynamic typing**
+* **Duck typing**
+
+As long as an object has the **required methods or attributes**, it can be used.
+
+
+---
+
+
+## 3. Duck Typing – The Core Idea
+
+Duck typing follows this famous principle:
+
+> **“If it looks like a duck and quacks like a duck, it is a duck.”**
+
+In Python:
+
+* The **actual class or type of an object does not matter**
+* What matters is **whether the object implements the required behavior (methods)**
+
+### Key Rule:
+
+✔️ If an object has the required method → it works
+
+❌ If it does not → Python raises an error
+
+![Duck_Typing_Concept](https://dyz1pdcuffwr5.cloudfront.net/Python/duck_typing_python.png)
+
+
+---
+
+
+## 4. Understanding with an Example
+
+### Classes with Similar Behavior
+
+```python
+class Laptop:        # duck
+    def build(self):
+        print("Laptop builds")
+
+class Desktop:       # crow
+    def build(self):
+        print("Desktop builds")
+
+class Tablet:
+    def open_pdf(self):
+        print("Opening PDF")
+```
+
+Here:
+
+* `Laptop` and `Desktop` both have a **build()** method
+* `Tablet` does **not** have a `build()` method
+
+
+
+### A Class That Uses Any “Machine”
+
+```python
+class Alien:
+    def code(self, machine: Laptop):
+        print("Alien building...")
+        machine.build()
+```
+
+**Note:**
+
+* The type hint `machine: Laptop` is **not enforced at runtime**
+* Python will only check **whether `machine.build()` exists**
+
+
+---
+
+
+## Object Usage and Output
+
+```python
+asus_rog = Laptop()
+beast = Desktop()
+lenevo_tab = Tablet()
+
+muskan = Alien()
+```
+
+### Case 1: Laptop object
+
+```python
+muskan.code(asus_rog)
+```
+
+**Output:**
+
+```
+Alien building...
+Laptop builds
+```
+
+✔️ Works because `Laptop` has `build()`
+
+
+### Case 2: Desktop object
+
+```python
+muskan.code(beast)
+```
+
+**Output:**
+
+```
+Alien building...
+Desktop builds
+```
+
+✔️ Works even though `Desktop` is a different class
+✔️ Because it also has `build()`
+
+> **This is duck typing in action**
+
+
+### Case 3: Tablet object
+
+```python
+muskan.code(lenevo_tab)
+```
+
+**Output:**
+
+```
+AttributeError: 'Tablet' object has no attribute 'build'
+```
+
+❌ Fails because `Tablet` does **not** implement `build()`
+
+
+### Why This Is Polymorphism?
+
+* The same method call:
+
+```python
+machine.build()
+```
+
+* Different implementations:
+
+  - Laptop → Laptop builds
+
+  - Desktop → Desktop builds
+
+* Same interface, different behavior.
+* This is runtime polymorphism driven by duck typing.
+
+> Python prioritizes **behavior over type**.
+> Objects are compatible **only if they implement the required method**, regardless of their class.
+
+
+* This makes code:
+
+  * Flexible
+  * Reusable
+  * Extensible
+
+
+### Real-World Analogy 
+
+You expect a duck that can quack.
+Someone gives you a crow that quacks.
+
+Python says:
+
+> “I don’t care what it is.
+> If it quacks, it’s acceptable.”
+
+![Benefits_of_Duck_Typing](https://dyz1pdcuffwr5.cloudfront.net/Python/benefits_duck_typing.png)
+
+
+---
+
+
+## Summary
+
+* Polymorphism in Python allows the same method call to produce different behaviors across objects.
+* Duck typing enables polymorphism by focusing on behavior rather than inheritance or type.
+* Python determines compatibility by checking for required methods, not class hierarchy.
+* Runtime errors occur only when an object lacks the expected behavior.
+* Dynamic typing makes Python flexible, expressive, and easy to extend.
+
+
+</Steps>
+
+Written By: <a href="https://www.linkedin.com/in/muskangarg03/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer"> Muskan Garg <ExternalLink className="w-4 h-4" /></a>

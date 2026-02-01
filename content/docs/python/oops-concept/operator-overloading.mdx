@@ -1,0 +1,307 @@
+---
+title: Operator Overloading
+---
+
+<Steps>
+<Video id="2YLoX7FSwYQ" />
+
+
+---
+
+
+## What is Operator Overloading?
+
+**Operator overloading** in Python allows developers to **redefine the behavior of operators** (such as `+`, `>`, `==`) for **user-defined classes**.
+
+This enables objects to interact using operators in a **natural and intuitive way**, just like built-in data types.
+
+> Operator overloading allows the **same operator** to perform **different operations** depending on the **types of operands**, which is a practical example of **polymorphism**.
+
+
+---
+
+
+## Polymorphism Through Operators
+
+Python already uses operator overloading internally.
+
+**Example: `+` Operator** 
+
+```python
+a = 5
+b = 6
+c = a + b
+print(c)
+```
+
+**Output**
+
+```
+11
+```
+
+Here, `+` performs **integer addition**.
+
+
+```python
+a = '5'
+b = '6'
+c = a + b
+print(c)
+```
+
+**Output**
+
+```
+56
+```
+
+Here, the same `+` operator performs **string concatenation**.
+
+✔️ Same operator
+
+✔️ Different behavior
+
+➡️ **Polymorphism in action**
+
+
+### Behind the Scenes: Magic (Dunder) Methods
+
+In Python, operators are just **method calls**.
+
+**Example: Integer Addition**
+
+```python
+a = 5
+b = 6
+
+c = a.__add__(b)
+print(c)
+```
+
+**Output**
+
+```
+11
+```
+
+This proves:
+
+```python
+a + b  ==  a.__add__(b)
+```
+
+**Key Insight**
+
+* `int` is a **class**
+* Integers are **objects**
+* Operators call **special (dunder) methods**
+
+
+### The `__str__()` Method 
+
+* Returns a **string representation** of an object
+* Automatically called when an object is printed
+
+```python
+a = 5
+print(a.__str__())
+```
+
+**Output**
+
+```
+5
+```
+
+By default, Python provides a basic implementation, but we can **override it** for custom classes.
+
+
+---
+
+
+## Custom Class Without Operator Overloading
+
+### Creating an `Account` Class
+
+```python
+class Account:
+    def __init__(self, name, balance):
+        self.name = name
+        self.balance = balance
+```
+
+If we print an object now:
+
+```python
+print(user1)
+```
+
+We would get a **memory address**, not meaningful data.
+
+
+### Overriding `__str__()` for Readable Output
+
+```python
+class Account:
+    def __init__(self, name, balance):
+        self.name = name
+        self.balance = balance
+
+    def __str__(self):
+        return f'{self.name} : {self.balance}'
+```
+
+**Usage**
+
+```python
+user1 = Account('navin', 1000)
+user2 = Account('kiran', 2000)
+
+print(user1)
+print(user2)
+```
+
+**Output**
+
+```
+navin : 1000
+kiran : 2000
+```
+
+* Improves readability
+* Helps debugging
+* Makes objects user-friendly
+
+
+---
+
+
+## Overloading the `+` Operator with `__add__()`
+
+### Why Overload `+`?
+
+To define **domain-specific logic**, such as:
+
+* Combining balances
+* Merging objects
+
+
+### Example: Combining Two Accounts
+
+```python
+class Account:
+    def __init__(self, name, balance):
+        self.name = name
+        self.balance = balance
+
+    def __str__(self):
+        return f'{self.name} : {self.balance}'
+
+    def __add__(self, other):
+        return Account('combined', self.balance + other.balance)
+```
+
+**Usage**
+
+```python
+user1 = Account('navin', 1000)
+user2 = Account('kiran', 2000)
+
+combined = user1 + user2
+
+print(user1)
+print(user2)
+print(combined)
+```
+
+**Output**
+
+```
+navin : 1000
+kiran : 2000
+combined : 3000
+```
+
+ > `+` now works with **Account objects**, not just numbers.
+
+
+---
+
+
+## Overloading Comparison Operators (`>`, `<`, `==`)
+
+### Example: Who Pays the Bill?
+
+```python
+class Account:
+    def __init__(self, name, balance):
+        self.name = name
+        self.balance = balance
+
+    def __str__(self):
+        return f'{self.name} : {self.balance}'
+
+    def __add__(self, other):
+        return Account('combined', self.balance + other.balance)
+
+    def __gt__(self, other):
+        return self.balance > other.balance
+```
+
+**Usage**
+
+```python
+user1 = Account('navin', 1000)
+user2 = Account('kiran', 2000)
+
+if user1 > user2:
+    print("navin pays the bill")
+else:
+    print("kiran pays the bill")
+```
+
+**Output**
+
+```
+kiran pays the bill
+```
+
+* Custom logic
+* Clean syntax
+* Real-world meaning
+
+
+---
+
+
+## Common Operator Overloading Methods
+
+| Operator  | Method                 |
+| --------- | ---------------------- |
+| `+`       | `__add__(self, other)` |
+| `-`       | `__sub__()`            |
+| `*`       | `__mul__()`            |
+| `>`       | `__gt__()`             |
+| `<`       | `__lt__()`             |
+| `==`      | `__eq__()`             |
+| `print()` | `__str__()`            |
+
+![Operator_overloading](https://dyz1pdcuffwr5.cloudfront.net/Python/operator_overloading.png)
+
+
+---
+
+
+## Summary 
+
+* In Python, operators such as `+`, `>`, and `==` are implemented internally using **special (magic) methods**, also known as **dunder methods**.
+* **Operator overloading** allows developers to define or modify how operators behave for **user-defined classes**, enabling objects to interact naturally using standard operators.
+* Magic methods like `__add__()`, `__gt__()`, and `__str__()` act as a bridge between **Python’s built-in operators** and **custom class logic**.
+* Operator overloading demonstrates **polymorphism**, where the same operator performs different actions depending on the type of objects involved.
+* When used thoughtfully, operator overloading improves **code readability, expressiveness, and usability**.
+
+
+</Steps>
+
+Written By: <a href="https://www.linkedin.com/in/muskangarg03/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer"> Muskan Garg <ExternalLink className="w-4 h-4" /></a>
