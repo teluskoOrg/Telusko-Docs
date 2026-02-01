@@ -1,0 +1,202 @@
+---
+title: Compile-Time Polymorphism
+---
+
+## 1. Introduction
+
+**Compile-Time Polymorphism**, also known as:
+
+- **Static Polymorphism**
+- **Method Overloading**
+- **Early Binding**
+
+is the type of polymorphism where the method to be executed is determined **at compile time**.
+
+Java decides which overloaded method to call based on:
+
+- Number of parameters  
+- Type of parameters  
+- Order of parameters  
+
+Compile-time polymorphism improves **readability**, **flexibility**, and **code organization**.
+
+
+
+## 2. What Is Method Overloading?
+
+Method Overloading occurs when:
+
+1. Two or more methods have the **same name**, but  
+2. **Different parameter list** (number, type, or order)
+
+Example:
+
+```java
+void add(int a, int b) { }
+void add(double a, double b) { }
+void add(int a, int b, int c) { }
+````
+
+All three are valid overloaded methods.
+
+
+
+## 3. Characteristics of Compile-Time Polymorphism
+
+* Occurs within the **same class** or **parent-child classes**
+* Based on method **signature differences**
+* Java determines the method during **compilation**
+* Improves code readability
+* Does *not* involve method overriding
+
+## 4. Rules for Method Overloading
+
+### Rule 1: Change in Number of Parameters
+
+```java
+void test(int a) { }
+void test(int a, int b) { }
+```
+
+### Rule 2: Change in Data Types
+
+```java
+void test(int a) { }
+void test(double a) { }
+```
+
+### Rule 3: Change in Order of Parameters
+
+```java
+void test(int a, String b) { }
+void test(String b, int a) { }
+```
+
+### Not Allowed:
+
+Changing **only** return type is NOT considered overloading.
+
+```java
+int test(int a) { }
+double test(int a) { } // ERROR
+```
+
+
+
+## 5. Example Program
+
+```java
+class Calculator {
+
+    int add(int a, int b) {
+        return a + b;
+    }
+
+    double add(double a, double b) {
+        return a + b;
+    }
+
+    int add(int a, int b, int c) {
+        return a + b + c;
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+        Calculator c = new Calculator();
+
+        System.out.println(c.add(4, 5));
+        System.out.println(c.add(4.5, 5.5));
+        System.out.println(c.add(1, 2, 3));
+    }
+}
+```
+
+Output:
+
+```
+9
+10.0
+6
+```
+
+The compiler picks the correct method based on arguments.
+
+
+
+## 6. Type Promotion in Overloading
+
+Java automatically promotes:
+
+* `byte` → `short` → `int` → `long` → `float` → `double`
+
+Example:
+
+```java
+void show(int a) { }
+void show(double a) { }
+```
+
+Call:
+
+```java
+show(10);      // calls show(int)
+show(10.5f);   // float promotes to double → show(double)
+```
+
+
+
+## 7. Overloading with Varargs
+
+Example:
+
+```java
+void display(int... a) { }
+void display(String s, int... a) { }
+```
+
+Varargs cannot be overloaded just by writing multiple varargs.
+
+
+
+## 8. Real-World Use of Compile-Time Polymorphism
+
+### Example: Logging System
+
+```java
+log(String msg)
+log(String msg, int code)
+log(String msg, Exception e)
+```
+
+### Example: Constructors
+
+Constructor overloading is also compile-time polymorphism:
+
+```java
+class Student {
+    Student() { }
+    Student(String name) { }
+    Student(String name, int age) { }
+}
+```
+
+
+## 9. Advantages of Compile-Time Polymorphism
+
+* Cleaner and organized method definitions
+* Flexibility in calling methods with different inputs
+* No need to remember many method names
+* Reduced complexity
+
+
+
+## 10. Summary
+
+* Compile-Time Polymorphism = Method Overloading.
+* The compiler decides which method to call based on parameters.
+* Overloading must differ in parameter type, number, or order.
+* Return type alone **cannot** differentiate methods.
+* Widely used in constructors, utility classes, and frameworks.
+
+This completes **Compile-Time Polymorphism**.

@@ -1,0 +1,276 @@
+---
+title: Run-Time Polymorphism
+---
+
+## 1. Introduction
+
+**Run-Time Polymorphism**, also known as:
+
+- **Dynamic Polymorphism**
+- **Late Binding**
+- **Method Overriding**
+- **Dynamic Method Dispatch**
+
+allows Java to determine which method implementation to execute **at runtime**.
+
+This is one of the strongest features of OOP because it enables:
+
+- Flexible code  
+- Extensibility  
+- Dynamic behavior based on object type  
+
+
+
+## 2. What Is Run-Time Polymorphism?
+
+Run-time polymorphism occurs when:
+
+- A **parent class reference** refers to a **child class object**
+- A **child class overrides a parent class method**
+- The **overridden method** executed depends on the **actual object**, not reference type
+
+Example:
+
+```java
+Animal a = new Dog(); // Parent ref → Child obj
+a.sound();            // Executes Dog's sound() at runtime
+````
+
+Even though `a` is of type `Animal`, the actual method executed belongs to `Dog`.
+
+
+
+## 3. Method Overriding — The Key to Runtime Polymorphism
+
+### Rules for Overriding
+
+1. Method signature must be identical
+2. Access level cannot be reduced
+3. Return type must be compatible
+4. Only inherited methods can be overridden
+5. Static/final/private methods cannot be overridden
+
+Example:
+
+```java
+class A {
+    void show() {
+        System.out.println("A show");
+    }
+}
+
+class B extends A {
+    @Override
+    void show() {
+        System.out.println("B show");
+    }
+}
+```
+
+
+
+## 4. Basic Example of Runtime Polymorphism
+
+```java
+class Animal {
+    void sound() { System.out.println("Animal sound"); }
+}
+
+class Dog extends Animal {
+    @Override
+    void sound() { System.out.println("Dog barks"); }
+}
+
+public class Main {
+    public static void main(String[] args) {
+        Animal a = new Dog(); // upcasting
+        a.sound();            // Dog barks
+    }
+}
+```
+
+OUTPUT:
+
+```
+Dog barks
+```
+
+
+
+## 5. Why Run-Time Polymorphism Is Important
+
+### 5.1 Supports Dynamic Behavior
+
+Program behavior changes depending on the object type.
+
+### 5.2 Enables Frameworks and APIs
+
+Spring, Hibernate, JDBC rely heavily on interfaces and runtime polymorphism.
+
+Example:
+
+```java
+Connection con = DriverManager.getConnection(...);  // actual subclass depends on database
+```
+
+### 5.3 Reduces Code Complexity
+
+You do not need long `if-else` chains:
+
+```java
+Animal a;
+a = new Dog();
+a.sound();
+
+a = new Cat();
+a.sound();
+```
+
+### 5.4 Makes Systems Extensible
+
+Add new classes without modifying existing logic.
+
+
+
+## 6. Runtime Polymorphism with Multiple Subclasses
+
+```java
+class Shape {
+    void draw() { System.out.println("Drawing shape"); }
+}
+
+class Circle extends Shape {
+    void draw() { System.out.println("Drawing circle"); }
+}
+
+class Square extends Shape {
+    void draw() { System.out.println("Drawing square"); }
+}
+
+class Triangle extends Shape {
+    void draw() { System.out.println("Drawing triangle"); }
+}
+```
+
+Usage:
+
+```java
+Shape s;
+
+s = new Circle();
+s.draw();
+
+s = new Square();
+s.draw();
+
+s = new Triangle();
+s.draw();
+```
+
+
+
+## 7. Runtime Polymorphism with Method Parameters
+
+```java
+class Payment {
+    void process() {
+        System.out.println("General payment");
+    }
+}
+
+class UPI extends Payment {
+    void process() {
+        System.out.println("UPI payment");
+    }
+}
+
+class NetBanking extends Payment {
+    void process() {
+        System.out.println("NetBanking payment");
+    }
+}
+```
+
+### Method accepting parent type:
+
+```java
+void makePayment(Payment p) {
+    p.process();
+}
+```
+
+Different outputs depending on object type passed:
+
+```java
+makePayment(new UPI());
+makePayment(new NetBanking());
+```
+
+
+
+## 8. What Cannot Participate in Runtime Polymorphism?
+
+| Feature         | Can it override? |
+| --------------- | ---------------- |
+| Static methods  | ❌ No             |
+| Private methods | ❌ No             |
+| Final methods   | ❌ No             |
+| Constructors    | ❌ No             |
+| Variables       | ❌ No             |
+
+Static methods use **compile-time binding**.
+
+Example:
+
+```java
+class A {
+    static void show() { System.out.println("A static"); }
+}
+
+class B extends A {
+    static void show() { System.out.println("B static"); }
+}
+
+A obj = new B();
+obj.show(); // A static
+```
+
+## 9. Real-World Example
+
+### Logging System
+
+```java
+class Logger {
+    void log(String msg) { System.out.println("Log: " + msg); }
+}
+
+class FileLogger extends Logger {
+    void log(String msg) { System.out.println("File: " + msg); }
+}
+
+class CloudLogger extends Logger {
+    void log(String msg) { System.out.println("Cloud: " + msg); }
+}
+```
+
+Usage:
+
+```java
+Logger log = new FileLogger();
+log.log("Error");
+
+log = new CloudLogger();
+log.log("Error");
+```
+
+
+
+## 10. Summary
+
+* Run-time polymorphism is achieved through **method overriding**.
+* The **object type**, not reference type, determines which method executes.
+* Enables dynamic, flexible, and scalable program design.
+* Key behind frameworks, interfaces, and real-world application architecture.
+* Static, private, final methods and variables do NOT participate.
+
+This completes **Run-Time Polymorphism in Java**.

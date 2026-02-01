@@ -1,0 +1,228 @@
+---
+title: Static Binding vs Dynamic Binding
+---
+
+## 1. Introduction
+
+Binding refers to the process of linking a **method call** to the **method body**.  
+Java performs this binding in two ways:
+
+1. **Static Binding (Early Binding)**  
+2. **Dynamic Binding (Late Binding)**  
+
+Understanding these concepts is crucial for mastering **polymorphism**, **method overloading**, and **method overriding**.
+
+
+
+## 2. What Is Static Binding?
+
+Static Binding happens **at compile time**.
+
+Java determines which method to call based on the **reference type** and the **method signature** available at compile time.
+
+### Characteristics of Static Binding
+
+- Also called **early binding**
+- Happens during compilation
+- Used for:
+  - Method overloading
+  - Static methods
+  - Private methods
+  - Final methods
+  - Variables
+
+### Example: Overloading (Static Binding)
+
+```java
+class Test {
+    void show(int a) { System.out.println("int"); }
+    void show(double a) { System.out.println("double"); }
+}
+
+public class Main {
+    public static void main(String[] args) {
+        Test t = new Test();
+        t.show(10);     // int → resolved at compile time
+        t.show(10.5);   // double → resolved at compile time
+    }
+}
+````
+
+
+
+## 3. What Is Dynamic Binding?
+
+Dynamic Binding happens **at runtime**.
+
+Java determines the method implementation to execute based on the **actual object** (not reference type).
+
+### Characteristics of Dynamic Binding
+
+* Also called **late binding**
+* Happens during program execution
+* Used for:
+
+  * Method overriding
+  * Runtime polymorphism
+
+### Example: Overriding (Dynamic Binding)
+
+```java
+class A {
+    void show() { System.out.println("A"); }
+}
+
+class B extends A {
+    void show() { System.out.println("B"); }
+}
+
+public class Main {
+    public static void main(String[] args) {
+        A obj = new B(); // upcasting
+        obj.show();      // B → resolved at runtime
+    }
+}
+```
+
+
+
+## 4. Differences Between Static and Dynamic Binding
+
+| Feature      | Static Binding                               | Dynamic Binding          |
+| ------------ | -------------------------------------------- | ------------------------ |
+| When decided | Compile time                                 | Runtime                  |
+| Keyword used | Overloading                                  | Overriding               |
+| Applies to   | Static, private, final methods and variables | Instance methods         |
+| Performance  | Faster                                       | Slightly slower          |
+| Based on     | Reference type                               | Actual object            |
+| Example      | show(int), show(double)                      | overridden show() method |
+
+
+
+## 5. Static Binding Applies to:
+
+### 5.1 Static Methods
+
+```java
+class A {
+    static void test() { System.out.println("A"); }
+}
+
+class B extends A {
+    static void test() { System.out.println("B"); }
+}
+
+A ref = new B();
+ref.test(); // A → static binding
+```
+
+
+
+### 5.2 Private Methods
+
+```java
+class A {
+    private void hello() { System.out.println("Private A"); }
+}
+```
+
+Private methods are not visible to subclasses → no overriding possible.
+
+
+
+### 5.3 Final Methods
+
+Final methods cannot be overridden → fixed binding.
+
+
+
+### 5.4 Variables
+
+Variables always use static binding.
+
+```java
+class A { int x = 10; }
+class B extends A { int x = 20; }
+
+A obj = new B();
+System.out.println(obj.x); // 10 → reference type decides
+```
+
+
+
+## 6. Dynamic Binding Applies to Instance Methods
+
+### Real Example
+
+```java
+class Shape {
+    void draw() { System.out.println("Shape"); }
+}
+
+class Circle extends Shape {
+    void draw() { System.out.println("Circle"); }
+}
+
+class Square extends Shape {
+    void draw() { System.out.println("Square"); }
+}
+```
+
+```java
+Shape s = new Circle();
+s.draw(); // Circle → runtime binding
+
+s = new Square();
+s.draw(); // Square → runtime binding
+```
+
+This enables **polymorphism**.
+
+
+
+## 7. Why Dynamic Binding Is Important?
+
+* Enables flexible code
+* Supports runtime polymorphism
+* Allows framework-level abstraction
+* Makes method overriding powerful
+* Lets developers extend programs without modifying existing code
+
+
+
+## 8. Real-World Use Case
+
+### Example: Notification System
+
+```java
+class Notification {
+    void send() { System.out.println("General Notification"); }
+}
+
+class Email extends Notification {
+    void send() { System.out.println("Email Sent"); }
+}
+
+class SMS extends Notification {
+    void send() { System.out.println("SMS Sent"); }
+}
+```
+
+Runtime:
+
+```java
+Notification n = new Email();
+n.send(); // Email Sent
+
+n = new SMS();
+n.send(); // SMS Sent
+```
+
+## 9. Summary
+
+* **Static Binding** = compile-time binding; used for overloading, static, private, final methods, and variables.
+* **Dynamic Binding** = runtime binding; used for overriding and polymorphism.
+* Dynamic binding allows Java to choose the method implementation based on the **object**, not the reference type.
+* These concepts are essential for understanding polymorphism, frameworks, and design patterns.
+
+This completes **Static vs Dynamic Binding**.

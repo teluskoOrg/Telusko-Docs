@@ -1,0 +1,218 @@
+---
+title: Polymorphism Overview
+---
+
+## 1. Introduction
+
+Polymorphism is one of the most important pillars of Object-Oriented Programming (OOP).  
+The word **polymorphism** means *many forms*.
+
+In Java, polymorphism allows:
+
+- A single reference type to refer to objects of different classes  
+- A method to behave differently depending on the object that calls it  
+- Flexible and extendable program design  
+
+Polymorphism makes Java applications more modular, reusable, and easier to maintain.
+
+
+
+## 2. Types of Polymorphism in Java
+
+Java supports two types of polymorphism:
+
+1. **Compile-Time Polymorphism (Static Binding / Method Overloading)**  
+2. **Runtime Polymorphism (Dynamic Binding / Method Overriding)**  
+
+
+
+## 3. Compile-Time vs Runtime Polymorphism
+
+### 3.1 Compile-Time Polymorphism  
+Achieved through **method overloading**.
+
+- Method to call is decided at compile time  
+- Same method name, different parameters  
+
+Example:
+
+```java
+void sum(int a, int b) {}
+void sum(double a, double b) {}
+````
+
+
+
+### 3.2 Runtime Polymorphism
+
+Achieved through **method overriding**.
+
+* Method to call is decided at runtime
+* Overridden method in subclass replaces parent method
+* Uses **upcasting** and **dynamic method dispatch**
+
+Example:
+
+```java
+class A { void show() { } }
+class B extends A { @Override void show() { } }
+A obj = new B(); // runtime selection
+```
+
+
+## 4. Why Do We Need Polymorphism?
+
+### 4.1 Flexibility and Extensibility
+
+You can write general code that works with multiple types.
+
+Example:
+
+```java
+Animal a = new Dog();
+a.sound();
+
+a = new Cat();
+a.sound();
+```
+
+Same reference, different behaviors.
+
+
+
+### 4.2 Cleaner and Maintainable Code
+
+Without polymorphism:
+
+* You would write repetitive `if-else` or `switch` statements
+* Code becomes harder to modify
+
+With polymorphism:
+
+Add new subclasses without modifying existing logic.
+
+
+
+### 4.3 Supports Frameworks and Abstractions
+
+Every major Java framework (Spring, Hibernate, JDBC) heavily uses polymorphism.
+
+Example: JDBC
+
+```java
+Connection con = DriverManager.getConnection(...);
+```
+
+`Connection` is an interface, implemented by many drivers — polymorphism hides implementation.
+
+
+
+## 5. Real-World Example of Polymorphism
+
+### Payment System
+
+```java
+class Payment {
+    void pay() { }
+}
+
+class CreditCard extends Payment {
+    void pay() { System.out.println("Paid using Credit Card"); }
+}
+
+class UPI extends Payment {
+    void pay() { System.out.println("Paid using UPI"); }
+}
+```
+
+Usage:
+
+```java
+Payment p = new CreditCard();
+p.pay(); // Paid using Credit Card
+
+p = new UPI();
+p.pay(); // Paid using UPI
+```
+
+The same reference produces different outcomes.
+
+
+
+## 6. Method Overriding and Polymorphism
+
+Overriding allows a subclass to provide specific behavior:
+
+```java
+class Animal {
+    void sound() { System.out.println("Animal sound"); }
+}
+
+class Dog extends Animal {
+    @Override
+    void sound() { System.out.println("Dog barks"); }
+}
+```
+
+Polymorphism ensures:
+
+```java
+Animal a = new Dog();
+a.sound();  // Dog barks
+```
+
+Runtime selects correct method.
+
+
+
+## 7. Polymorphism and Interfaces
+
+Interfaces allow unrelated classes to share common behavior.
+
+Example:
+
+```java
+interface Shape {
+    void draw();
+}
+
+class Circle implements Shape {
+    public void draw() { System.out.println("Draw Circle"); }
+}
+
+class Square implements Shape {
+    public void draw() { System.out.println("Draw Square"); }
+}
+```
+
+Usage:
+
+```java
+Shape s = new Circle();
+s.draw();
+
+s = new Square();
+s.draw();
+```
+
+
+## 8. Advantages of Polymorphism
+
+* Improves code reusability
+* Reduces code duplication
+* Enhances program extensibility
+* Promotes loose coupling
+* Enables interface-based programming
+* Foundation of design patterns (Strategy, Command, Factory)
+
+
+
+## 9. Summary
+
+* Polymorphism means *many forms*.
+* Java supports compile-time (overloading) and runtime (overriding) polymorphism.
+* Runtime polymorphism is implemented using inheritance and method overriding.
+* Allows a single reference type to refer to different object types.
+* Essential for flexible, maintainable, and scalable application design.
+
+This completes **Polymorphism Overview**.
