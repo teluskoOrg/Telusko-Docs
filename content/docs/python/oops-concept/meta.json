@@ -8,6 +8,7 @@
         "inheritance-and-MRO.mdx",
         "init-and-super-with-inheritance.mdx",
         "polymorphism-and-duck-typing.mdx",
-        "operator-overloading.mdx"
+        "operator-overloading.mdx",
+        "method-overriding.mdx"
     ]
 } 

@@ -1,0 +1,232 @@
+---
+title: Method Overriding
+---
+
+<Steps>
+<Video id="Z5kiIP1Yq5w" />
+
+---
+
+
+## What is Method Overriding?
+
+Method overriding in Python allows a **subclass (child class)** to provide its **own implementation** of a method that is already defined in its **superclass (parent class)**.
+
+When a method is overridden:
+
+* The **child class version** of the method is executed
+* The **parent class version** is ignored for that object
+
+
+> Method overriding occurs when a child class defines a method with the **same name and same parameters** as a method in the parent class, and the child’s method replaces the parent’s behavior.
+
+
+---
+
+
+## Why Method Overriding is Needed
+
+Method overriding enables:
+
+* **Customization of inherited behavior**
+* **Polymorphism** in object-oriented programming
+* **Real-world modeling**, where subclasses behave differently
+
+Example:
+
+* A generic phone may have a `show()` method
+* Different brands may implement it differently
+
+
+---
+
+
+## Basic Example Without Inheritance
+
+```python
+class A:
+    def show(self):
+        print("in A show")
+
+class B:
+    def show(self):
+        print("in B show")
+
+obj1 = B()
+obj1.show()
+```
+
+**Output**
+
+```
+in B show
+```
+
+Here, class `B` has its own `show()` method, so it is executed.
+However, this is **method redefinition**, not true overriding, because there is **no inheritance**.
+
+
+---
+
+
+## Method Overriding Using Inheritance
+
+### Parent Class
+
+```python
+class A:
+    def show(self):
+        print("in A show")
+```
+
+### Child Class (Without Override)
+
+```python
+class B(A):
+    pass
+```
+
+```python
+obj = B()
+obj.show()
+```
+
+**Output**
+
+```
+in A show
+```
+
+* Since `B` does not define `show()`, it inherits the method from class `A`.
+
+
+### Child Class (With Override)
+
+```python
+class B(A):
+    def show(self):
+        print("in B show")
+```
+
+```python
+obj = B()
+obj.show()
+```
+
+**Output**
+
+```
+in B show
+```
+
+* The child class method **overrides** the parent class method.
+
+
+---
+
+
+## How Python Decides Which Method to Call?
+
+Python determines method execution based on the **actual object type**, not the reference or parent class.
+
+> “The method called depends on the object created, not the class it inherits from.”
+
+This behavior is known as **runtime polymorphism**.
+
+
+### Rules for Method Overriding
+
+For method overriding to occur:
+
+* Method name must be **same**
+* Parameters must be **same**
+* Inheritance must exist
+* Method resolution happens at **runtime**
+* The child class method takes **priority**
+
+
+### Real-World Analogy
+
+* A student tells friends he has a **Nokia phone**
+* Later, he gets a **Motorola**
+* When asked again, he no longer says Nokia — he now says Motorola
+
+The **new behavior replaces the old one**
+
+Similarly:
+
+* Parent class method → Nokia
+* Child class method → Motorola
+* Child method **overrides** parent behavior
+
+
+---
+
+
+## Overriding Built-in Methods (`__str__` Example)
+
+Method overriding is also used to customize **built-in methods**.
+
+### Default Behavior
+
+```python
+obj = object()
+print(obj)
+```
+
+Shows memory address.
+
+
+### Overriding `__str__()`
+
+```python
+class Student:
+    def __init__(self, name):
+        self.name = name
+
+    def __str__(self):
+        return f"Student name: {self.name}"
+```
+
+```python
+s = Student("Navin")
+print(s)
+```
+
+**Output**
+
+```
+Student name: Navin
+```
+
+* The child class overrides `object.__str__()` to provide meaningful output.
+
+
+---
+
+
+## Method Overriding vs Method Overloading 
+
+| Feature          | Overriding     | Overloading                                   |
+| ---------------- | -------------- | --------------------------------------------- |
+| Classes involved | Parent & Child | Same class                                    |
+| Method name      | Same           | Same                                          |
+| Parameters       | Same           | Different                                     |
+| Runtime decision | Yes            | No (Python does not support true overloading) |
+
+
+---
+
+
+## Summary
+
+* Method overriding allows a **subclass to modify or enhance the behavior** of a method inherited from its parent class.
+* When a method is overridden, the **child class implementation is executed**, replacing the parent class version for that object.
+* Python determines which method to invoke based on the **actual class of the object at runtime**, not the reference type.
+* Method overriding is a key mechanism for achieving **runtime polymorphism** in Python.
+* Built-in methods such as `__str__()`, `__init__()`, and others are **frequently overridden** to provide meaningful and customized behavior for objects.
+
+
+</Steps>
+
+Written By: <a href="https://www.linkedin.com/in/muskangarg03/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer"> Muskan Garg <ExternalLink className="w-4 h-4" /></a>
