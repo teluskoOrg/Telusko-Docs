@@ -9,6 +9,8 @@
         "init-and-super-with-inheritance.mdx",
         "polymorphism-and-duck-typing.mdx",
         "operator-overloading.mdx",
-        "method-overriding.mdx"
+        "method-overriding.mdx",
+        "abstract-class-and-method.mdx",
+        "advanced-abstraction-concepts.mdx"
     ]
 } 

@@ -1,0 +1,220 @@
+---
+title: Advanced Abstraction Concepts
+---
+
+<Steps>
+
+
+---
+
+
+Advanced abstraction concepts helps to design **flexible, scalable, and maintainable systems** by defining clear contracts, enforcing consistency, and controlling how components interact with each other. Python achieves this through **Abstract Base Classes (ABC)**, advanced abstract method patterns, and well-defined object hierarchies.
+
+![Importance_of_abstraction](https://dyz1pdcuffwr5.cloudfront.net/Python/importance_of_abstraction.png)
+
+
+## Multiple Abstract Methods in One Class
+
+An abstract class in Python can define **more than one abstract method**. This allows the abstract class to specify **multiple requirements** that every concrete subclass must fulfill.
+
+### Why This Is Needed
+
+* To define a **complete contract** for subclasses
+* To ensure all required behaviors are implemented
+* To avoid partially implemented services
+
+### Example
+
+```python
+from abc import ABC, abstractmethod
+
+class PaymentGateway(ABC):
+
+    @abstractmethod
+    def pay(self, amount):
+        pass
+
+    @abstractmethod
+    def refund(self, amount):
+        pass
+```
+
+### Key Rule
+
+A subclass **must implement all abstract methods**, otherwise object creation is not allowed.
+
+```python
+class RazorPay(PaymentGateway):
+    def pay(self, amount):
+        print(f"Paying {amount} using RazorPay")
+
+    def refund(self, amount):
+        print(f"Refunding {amount} using RazorPay")
+```
+
+
+---
+
+
+## Abstract Properties (@property + @abstractmethod)
+
+In addition to abstract methods, Python also supports **abstract properties**. These are useful when you want to enforce the presence of an attribute rather than a method.
+
+### Why Abstract Properties Are Needed
+
+* To enforce **read-only attributes**
+* To guarantee that subclasses expose certain data
+* To define computed attributes as part of an interface
+
+### Example
+
+```python
+from abc import ABC, abstractmethod
+
+class Employee(ABC):
+
+    @property
+    @abstractmethod
+    def salary(self):
+        pass
+```
+
+### Implementation
+
+```python
+class Developer(Employee):
+    @property
+    def salary(self):
+        return 60000
+```
+
+> If the property is not implemented, instantiation will fail.
+
+
+---
+
+
+## Why Python Doesn’t Have True Interfaces
+
+Unlike Java or C#, Python does **not** have a separate `interface` keyword.
+
+### Reasons
+
+* Python is **dynamically typed**
+* Python supports **duck typing** (behavior over type)
+* Enforcing strict interfaces is often unnecessary
+
+### How Python Solves This
+
+Python uses **Abstract Base Classes (ABC)** to provide **interface-like behavior**.
+
+### Comparison
+
+| Java Interface           | Python Equivalent |
+| ------------------------ | ----------------- |
+| interface keyword        | ABC class         |
+| method declarations only | abstract methods  |
+| strict typing            | flexible typing   |
+
+➡️ In Python, **ABC + abstractmethod = Interface**
+
+
+---
+
+
+## Method Resolution Order (MRO) in Abstract Inheritance
+
+MRO defines the **order in which Python searches for methods** in a class hierarchy.
+
+### Why MRO Matters?
+
+* Multiple inheritance scenarios
+* Abstract class hierarchies
+* Understanding which method gets executed
+
+### Example
+
+```python
+from abc import ABC, abstractmethod
+
+class A(ABC):
+    @abstractmethod
+    def show(self):
+        pass
+
+class B(A):
+    def show(self):
+        print("B show")
+
+class C(B):
+    pass
+
+obj = C()
+obj.show()
+```
+
+### Output
+
+```
+B show
+```
+
+### MRO Order
+
+```
+C → B → A → ABC → object
+```
+
+
+---
+
+
+## Difference: Abstraction vs Encapsulation
+
+Although both are used to manage complexity, **abstraction and encapsulation serve different purposes**.
+
+### Abstraction
+
+* Focuses on **what an object does**
+* Hides implementation details
+* Achieved using abstract classes and interfaces
+
+### Encapsulation
+
+* Focuses on **how data is protected**
+* Hides internal state
+* Achieved using access control and methods
+
+![Abstraction_vs_Encapsulation](https://dyz1pdcuffwr5.cloudfront.net/Python/abstraction_vs_encapsulation.png)
+
+### Example
+
+```python
+class BankAccount:
+    def __init__(self, balance):
+        self.__balance = balance  # encapsulation
+
+    def get_balance(self):
+        return self.__balance
+```
+
+➡️ Abstraction defines **what operations exist**, encapsulation controls **how data is accessed**.
+
+
+---
+
+
+## Summary
+
+* Abstract classes can define **multiple abstract methods** to enforce a complete contract.
+* **Abstract properties** ensure consistent attribute access across implementations.
+* Python uses **ABCs as interface-like structures** instead of true interfaces.
+* **MRO** controls method lookup order in abstract inheritance hierarchies.
+* **Abstraction** hides behavior complexity by exposing essential operations.
+* **Encapsulation** hides data and internal implementation to protect objects.
+
+
+</Steps>
+
+Written By: <a href="https://www.linkedin.com/in/muskangarg03/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer"> Muskan Garg <ExternalLink className="w-4 h-4" /></a>
+

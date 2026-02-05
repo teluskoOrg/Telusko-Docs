@@ -1,0 +1,280 @@
+---
+title: Abstract Class and Abstract Method
+---
+
+<Steps>
+<Video id="TUpwQ6zT1cI" />
+
+
+---
+
+
+## What is Abstraction?
+
+**Abstraction** is an Object-Oriented Programming (OOP) principle that focuses on **showing only the essential features** of an object while **hiding the internal implementation details**.
+
+In abstraction, the user interacts with **what an object does**, not **how it does it**.
+
+
+### Real-World Analogy 
+
+Consider driving a car:
+
+* You know what actions to perform (steer, accelerate, brake)
+* You don’t need to know how the engine, gearbox, or fuel system works internally
+
+➡️ This separation of **what to do** from **how it is done** is called **abstraction**.
+
+
+> Abstraction separates the **interface** (what is exposed) from the **implementation** (how it works internally).
+
+This allows users to work with a system **without understanding its internal complexity**, making software easier to use, extend, and maintain.
+
+
+---
+
+
+## Abstraction in Python
+
+Python implements abstraction using:
+
+* **Abstract Base Classes (ABC)**
+* **Abstract Methods**
+
+These are provided by the built-in **`abc` module**.
+
+### Key Characteristics
+
+* An **abstract class cannot be instantiated**
+* An **abstract method has no implementation**
+* Any subclass **must implement all abstract methods**
+* Ensures a **standard structure (interface)** across subclasses
+
+
+![Benfits_of_Abstraction](https://dyz1pdcuffwr5.cloudfront.net/Python/benefits_of_abstraction.png)
+
+
+---
+
+
+## Abstract Class and Abstract Method
+
+### 1. Abstract Class
+
+* A class that serves as a **blueprint**
+* May contain abstract methods
+* Cannot be instantiated directly
+
+### Rules to Create an Abstract Class
+
+1. Import `ABC` and `abstractmethod`
+2. Inherit from `ABC`
+3. Decorate abstract methods using `@abstractmethod`
+4. Do **not** create objects of the abstract class
+
+### Example: Abstract Class
+
+```python
+from abc import ABC, abstractmethod
+
+class A(ABC):
+
+    @abstractmethod
+    def show(self):
+        pass
+```
+
+```python
+obj = A()
+```
+
+**Output**
+
+```
+TypeError: Can't instantiate abstract class A without an implementation for abstract method 'show'
+```
+
+* Python prevents object creation
+* Ensures abstraction is enforced
+
+
+### 2. Abstract Method
+
+* A method **declared but not implemented**
+* Forces subclasses to provide their own implementation
+  
+```python
+@abstractmethod
+def pay(self):
+    pass
+```
+
+
+---
+
+
+![Examples_of_abstraction](https://dyz1pdcuffwr5.cloudfront.net/Python/examples_of_abstraction.png)
+
+
+## Example: Tight Coupling (Without Abstraction)
+
+```python
+class RazorPay:
+    def pay(self):
+        print("paying using RazorPay...")
+
+class Purchase:
+    def __init__(self, gateway):
+        self.gateway = gateway
+
+    def checkout(self):
+        print("checking out...")
+        self.gateway.pay()
+```
+
+```python
+gateway = RazorPay()
+purchase = Purchase(gateway)
+purchase.checkout()
+```
+
+**Output**
+
+```
+checking out...
+paying using RazorPay...
+```
+
+### Issue ❌
+
+* `Purchase` is tightly coupled to `RazorPay`
+* Switching to another gateway requires **code changes**
+* No guarantee that another gateway has `pay()` method
+
+
+---
+
+
+## Example: Abstraction Using Abstract Class
+
+<Step>
+### Step 1: Define a Standard Interface
+
+```python
+from abc import ABC, abstractmethod
+
+class PaymentGateway(ABC):
+
+    @abstractmethod
+    def pay(self):
+        pass
+```
+
+✔️ Defines a **contract**
+
+✔️ Ensures consistency
+
+</Step>
+
+<Step>
+### Step 2: Implement the Interface
+
+```python
+class TeluskoPay(PaymentGateway):
+    def pay(self):
+        print("paying using TeluskoPay...")
+```
+
+```python
+class RazorPay(PaymentGateway):
+    def pay(self):
+        print("paying using RazorPay...")
+```
+
+✔️ Both classes follow the same standard
+
+✔️ Both must implement `pay()`
+
+</Step>
+
+<Step>
+### Step 3: Use Abstraction in Business Logic
+
+```python
+class Purchase:
+    def __init__(self, gateway):
+        self.gateway = gateway
+
+    def checkout(self):
+        print("checking out...")
+        self.gateway.pay()
+```
+
+</Step>
+
+<Step>
+### Step 4: Plug-and-Play Usage
+
+```python
+gateway1 = RazorPay()
+gateway2 = TeluskoPay()
+
+purchase = Purchase(gateway2)
+purchase.checkout()
+```
+
+**Output**
+
+```
+checking out...
+paying using TeluskoPay...
+```
+
+✔️ No change in `Purchase` class
+
+✔️ Easy gateway switching
+
+✔️ Loose coupling achieved
+
+</Step>
+
+
+---
+
+
+## What Happens If Abstract Method Is Not Implemented?
+
+```python
+class RazorPay(PaymentGateway):
+    pass
+```
+
+```python
+gateway = RazorPay()
+```
+
+**Output**
+
+```
+TypeError: Can't instantiate abstract class RazorPay with abstract method pay
+```
+
+* Python enforces abstraction
+* Prevents incomplete implementations
+
+
+---
+
+
+## Summary
+
+* Abstraction focuses on **what an object should do**, not **how it performs the task internally**.
+* In Python, abstraction is implemented using **abstract base classes (ABC)** and **abstract methods**.
+* Abstract classes define a **standard interface or blueprint**, not concrete implementations.
+* Any subclass inheriting from an abstract class **must implement all abstract methods** before it can be instantiated.
+* Abstraction promotes **loose coupling**, making systems **scalable, flexible, and easier to maintain**.
+
+
+</Steps>
+
+Written By: <a href="https://www.linkedin.com/in/muskangarg03/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer"> Muskan Garg <ExternalLink className="w-4 h-4" /></a>
