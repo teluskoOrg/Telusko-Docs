@@ -17,7 +17,7 @@
         "encapsulation",
         "inheritance",
         "polymorphism",
-        "DISABLED-abstraction-and-interfaces",
+        "abstraction-and-interfaces",
         "DISABLED-inner-classes",
 
         "DISABLED-strings",
