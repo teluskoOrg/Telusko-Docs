@@ -1,0 +1,243 @@
+---
+title: Static Method in Interface
+---
+
+## 1. Introduction
+
+A **static method in an interface** is a method that belongs to the **interface itself**, not to the classes that implement it.  
+This feature was introduced so interfaces can provide **utility logic** directly, without requiring a separate helper class.
+
+Static methods in interfaces are commonly used when:
+
+- a behavior is logically tied to the interface concept
+- you want a clean, grouped API (contract + helper methods together)
+- you want to provide factory-style creation or validation methods
+
+Unlike default methods, static methods are **not inherited** by implementing classes.
+
+
+
+## 2. What Is a Static Method in an Interface?
+
+You define it using the `static` keyword and provide a method body.
+
+```java
+interface MathUtil {
+    static int square(int n) {
+        return n * n;
+    }
+}
+````
+
+Call it like this:
+
+```java
+int result = MathUtil.square(5);
+```
+
+Important: You cannot call it using an object reference.
+
+
+
+## 3. Why Static Methods Were Added to Interfaces
+
+Before static methods in interfaces, developers used separate utility classes:
+
+* `Collections`
+* `Arrays`
+* `Math`
+
+But sometimes utility logic is directly connected to an interface and is better placed inside it for better discoverability.
+
+This improves code organization:
+
+* The interface defines the contract
+* Static methods provide helpers around the contract
+
+This is why modern Java libraries can keep helper APIs closer to the abstraction.
+
+
+
+## 4. Static Method vs Default Method (Key Difference)
+
+Static method:
+
+* belongs to interface
+* called using interface name
+* not inherited by implementing class
+* cannot be overridden
+
+Default method:
+
+* belongs to implementing object
+* inherited by implementing class
+* can be overridden
+
+This separation prevents confusion: default methods are for instance-level behavior, static methods are for interface-level utilities.
+
+
+
+## 5. Calling a Static Method (Correct Way)
+
+```java
+interface Validator {
+    static boolean isValidEmail(String email) {
+        return email != null && email.contains("@");
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+        System.out.println(Validator.isValidEmail("a@b.com"));
+    }
+}
+```
+
+Output:
+
+```
+true
+```
+
+
+
+## 6. Not Inherited by Implementing Classes
+
+This is a common misunderstanding.
+
+```java
+interface Tool {
+    static void help() {
+        System.out.println("Help from Tool");
+    }
+}
+
+class MyTool implements Tool { }
+
+public class Main {
+    public static void main(String[] args) {
+        Tool.help();     // correct
+        // MyTool.help(); // not allowed
+    }
+}
+```
+
+Reason: `help()` belongs to `Tool`, not to `MyTool`.
+
+
+
+## 7. Static Methods Cannot Be Overridden
+
+Even if an implementing class defines a method with same name, it is not overriding the interface static method.
+
+```java
+interface A {
+    static void show() {
+        System.out.println("A show");
+    }
+}
+
+class B implements A {
+    static void show() {
+        System.out.println("B show");
+    }
+}
+```
+
+This is not overriding.
+They are two unrelated static methods:
+
+* `A.show()`
+* `B.show()`
+
+Java keeps this strict because static methods do not participate in runtime polymorphism.
+
+
+
+## 8. Static Methods for Factory Patterns
+
+A common use case is providing a factory-like method inside the interface.
+
+```java
+interface Payment {
+    void pay(double amount);
+
+    static Payment upi() {
+        return new UpiPayment();
+    }
+}
+
+class UpiPayment implements Payment {
+    public void pay(double amount) {
+        System.out.println("Paid via UPI: " + amount);
+    }
+}
+```
+
+Usage:
+
+```java
+Payment p = Payment.upi();
+p.pay(500);
+```
+
+This keeps creation logic close to the abstraction.
+
+
+
+## 9. Static Methods with Private Helpers (Modern Style)
+
+Interfaces can include private methods to avoid repeating helper logic.
+
+```java
+interface Logger {
+    static void info(String msg) {
+        print("INFO", msg);
+    }
+
+    static void error(String msg) {
+        print("ERROR", msg);
+    }
+
+    private static void print(String level, String msg) {
+        System.out.println(level + ": " + msg);
+    }
+}
+```
+
+This is a clean way to organize related helper methods inside one interface.
+
+
+
+## 10. Common Mistakes
+
+### 10.1 Trying to call via object reference
+
+```java
+// Payment p = new UpiPayment();
+// p.upi(); // wrong idea, static methods are not called like this
+```
+
+Static methods must be called using the interface name.
+
+### 10.2 Expecting polymorphism
+
+Static methods do not behave differently based on runtime object type.
+They are resolved at compile time.
+
+### 10.3 Putting business logic inside static methods
+
+Static methods in interfaces are best kept for utilities, validation, factory helpers, or formatting.
+Core business workflows are better placed in services/classes.
+
+
+
+## 11. Summary
+
+* Static methods in interfaces belong to the interface, not implementing classes.
+* They are called using the interface name only.
+* They are not inherited and cannot be overridden.
+* Useful for utilities, validation, and factory-style creation tied to an abstraction.
+* Static methods do not participate in runtime polymorphism.
+
+Written By: <a href="https://www.linkedin.com/in/shivasrivastava1/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer">Shiva Srivastava</a>

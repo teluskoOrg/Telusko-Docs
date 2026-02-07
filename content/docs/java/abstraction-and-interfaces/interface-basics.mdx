@@ -1,0 +1,250 @@
+---
+title: Interface Basics
+---
+
+## 1. Introduction
+
+An **interface** in Java is a way to define a **contract** for a class.  
+It tells a class: “If you agree to implement this interface, you must provide these behaviors.”
+
+Unlike an abstract class, an interface is not about sharing common state or providing partial implementation as the main goal. Instead, it focuses on **standardizing behavior across different classes**, even if those classes are not closely related by inheritance.
+
+Interfaces are heavily used in:
+
+- Large codebases to enforce consistent APIs
+- Frameworks (Spring, Hibernate, JDBC)
+- Pluggable architectures (payment gateways, notification channels)
+- Testing and mocking (because interfaces are easy to replace)
+
+
+
+## 2. What Exactly Is an Interface?
+
+An interface is declared using the `interface` keyword:
+
+```java
+interface Flyable {
+    void fly();
+}
+````
+
+This interface defines a rule:
+Any class that implements `Flyable` must provide `fly()`.
+
+
+
+## 3. Why Interfaces Exist (The Core Problem They Solve)
+
+Java allows a class to extend only **one** class.
+So inheritance alone cannot model cases like:
+
+* A class needs abilities from multiple categories
+* Multiple unrelated classes should follow the same behavior standard
+
+Example:
+`Bird` and `Airplane` are totally different types, but both can “fly”.
+This is not a clean inheritance relationship, but it is a clean **capability** relationship.
+
+Interfaces represent these capabilities.
+
+
+
+## 4. Basic Syntax: Implementing an Interface
+
+```java
+interface Payment {
+    void pay(double amount);
+}
+
+class UpiPayment implements Payment {
+    @Override
+    public void pay(double amount) {
+        System.out.println("UPI payment: " + amount);
+    }
+}
+```
+
+Important points:
+
+* Use `implements`
+* Implement all abstract methods
+* Methods are typically written as `public` in the implementing class
+
+
+
+## 5. Interface Methods and Variables (Default Rules)
+
+### 5.1 Methods
+
+By default, interface methods are:
+
+* `public`
+* `abstract` (unless they are `default` or `static`, covered later)
+
+So this:
+
+```java
+interface A {
+    void show();
+}
+```
+
+is treated as:
+
+```java
+interface A {
+    public abstract void show();
+}
+```
+
+### 5.2 Variables
+
+Interface variables are always:
+
+* `public`
+* `static`
+* `final`
+
+So this:
+
+```java
+interface Config {
+    int TIMEOUT = 30;
+}
+```
+
+means `TIMEOUT` is a constant:
+
+* You cannot change it
+* It belongs to the interface itself
+
+
+
+## 6. Creating Objects: Interface Reference (Polymorphism)
+
+You cannot instantiate an interface directly:
+
+```java
+// Payment p = new Payment(); // not allowed
+```
+
+But you can store an implementing class object inside an interface reference:
+
+```java
+Payment p = new UpiPayment();
+p.pay(1000);
+```
+
+This is the same powerful design idea used in production systems:
+program to an interface, not a concrete class.
+
+
+
+## 7. Multiple Interfaces (Key Feature)
+
+A class can implement multiple interfaces, which is Java’s way to achieve multiple inheritance of behavior contracts.
+
+```java
+interface Printable {
+    void print();
+}
+
+interface Scannable {
+    void scan();
+}
+
+class MultiFunctionPrinter implements Printable, Scannable {
+    @Override
+    public void print() {
+        System.out.println("Printing...");
+    }
+
+    @Override
+    public void scan() {
+        System.out.println("Scanning...");
+    }
+}
+```
+
+This is extremely common in real architecture where a single object supports multiple capabilities.
+
+
+
+## 8. Interface vs Abstract Class (High-Level Difference)
+
+| Feature          | Interface                                 | Abstract Class                  |
+| ---------------- | ----------------------------------------- | ------------------------------- |
+| Main purpose     | Define contract (capability)              | Share common state + base logic |
+| Methods          | Usually abstract, can have default/static | Abstract + concrete methods     |
+| Variables        | Only constants                            | Any instance variables allowed  |
+| Constructors     | Not allowed                               | Allowed                         |
+| Multiple support | Can implement multiple                    | Can extend only one             |
+
+This lecture is focused only on interface basics. More comparisons will appear in later lectures where needed.
+
+
+
+## 9. Practical Example: Strategy Style Usage
+
+Interfaces help you swap implementations easily.
+
+```java
+interface SortStrategy {
+    void sort(int[] arr);
+}
+
+class BubbleSort implements SortStrategy {
+    @Override
+    public void sort(int[] arr) {
+        System.out.println("Bubble sort logic");
+    }
+}
+
+class QuickSort implements SortStrategy {
+    @Override
+    public void sort(int[] arr) {
+        System.out.println("Quick sort logic");
+    }
+}
+```
+
+Now your system can accept `SortStrategy` and decide which implementation to use without changing main code.
+
+This pattern is widely used in enterprise code to keep code modular and extensible.
+
+
+
+## 10. Common Mistakes
+
+### 10.1 Forgetting `public` while implementing
+
+Interface methods are implicitly `public`, so the implemented method must also be `public`.
+
+```java
+interface A {
+    void show();
+}
+
+class B implements A {
+    // void show() { }  // invalid (default access)
+    public void show() { } // correct
+}
+```
+
+### 10.2 Trying to create object of interface
+
+```java
+// A a = new A(); // not allowed
+```
+
+## 11. Summary
+
+* An interface defines a contract that classes must follow.
+* Interface methods are implicitly `public abstract` (unless default/static).
+* Interface variables are always `public static final` constants.
+* You cannot instantiate an interface directly, but you can use it as a reference type.
+* A class can implement multiple interfaces, enabling multiple behavior contracts.
+
+Written By: <a href="https://www.linkedin.com/in/shivasrivastava1/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer">Shiva Srivastava</a>
+
+ 

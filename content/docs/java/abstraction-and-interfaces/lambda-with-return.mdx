@@ -1,0 +1,214 @@
+---
+title: Lambda With Return
+---
+
+## 1. Introduction
+
+In many real cases, lambda expressions are not just used to perform an action (like printing). They are also used to **produce a value**, such as:
+
+- calculating a result
+- transforming data
+- deciding true/false conditions
+- converting one type into another
+
+When a lambda expression needs to return a value, the way you write it depends on whether you use a **single-expression body** or a **block body**.
+
+This lecture focuses on return-based lambdas clearly, because most confusion happens around braces `{}` and the `return` keyword.
+
+
+
+## 2. Return Depends on the Functional Interface Method
+
+A lambda expression always matches the single abstract method of a functional interface.  
+So whether your lambda returns something depends on what that method returns.
+
+Example:
+
+```java
+@FunctionalInterface
+interface Operation {
+    int apply(int a, int b);
+}
+````
+
+Because `apply()` returns `int`, the lambda must also return an `int`.
+
+
+
+## 3. Lambda With Implicit Return (Single Expression)
+
+If the body is a single expression and you do not use braces, Java automatically returns the value.
+
+```java
+Operation add = (a, b) -> a + b;
+Operation max = (a, b) -> a > b ? a : b;
+```
+
+This is the cleanest form and used most often.
+
+No `return` keyword is written, but the value is still returned.
+
+
+
+## 4. Lambda With Explicit Return (Block Body)
+
+If you use braces `{ }`, then you must use the `return` keyword for non-void lambdas.
+
+```java
+Operation add = (a, b) -> {
+    int result = a + b;
+    return result;
+};
+```
+
+Reason:
+
+* Braces indicate a block (multiple statements)
+* Java expects an explicit return inside that block
+
+
+
+## 5. Example: Returning Boolean (Predicate Style)
+
+```java
+@FunctionalInterface
+interface Check {
+    boolean test(int n);
+}
+```
+
+### 5.1 Implicit return
+
+```java
+Check isEven = n -> n % 2 == 0;
+```
+
+### 5.2 Explicit return
+
+```java
+Check isEven = n -> {
+    return n % 2 == 0;
+};
+```
+
+Both are correct. First one is shorter, second one is useful when logic grows.
+
+
+
+## 6. Example: Returning String (Transformation)
+
+```java
+@FunctionalInterface
+interface Formatter {
+    String format(String input);
+}
+```
+
+### 6.1 Implicit return
+
+```java
+Formatter upper = s -> s.toUpperCase();
+```
+
+### 6.2 Block return
+
+```java
+Formatter upper = s -> {
+    String trimmed = s.trim();
+    return trimmed.toUpperCase();
+};
+```
+
+
+
+## 7. Most Common Mistake: Using Braces Without Return
+
+This is incorrect:
+
+```java
+// Operation add = (a, b) -> { a + b; }; // invalid
+```
+
+Because inside `{}`, Java expects a return statement for non-void.
+
+Correct:
+
+```java
+Operation add = (a, b) -> { return a + b; };
+```
+
+
+
+## 8. Returning Complex Logic (Readable Style)
+
+A useful guideline:
+If the lambda becomes more than one or two operations, block style increases clarity.
+
+Example:
+
+```java
+@FunctionalInterface
+interface GradeCalculator {
+    String grade(int marks);
+}
+
+GradeCalculator calc = marks -> {
+    if (marks >= 90) return "A";
+    if (marks >= 75) return "B";
+    if (marks >= 60) return "C";
+    return "D";
+};
+```
+
+This is clean because the logic is multi-step.
+
+
+
+## 9. Return Type Must Match Exactly
+
+The return type must match the functional interface method return type.
+
+Example:
+
+```java
+@FunctionalInterface
+interface LengthFinder {
+    int len(String s);
+}
+```
+
+Correct:
+
+```java
+LengthFinder lf = s -> s.length();
+```
+
+Incorrect idea:
+
+```java
+// LengthFinder lf = s -> "5"; // invalid (String cannot return where int expected)
+```
+
+
+
+## 10. Built-in Functional Interfaces That Commonly Return Values
+
+These are frequently used in production code:
+
+* `Function<T, R>` returns `R`
+* `Predicate<T>` returns boolean
+* `Supplier<T>` returns `T`
+* `BiFunction<T, U, R>` returns `R`
+
+You will see return-based lambdas heavily in Stream API when doing transformations and filters.
+
+
+## 11. Summary
+
+* Return in lambda depends on functional interface method return type.
+* Without braces, single-expression lambdas use implicit return.
+* With braces, you must write `return` for non-void lambdas.
+* Braces are preferred when logic is multi-step for readability.
+* Return type must match exactly the method signature.
+
+Written By: <a href="https://www.linkedin.com/in/shivasrivastava1/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer">Shiva Srivastava</a>

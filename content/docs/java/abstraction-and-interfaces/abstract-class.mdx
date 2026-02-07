@@ -1,0 +1,281 @@
+---
+title: Abstract Class
+---
+
+## 1. Introduction
+
+An **abstract class** in Java is a class designed to act as a **base blueprint** for related classes.  
+It represents an idea that is too general to create a real object from (for example: `Shape`, `Vehicle`, `Employee`).
+
+In real-world code, you often want a parent class that:
+
+- Shares **common state** (fields) and **common behavior** (implemented methods)
+- Defines **mandatory behavior** that every child must follow (via abstract methods)
+- Prevents direct object creation so developers don’t misuse the base type
+
+That is exactly where an abstract class fits.
+
+
+
+## 2. What Does “Abstract” Mean in Java?
+
+When you mark a class as `abstract`, you are telling Java:
+
+- “This class is incomplete as a final real object type.”
+- “It exists to be extended, not to be directly created.”
+
+```java
+abstract class Shape {
+    // common logic + rules for child classes
+}
+````
+
+You can still use an abstract class as a **reference type**:
+
+```java
+Shape s = new Circle();
+```
+
+This is a powerful OOP idea: you write code using a general type (`Shape`), and at runtime Java uses the actual object type (`Circle`).
+
+
+
+## 3. Why Do We Need Abstract Classes?
+
+Abstract classes solve a common design problem: **How do we reuse code while still enforcing a standard structure?**
+
+Imagine you are building a drawing application. Every shape must support “area calculation”, but the formula differs.
+If you put everything in normal parent methods, children might forget to override and the system becomes incorrect.
+If you put everything in interfaces only, you lose the ability to share common fields and common code easily.
+
+An abstract class sits in the middle:
+
+* It can enforce rules for children.
+* It can also provide default reusable code to reduce duplication.
+
+This is why abstract classes are widely used in frameworks, libraries, and enterprise codebases.
+
+
+
+## 4. Key Characteristics of an Abstract Class
+
+### 4.1 You cannot create an object directly
+
+```java
+// Shape s = new Shape();  // Not allowed
+```
+
+This prevents misuse. If a type is meant only as a base concept, Java blocks direct instantiation.
+
+### 4.2 It can contain both complete and incomplete behavior
+
+An abstract class can contain:
+
+* **Concrete methods** (already implemented)
+* **Abstract methods** (only declared, implemented by child)
+
+In this lecture, focus is on the abstract class as a base type.
+Abstract methods are covered in detail in the next lecture.
+
+
+
+## 5. Basic Example (Minimal)
+
+```java
+abstract class Vehicle {
+    void startEngine() {
+        System.out.println("Engine start sequence initiated...");
+    }
+}
+
+class Car extends Vehicle {
+    // inherits startEngine()
+}
+
+public class Main {
+    public static void main(String[] args) {
+        Vehicle v = new Car();
+        v.startEngine();
+    }
+}
+```
+
+Here, `Vehicle` acts as a base category. You don’t create `Vehicle` directly, but you can store child objects in a `Vehicle` reference.
+
+
+
+## 6. Abstract Class as a “Template” for Child Classes
+
+A very practical usage of abstract classes is defining a **template flow** that every child follows.
+This is common in real projects where the overall algorithm is the same, but some steps differ.
+
+```java
+abstract class ReportGenerator {
+
+    // Template method: fixed overall flow
+    final void generateReport() {
+        fetchData();
+        formatData();
+        export();
+    }
+
+    // Common step (shared implementation)
+    void fetchData() {
+        System.out.println("Fetching data from database...");
+    }
+
+    // Steps that vary by child
+    abstract void formatData();
+    abstract void export();
+}
+
+class PdfReport extends ReportGenerator {
+    @Override
+    void formatData() {
+        System.out.println("Formatting data for PDF...");
+    }
+
+    @Override
+    void export() {
+        System.out.println("Exporting PDF report...");
+    }
+}
+```
+
+Why this is useful:
+
+* The base class ensures everyone follows the same report pipeline.
+* Child classes customize only the parts that differ.
+* `final` prevents child classes from breaking the flow by overriding the main pipeline method.
+
+
+
+## 7. Constructors in Abstract Classes
+
+Abstract classes can have constructors.
+Even though you cannot instantiate the abstract class directly, the constructor is executed when a child object is created.
+
+This is used to initialize shared fields.
+
+```java
+abstract class Employee {
+    String name;
+
+    Employee(String name) {
+        this.name = name;
+    }
+
+    void showName() {
+        System.out.println("Employee: " + name);
+    }
+}
+
+class Developer extends Employee {
+    Developer(String name) {
+        super(name);
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+        Employee e = new Developer("Shiva");
+        e.showName();
+    }
+}
+```
+
+This improves consistency because every `Employee`-type object always has a properly initialized `name`.
+
+
+
+## 8. What Can an Abstract Class Contain?
+
+An abstract class can contain:
+
+* Instance variables (fields)
+* Constructors
+* Concrete methods
+* Abstract methods
+* `static` methods
+* `final` methods
+* `static` blocks
+
+Example overview:
+
+```java
+abstract class Base {
+    int x = 10;
+
+    Base() {
+        System.out.println("Base constructor called");
+    }
+
+    static void info() {
+        System.out.println("Static method in abstract class");
+    }
+
+    final void fixedLogic() {
+        System.out.println("This cannot be overridden");
+    }
+
+    abstract void mustImplement();
+}
+```
+
+
+
+## 9. Important Rules and Restrictions
+
+1. If a class has at least one abstract method, the class must be abstract.
+2. A child class must implement all abstract methods, or the child must also be abstract.
+3. Abstract class cannot be `final` (because `final` blocks inheritance, and abstract requires inheritance).
+4. Abstract methods cannot be `private` (because children must override them).
+5. Abstract methods cannot be `static` (static methods belong to class, not objects, so overriding does not work the same way).
+
+
+
+## 10. When to Use Abstract Class vs Normal Class?
+
+Use an abstract class when:
+
+* You want to share common code + common state across related classes
+* You want to enforce a base structure so child classes can’t “skip required behavior”
+* You want to prevent direct object creation of the base type
+
+Use a normal class when:
+
+* The parent type can represent a real object by itself
+* There is no “incomplete” behavior that must be implemented in children
+
+
+
+## 11. Common Mistakes
+
+### 11.1 Trying to instantiate abstract class
+
+```java
+// new ReportGenerator(); // not allowed
+```
+
+### 11.2 Putting too much logic in the base class
+
+If the abstract class becomes too large, child classes become tightly coupled and the design becomes hard to maintain.
+Keep only truly common logic in the abstract base.
+
+### 11.3 Using abstract class when interface is better
+
+If you only need a contract (rules) and no shared code/state, an interface is usually a better choice.
+
+![abstract class as base type](https://dyz1pdcuffwr5.cloudfront.net/Java/abstract/abstract-class.png)
+
+
+## 12. Summary
+
+An abstract class is a base blueprint that cannot be instantiated directly.
+It helps you combine two important things: **code reuse** (shared implementation) and **design enforcement** (rules for children).
+It is best used when classes are strongly related and share common state and behavior, but still need customized implementations in child classes.
+
+Written By: <a href="https://www.linkedin.com/in/shivasrivastava1/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer">Shiva Srivastava</a>
+
+```
+ 

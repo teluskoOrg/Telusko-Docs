@@ -1,0 +1,233 @@
+---
+title: Functional Interface
+---
+
+## 1. Introduction
+
+A **functional interface** in Java is an interface that contains **exactly one abstract method**.  
+This single-method rule is important because it allows Java to treat the interface as a **target for lambda expressions** and method references.
+
+Functional interfaces are the foundation of:
+
+- lambda expressions
+- method references
+- functional-style coding with Streams
+- callback-style programming (tasks, comparators, filters)
+
+They make Java code more concise while still staying type-safe.
+
+
+
+## 2. What Makes an Interface “Functional”?
+
+An interface is functional if it has:
+
+- exactly **one abstract method**
+
+It can still contain:
+
+- `default` methods
+- `static` methods
+- `private` helper methods
+
+Those do not count as abstract methods.
+
+Example:
+
+```java
+interface Operation {
+    int apply(int a, int b);  // single abstract method
+}
+````
+
+This is a functional interface.
+
+
+
+## 3. Using @FunctionalInterface Annotation
+
+Java provides `@FunctionalInterface` to clearly communicate intent.
+
+```java
+@FunctionalInterface
+interface Operation {
+    int apply(int a, int b);
+}
+```
+
+Benefits:
+
+* Makes code self-explanatory (it is meant for lambdas)
+* Compiler enforces the rule: if you accidentally add a second abstract method, it becomes an error
+
+Example error case:
+
+```java
+@FunctionalInterface
+interface Demo {
+    void show();
+    void run();  // error: not a functional interface
+}
+```
+
+
+
+## 4. Why Functional Interfaces Are Useful
+
+Before lambdas, you had to create:
+
+* separate classes
+* or anonymous inner classes
+
+For simple one-time behavior, that becomes bulky.
+
+Functional interfaces allow you to pass behavior directly as data:
+
+* “Here is what to do”
+* not “Here is a whole class just to do one thing”
+
+This is extremely useful in modern APIs that accept behavior, such as sorting, filtering, mapping, executing tasks, etc.
+
+
+
+## 5. Classic Example Without Lambda (Old Style)
+
+```java
+@FunctionalInterface
+interface Greeting {
+    void sayHello();
+}
+
+class WelcomeGreeting implements Greeting {
+    public void sayHello() {
+        System.out.println("Hello");
+    }
+}
+```
+
+Usage:
+
+```java
+Greeting g = new WelcomeGreeting();
+g.sayHello();
+```
+
+This works, but it requires extra class creation.
+
+
+
+## 6. Same Example With Lambda (Functional Interface Advantage)
+
+```java
+@FunctionalInterface
+interface Greeting {
+    void sayHello();
+}
+
+public class Main {
+    public static void main(String[] args) {
+        Greeting g = () -> System.out.println("Hello");
+        g.sayHello();
+    }
+}
+```
+
+Here, lambda directly provides the implementation of the single abstract method.
+
+This is the main practical value of functional interfaces.
+
+
+
+## 7. Built-in Functional Interfaces (Very Important)
+
+Java provides many ready-to-use functional interfaces in `java.util.function`.
+
+Common ones include:
+
+* `Predicate<T>` → returns boolean (used for filtering)
+* `Function<T, R>` → converts T into R (used for mapping)
+* `Consumer<T>` → consumes input, returns nothing (used for forEach)
+* `Supplier<T>` → supplies a value without input
+* `BiFunction<T, U, R>` → takes two inputs
+* `UnaryOperator<T>` → input and output same type
+* `BinaryOperator<T>` → combines two values of same type
+
+These power Stream API and modern library designs.
+
+
+
+## 8. Functional Interface in Real Use Cases
+
+### 8.1 Sorting using Comparator
+
+`Comparator<T>` is a functional interface:
+
+```java
+Comparator<Integer> c = (a, b) -> b - a;
+```
+
+Used in sorting where you pass sorting logic as behavior.
+
+### 8.2 Filtering using Predicate
+
+```java
+Predicate<Integer> isEven = n -> n % 2 == 0;
+```
+
+Used in streams to filter values.
+
+The main idea: instead of writing if-else everywhere, you pass logic as a reusable function.
+
+
+
+## 9. Functional Interface With Default and Static Methods
+
+Having default/static methods does not break functional interface behavior.
+
+```java
+@FunctionalInterface
+interface Calculator {
+    int add(int a, int b);
+
+    default int doubleIt(int x) {
+        return x * 2;
+    }
+
+    static void info() {
+        System.out.println("Calculator interface");
+    }
+}
+```
+
+Still functional because it has only one abstract method: `add`.
+
+
+
+## 10. Common Mistakes
+
+### 10.1 Thinking one method always means functional usage
+
+An interface can have one method but still not be designed for lambdas.
+Using `@FunctionalInterface` makes intent clear.
+
+### 10.2 Adding second abstract method accidentally
+
+Without the annotation, you may accidentally break lambda compatibility.
+With annotation, compiler protects you.
+
+### 10.3 Confusing functional interface with “functional programming”
+
+Functional interface is just a Java interface type rule.
+Functional programming is a bigger concept involving immutability, pure functions, etc.
+
+
+## 11. Summary
+
+* A functional interface has exactly one abstract method.
+* `@FunctionalInterface` makes intent clear and enables compiler checks.
+* Functional interfaces are the base for lambda expressions and method references.
+* They are widely used in Streams and `java.util.function`.
+* Default/static methods are allowed without breaking functional interface rules.
+
+Written By: <a href="https://www.linkedin.com/in/shivasrivastava1/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer">Shiva Srivastava</a>
+

@@ -1,0 +1,248 @@
+---
+title: Lambda Expression Basics
+---
+
+## 1. Introduction
+
+A **lambda expression** in Java is a compact way to write a small piece of logic without creating a separate class.  
+It is mainly used to provide the implementation of a **functional interface** (an interface with exactly one abstract method).
+
+Lambda expressions became important in Java because many modern APIs (like Stream API) need a clean way to pass behavior such as:
+
+- filtering logic
+- sorting logic
+- mapping/conversion logic
+- short callback-like actions
+
+Instead of writing long boilerplate code, lambdas allow writing the same logic in a shorter and more readable way.
+
+
+
+## 2. What Problem Lambda Solves
+
+Before lambdas, if you wanted to pass a behavior, you usually wrote:
+
+- a separate class, or
+- an anonymous inner class
+
+Both approaches work, but they are verbose for small logic.
+
+Lambda helps when:
+
+- the logic is short
+- it is used once or a few times
+- the interface has exactly one method (functional interface)
+
+
+
+## 3. Lambda Works Only With Functional Interfaces
+
+A lambda expression can be assigned only to a type that has **exactly one abstract method**.
+
+Example functional interface:
+
+```java
+@FunctionalInterface
+interface Greeting {
+    void sayHello();
+}
+````
+
+Now a lambda can implement it.
+
+
+
+## 4. Basic Syntax of Lambda Expression
+
+General form:
+
+```java
+(parameters) -> { body }
+```
+
+Key parts:
+
+* `parameters` are inputs to the method
+* `->` separates inputs and implementation
+* `body` is the method logic
+
+
+
+## 5. First Example (No Parameters)
+
+Functional interface:
+
+```java
+@FunctionalInterface
+interface Greeting {
+    void sayHello();
+}
+```
+
+Lambda implementation:
+
+```java
+public class Main {
+    public static void main(String[] args) {
+        Greeting g = () -> System.out.println("Hello");
+        g.sayHello();
+    }
+}
+```
+
+Here `() ->` means the method takes no input.
+
+
+
+## 6. Lambda With One Parameter
+
+```java
+@FunctionalInterface
+interface Printer {
+    void print(String message);
+}
+```
+
+Lambda:
+
+```java
+public class Main {
+    public static void main(String[] args) {
+        Printer p = msg -> System.out.println(msg);
+        p.print("Welcome to Java");
+    }
+}
+```
+
+Note:
+
+* For single parameter, parentheses are optional: `msg -> ...`
+
+
+
+## 7. Lambda With Multiple Parameters
+
+```java
+@FunctionalInterface
+interface Operation {
+    int apply(int a, int b);
+}
+```
+
+Lambda:
+
+```java
+public class Main {
+    public static void main(String[] args) {
+        Operation add = (a, b) -> a + b;
+        System.out.println(add.apply(10, 20));
+    }
+}
+```
+
+Output:
+
+```
+30
+```
+
+
+
+## 8. Lambda Body: Single Statement vs Block
+
+### 8.1 Single Statement Body
+
+No braces needed:
+
+```java
+Operation add = (a, b) -> a + b;
+```
+
+### 8.2 Block Body
+
+Use braces when you need multiple statements:
+
+```java
+Operation add = (a, b) -> {
+    int result = a + b;
+    return result;
+};
+```
+
+When you use `{ }`, `return` is required if method returns a value.
+
+
+
+## 9. Type Inference in Lambda
+
+You usually do not need to write types:
+
+```java
+(a, b) -> a + b
+```
+
+Because Java infers types from the functional interface method signature.
+
+But you can explicitly write them if needed:
+
+```java
+(int a, int b) -> a + b
+```
+
+
+
+## 10. Lambda Is Not a Method, It Is an Implementation
+
+A lambda expression does not create a new named method.
+It provides the implementation of the single abstract method of a functional interface.
+
+So this:
+
+```java
+Operation add = (a, b) -> a + b;
+```
+
+means:
+
+* `add` is an object reference
+* pointing to an implementation of `Operation.apply(a,b)`
+
+
+
+## 11. Common Mistakes
+
+### 11.1 Trying to use lambda with non-functional interface
+
+If an interface has 2 abstract methods, lambda cannot be used.
+
+### 11.2 Confusing lambda with overloading
+
+A lambda is matched by the target type (functional interface).
+If Java cannot decide the target type, you get compilation errors.
+
+### 11.3 Using braces without return for non-void method
+
+This is invalid:
+
+```java
+// Operation add = (a, b) -> { a + b; }; // invalid
+```
+
+Correct:
+
+```java
+Operation add = (a, b) -> { return a + b; };
+```
+
+
+
+## 12. Summary
+
+* Lambda expression is a short way to implement a functional interface.
+* Works only when there is exactly one abstract method.
+* Syntax: `(parameters) -> body`
+* Parentheses optional for one parameter, required for multiple.
+* Use braces for multiple statements, and return when needed.
+* Lambda provides implementation of the interface method, not a separate named method.
+
+Written By: <a href="https://www.linkedin.com/in/shivasrivastava1/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer">Shiva Srivastava</a>

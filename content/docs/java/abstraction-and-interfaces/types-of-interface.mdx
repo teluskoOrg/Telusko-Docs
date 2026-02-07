@@ -1,0 +1,189 @@
+---
+title: Types of Interface
+---
+
+## 1. Introduction
+
+When people say “types of interfaces in Java”, they usually mean interfaces categorized by **how they are used in design**, not by a special keyword in Java syntax.
+
+Java technically has one `interface` keyword, but in real-world development, interfaces fall into common patterns.  
+Understanding these patterns helps you choose the correct interface style when designing code.
+
+This lecture covers the most practical and commonly taught interface types:
+
+- Normal Interface
+- Functional Interface
+- Marker Interface
+
+Each type solves a different design purpose.
+
+
+
+## 2. Normal Interface (Multiple Abstract Methods)
+
+A **normal interface** contains **more than one abstract method**.  
+It describes a full contract with multiple behaviors.
+
+Example:
+
+```java
+interface Repository {
+    void save();
+    void update();
+    void delete();
+}
+````
+
+Why this exists:
+
+* Some contracts are naturally multi-step.
+* It groups related operations into one standard.
+
+Where it is used:
+
+* Layered applications (service contracts, repository contracts)
+* APIs that expose multiple related operations
+
+
+
+## 3. Functional Interface (Exactly One Abstract Method)
+
+A **functional interface** contains exactly **one abstract method**.
+This matters because such interfaces can be used with **lambda expressions**.
+
+Example:
+
+```java
+interface Operation {
+    int apply(int a, int b);
+}
+```
+
+Why this exists:
+
+* It represents one “action” or “behavior” cleanly.
+* Makes functional programming style possible in Java.
+
+Common built-in examples:
+
+* `Runnable` → `run()`
+* `Callable<T>` → `call()`
+* `Comparator<T>` → `compare()`
+
+Functional interfaces will be covered in depth in `functional-interface.mdx`.
+
+
+
+## 4. Marker Interface (No Methods)
+
+A **marker interface** has **no methods** at all.
+It only marks a class as having some special property so frameworks or Java runtime can treat it differently.
+
+Example:
+
+```java
+interface Serializable { }
+```
+
+If a class implements it, it tells the JVM/framework:
+
+* “This object can be converted into bytes and stored/transferred”
+
+Other common marker interface:
+
+* `Cloneable`
+
+Marker interfaces will be explained deeply in `marker-interface.mdx`.
+
+
+
+## 5. Can Interfaces Also Have Default/Static Methods?
+
+Yes, modern Java allows:
+
+* `default` methods
+* `static` methods
+* `private` helper methods (inside interface)
+
+But these do not create a “new type of interface”.
+They are features that can be used in any interface.
+
+Examples:
+
+```java
+interface Logger {
+    default void info(String msg) {
+        System.out.println("INFO: " + msg);
+    }
+
+    static void banner() {
+        System.out.println("Logger Started");
+    }
+}
+```
+
+Default and static methods are covered in dedicated lectures.
+
+
+
+## 6. Why This Classification Matters
+
+In real projects, you choose the interface type based on intent:
+
+* Normal interface → when you need a complete contract with multiple operations
+* Functional interface → when you want a single action, often used with lambdas
+* Marker interface → when you want metadata-like tagging for runtime/framework behavior
+
+These are design decisions that affect clarity and maintainability.
+
+
+
+## 7. Quick Practical Examples (One Line Each)
+
+### 7.1 Normal Interface
+
+```java
+interface CrudService { void create(); void read(); void update(); void delete(); }
+```
+
+### 7.2 Functional Interface
+
+```java
+interface Transformer { String transform(String input); }
+```
+
+### 7.3 Marker Interface
+
+```java
+interface Auditable { } // used by framework logic to apply auditing
+```
+
+
+
+## 8. Common Mistakes
+
+### 8.1 Calling everything “functional interface”
+
+Just because an interface has one method does not automatically mean it is used as a functional design unless intended.
+To make the intent clear, Java provides `@FunctionalInterface` annotation (covered later).
+
+### 8.2 Expecting marker interfaces to enforce methods
+
+Marker interfaces do not enforce behavior through methods. They are used for framework/runtime checks.
+
+
+![types of interfaces - classification diagram](https://dyz1pdcuffwr5.cloudfront.net/Java/abstract/type-interface.png)
+
+
+## 9. Summary
+
+* Java interfaces are commonly categorized by usage:
+
+  * Normal interface: multiple abstract methods
+  * Functional interface: exactly one abstract method (supports lambdas)
+  * Marker interface: no methods, used for tagging
+* Default/static methods are features, not separate interface types.
+* Choosing the right interface type makes designs cleaner and more maintainable.
+
+Written By: <a href="https://www.linkedin.com/in/shivasrivastava1/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer">Shiva Srivastava</a>
+ 

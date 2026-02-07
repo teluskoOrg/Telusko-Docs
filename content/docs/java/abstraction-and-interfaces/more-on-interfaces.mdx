@@ -1,0 +1,272 @@
+---
+title: More on Interfaces
+---
+
+## 1. Introduction
+
+After learning interface basics and why interfaces are needed, the next step is understanding what interfaces can contain and how they behave in real Java programs.
+
+In modern Java, interfaces are more than just a list of abstract methods. They can define:
+
+- constants (fixed values)
+- default methods (reusable behavior)
+- static methods (utility behavior)
+- private helper methods (internal reuse inside interface)
+
+At the same time, interfaces still follow strict rules that keep them focused on being a contract, not a full class replacement.
+
+This lecture explains the deeper rules and practical behavior of interfaces without repeating earlier concepts.
+
+
+
+## 2. Interface Members: What Can an Interface Contain?
+
+An interface can contain:
+
+1. Method declarations (commonly abstract)
+2. Constants (public static final)
+3. Default methods
+4. Static methods
+5. Private methods (helper methods used inside default/static methods)
+
+It cannot contain:
+
+- constructors
+- instance variables (normal fields)
+- non-static initialization blocks
+
+
+
+## 3. Interface Variables Are Always Constants
+
+Any variable you write inside an interface automatically becomes a constant.
+
+```java
+interface AppConfig {
+    int TIMEOUT = 30;
+}
+````
+
+This is treated as:
+
+```java
+public static final int TIMEOUT = 30;
+```
+
+Important meaning:
+
+* You cannot change it later
+* It belongs to the interface, not to objects
+* It is accessed like:
+
+```java
+System.out.println(AppConfig.TIMEOUT);
+```
+
+
+
+## 4. Interface Methods: Visibility and Default Nature
+
+If you write a normal method declaration in an interface:
+
+```java
+interface A {
+    void show();
+}
+```
+
+Java reads it as:
+
+```java
+public abstract void show();
+```
+
+Key implications:
+
+* The implementing class must define it as `public`
+* Because interface methods are always `public` by default
+
+
+
+## 5. Implementing Multiple Interfaces and Method Conflicts
+
+A class can implement multiple interfaces:
+
+```java
+class Demo implements A, B { }
+```
+
+This is powerful but can create conflicts when two interfaces declare the same method signature.
+
+If two interfaces declare the same abstract method signature:
+
+* No conflict
+* The class implements it once
+
+```java
+interface A { void run(); }
+interface B { void run(); }
+
+class C implements A, B {
+    public void run() {
+        System.out.println("Running");
+    }
+}
+```
+
+This works because both contracts are satisfied by one implementation.
+
+
+
+## 6. Default Method Conflict (Preview for Later)
+
+When two interfaces provide a **default method** with the same signature, the class must resolve the conflict explicitly.
+
+Example (concept-level, full default method lecture comes later):
+
+```java
+interface A {
+    default void show() { System.out.println("A"); }
+}
+
+interface B {
+    default void show() { System.out.println("B"); }
+}
+
+class C implements A, B {
+    @Override
+    public void show() {
+        A.super.show(); // or B.super.show()
+    }
+}
+```
+
+This tells Java exactly which default method to use.
+
+
+
+## 7. Extending Interfaces (Interface Inheritance)
+
+Interfaces can extend other interfaces, allowing contracts to grow in layers.
+
+```java
+interface A {
+    void methodA();
+}
+
+interface B extends A {
+    void methodB();
+}
+```
+
+A class implementing `B` must implement both methods.
+
+```java
+class Demo implements B {
+    public void methodA() { }
+    public void methodB() { }
+}
+```
+
+This is commonly used when you want to build a larger contract from smaller contracts.
+
+
+
+## 8. Marker Interfaces (Only Concept Hint)
+
+Some interfaces have no methods at all, and exist just to mark a class with a capability.
+
+Examples in Java:
+
+* `Serializable`
+* `Cloneable`
+
+This topic will be covered properly in the dedicated lecture `marker-interface.mdx`.
+
+
+
+## 9. Functional Interface (Only Concept Hint)
+
+A functional interface is an interface with exactly one abstract method, used heavily with lambdas.
+
+Example:
+
+```java
+interface Operation {
+    int apply(int a, int b);
+}
+```
+
+This will be covered properly in `functional-interface.mdx` and lambda lectures.
+
+
+
+## 10. Real-World Pattern: Interface + Multiple Implementations
+
+A common architecture style is:
+
+* One interface defines an operation
+* Multiple classes implement it differently
+* Business logic depends only on the interface
+
+Example:
+
+```java
+interface Notification {
+    void send(String message);
+}
+
+class EmailNotification implements Notification {
+    public void send(String message) {
+        System.out.println("Email sent: " + message);
+    }
+}
+
+class SmsNotification implements Notification {
+    public void send(String message) {
+        System.out.println("SMS sent: " + message);
+    }
+}
+```
+
+Why this matters:
+
+* You can add new channels later (Push, WhatsApp, etc.)
+* Existing code does not break
+* Testing becomes easier because you can replace implementations
+
+
+
+## 11. Common Mistakes
+
+### 11.1 Forgetting `public` in implementation
+
+```java
+interface A { void show(); }
+
+class B implements A {
+    // void show() { } // invalid
+    public void show() { } // correct
+}
+```
+
+### 11.2 Trying to create objects of an interface
+
+```java
+// A a = new A(); // not allowed
+```
+
+### 11.3 Trying to add constructors
+
+Interfaces cannot have constructors because they cannot be instantiated.
+ 
+
+## 12. Summary
+
+* Interfaces can contain constants, abstract methods, default methods, static methods, and private helper methods.
+* Interface variables are always `public static final`.
+* Interface abstract methods are always `public abstract`.
+* A class can implement multiple interfaces and satisfy same-method contracts with one implementation.
+* Interfaces can extend other interfaces, creating layered contracts.
+
+Written By: <a href="https://www.linkedin.com/in/shivasrivastava1/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer">Shiva Srivastava</a>

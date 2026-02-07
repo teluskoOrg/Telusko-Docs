@@ -1,0 +1,192 @@
+---
+title: Abstract Method
+---
+
+## 1. Introduction
+
+An **abstract method** is a method that defines a **required capability** but intentionally leaves the **implementation empty**, because the correct logic depends on the specific child class.
+
+Think of it as Java’s way of enforcing a design rule:  
+“If you extend this base type, you must provide this behavior.”
+
+This is extremely useful when you want **consistency** across multiple related classes without forcing one incorrect default implementation.
+
+
+
+## 2. What Is an Abstract Method?
+
+An abstract method has:
+
+- The `abstract` keyword
+- Only the method signature (no body)
+- Ends with a semicolon `;`
+
+Example:
+
+```java
+abstract class Shape {
+    abstract double area();
+}
+````
+
+Here, every `Shape` must have an `area()` method, but Java does not assume one formula.
+
+
+
+## 3. Why Abstract Methods Are Needed
+
+Abstract methods exist because many systems have a **common type** but **different behavior per subtype**.
+
+Example categories where this naturally happens:
+
+* `Payment` → UPI, Card, NetBanking (each processes differently)
+* `Employee` → Developer, Tester, Manager (each “work” differs)
+* `Notification` → Email, SMS, Push (each sends differently)
+
+If you write a normal method in the parent, you risk shipping a wrong default.
+If you don’t define the method at all, you lose a reliable contract and polymorphism becomes harder to use safely.
+An abstract method solves both: the method exists, and the child must define it correctly.
+
+
+
+## 4. Rules and Restrictions (Very Important)
+
+### 4.1 Must be inside an abstract class (or interface)
+
+```java
+abstract class A {
+    abstract void show();
+}
+```
+
+### 4.2 Child class must override it (or child becomes abstract)
+
+If a child does not implement all abstract methods, it cannot be a concrete class.
+
+### 4.3 Modifiers that are not allowed
+
+* `private` (child must access and override it)
+* `final` (final prevents overriding)
+* `static` (static is class-level, not polymorphic overriding)
+
+
+
+## 5. Core Example: Mandatory Override + Polymorphism
+
+```java
+abstract class Animal {
+    abstract void sound();
+}
+
+class Dog extends Animal {
+    @Override
+    void sound() {
+        System.out.println("Bark");
+    }
+}
+
+class Cat extends Animal {
+    @Override
+    void sound() {
+        System.out.println("Meow");
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+        Animal a1 = new Dog();
+        Animal a2 = new Cat();
+
+        a1.sound();
+        a2.sound();
+    }
+}
+```
+
+Output:
+
+```
+Bark
+Meow
+```
+
+This is the key advantage: code written using the parent type (`Animal`) remains clean, and runtime behavior still becomes correct per actual object type.
+
+
+
+## 6. Abstract Method With Shared Concrete Logic
+
+In most real designs, the abstract class provides both:
+
+* Common logic (already implemented)
+* Abstract methods (must be implemented)
+
+```java
+abstract class Payment {
+    void receipt(double amount) {
+        System.out.println("Receipt generated for: " + amount);
+    }
+
+    abstract void pay(double amount);
+}
+
+class UpiPayment extends Payment {
+    @Override
+    void pay(double amount) {
+        System.out.println("Paid using UPI: " + amount);
+    }
+}
+```
+
+This design is strong because it reduces duplication while still forcing correctness where logic differs.
+
+
+
+## 7. Design Benefit: Safety and Consistency
+
+When you introduce abstract methods, you make your system safer:
+
+* Every child must implement required behavior, so incomplete implementations are blocked at compile time.
+* Common code can call the abstract method confidently, knowing it exists.
+* You create a stable base contract that makes your codebase more maintainable as it grows.
+
+In large projects, this becomes one of the simplest ways to avoid inconsistent implementations across different modules or teams.
+
+
+
+## 8. Common Mistakes
+
+### 8.1 Forgetting to override
+
+```java
+abstract class A {
+    abstract void show();
+}
+
+class B extends A {
+    // show() missing -> compilation error
+}
+```
+
+### 8.2 Trying invalid combinations
+
+```java
+// abstract final void show();   // invalid
+// abstract static void show();  // invalid
+// private abstract void show(); // invalid
+```
+
+
+![abstract method enforcement and overriding](https://dyz1pdcuffwr5.cloudfront.net/Java/abstract/abstract-method.png)
+
+
+
+## 9. Summary
+
+* An abstract method defines a required method without implementation.
+* Child classes must implement it to become concrete.
+* It enforces consistent design and enables safe polymorphism.
+* It cannot be private, static, or final.
+* Commonly used when parent defines a contract but each child needs different logic.
+
+Written By: <a href="https://www.linkedin.com/in/shivasrivastava1/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer">Shiva Srivastava</a>

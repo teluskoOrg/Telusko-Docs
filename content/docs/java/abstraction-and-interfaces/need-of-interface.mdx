@@ -1,0 +1,228 @@
+---
+title: Need of Interface
+---
+
+## 1. Introduction
+
+After understanding what an interface is, the next real question is: why do we need it when we already have classes and inheritance?
+
+The need of interface comes from practical software design problems where:
+
+- classes can be unrelated but still share the same capability
+- inheritance becomes rigid and difficult to scale
+- you need plug-and-play behavior (swap implementations without changing code)
+- you want clean architecture where implementation details are hidden behind contracts
+
+Interfaces are not just an OOP concept. They are a core tool used to build flexible, testable, and maintainable systems.
+
+
+
+## 2. The Problem With Only Using Inheritance
+
+Inheritance is useful, but it has limitations:
+
+1. Java supports only **single inheritance** (a class can extend only one class).
+2. Inheritance models an **is-a** relationship, not a capability relationship.
+3. Overusing inheritance can create deep class hierarchies that become hard to modify.
+
+Example:  
+If you try to model multiple abilities using only inheritance, you quickly get stuck.
+
+A `Phone` can:
+
+- make calls
+- take photos
+- connect to internet
+
+If you attempt inheritance-only design, you end up forcing unnatural hierarchies.
+
+Interfaces solve this by allowing a class to implement multiple capabilities.
+
+
+
+## 3. Capability Modeling (The Real Strength of Interfaces)
+
+Interfaces represent abilities, not identity.
+
+Examples of abilities:
+
+- `Runnable` → can run as a thread task
+- `Comparable` → can be compared/sorted
+- `Serializable` → can be converted into bytes for storage/network
+- `AutoCloseable` → can be automatically closed
+
+These abilities can apply to completely different classes. That is why interface exists as a separate concept.
+
+
+
+## 4. Multiple Inheritance of Behavior Contracts
+
+Java does not allow:
+
+```java
+class C extends A, B { } // not allowed
+````
+
+But Java allows:
+
+```java
+class C implements A, B { } // allowed
+```
+
+This is one of the biggest reasons interfaces exist.
+A class can accept multiple roles at the same time without forcing inheritance coupling.
+
+Example:
+
+```java
+interface Printable {
+    void print();
+}
+
+interface Scannable {
+    void scan();
+}
+
+class OfficeMachine implements Printable, Scannable {
+    public void print() {
+        System.out.println("Printing...");
+    }
+
+    public void scan() {
+        System.out.println("Scanning...");
+    }
+}
+```
+
+This design is natural: one object supports multiple abilities.
+
+
+
+## 5. Loose Coupling (Most Important in Real Projects)
+
+Interfaces help you reduce dependency on concrete classes.
+
+Instead of writing code like:
+
+```java
+class CheckoutService {
+    private UpiPayment payment = new UpiPayment();
+}
+```
+
+You write:
+
+```java
+class CheckoutService {
+    private Payment payment;
+
+    CheckoutService(Payment payment) {
+        this.payment = payment;
+    }
+}
+```
+
+Now the service depends on an interface, not a specific payment type.
+This makes the system easier to extend and maintain.
+
+
+
+## 6. Plug-and-Play Architecture (Open/Closed Principle)
+
+The Open/Closed Principle means:
+
+* open for extension
+* closed for modification
+
+Interfaces help achieve this because you can add a new implementation without changing existing code.
+
+Example: payment types.
+
+Today:
+
+* UPI
+* Card
+
+Tomorrow:
+
+* NetBanking
+* Wallet
+
+If the system uses an interface `Payment`, adding new types requires only new classes, not changing old logic.
+
+
+
+## 7. Framework Design and Industry Usage
+
+Interfaces are heavily used in real frameworks because they allow frameworks to:
+
+* expose stable APIs
+* hide internal implementations
+* allow developers to inject custom logic
+
+Examples you see daily in Java ecosystem:
+
+* JDBC uses interfaces like `Connection`, `Statement`, `ResultSet`
+* Collections uses `List`, `Set`, `Map` interfaces
+* Spring promotes programming to interfaces for DI and easier testing
+
+The reason is simple: interfaces protect your architecture from change.
+
+
+
+## 8. Testability and Mocking
+
+When code depends on interfaces, testing becomes easier because you can replace the real implementation with a fake/mock implementation.
+
+Example idea:
+
+* Real: `EmailService` sends actual emails
+* Test: `FakeEmailService` just records that email was requested
+
+You test logic without external side effects.
+
+This is a major reason interfaces are preferred in professional codebases.
+
+
+
+## 9. Standardization Across Teams
+
+In team environments, interfaces provide a shared agreement:
+
+* One team writes the contract (interface)
+* Another team writes the implementation
+
+Both can work in parallel.
+
+Example: In a microservices system, you might define an interface-like contract in code or API spec first, and implementations follow.
+
+In Java applications, the interface becomes the internal contract for modules and layers.
+
+
+
+## 10. When Interface Is Better Than Abstract Class
+
+You prefer interface when:
+
+* you only need a contract, not shared state
+* multiple inheritance of capabilities is needed
+* classes are not strongly related by identity
+* you want flexible swapping of implementations
+
+You prefer abstract class when:
+
+* you want shared fields and shared base logic
+* the relationship is strongly “is-a”
+* you want partial implementation + enforced rules
+
+
+## 11. Summary
+
+* Interfaces are needed to model capabilities, not identity.
+* They enable multiple inheritance of contracts in Java.
+* They reduce tight coupling by making code depend on contracts, not concrete classes.
+* They support plug-and-play design, extension without modification, and cleaner architecture.
+* They are essential for frameworks, large systems, and testable code.
+
+Written By: <a href="https://www.linkedin.com/in/shivasrivastava1/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer">Shiva Srivastava</a>
+ 

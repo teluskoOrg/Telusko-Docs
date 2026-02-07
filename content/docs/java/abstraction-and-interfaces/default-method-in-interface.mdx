@@ -1,0 +1,259 @@
+---
+title: Default Method in Interface
+---
+
+## 1. Introduction
+
+Originally, interfaces in Java were meant to define only method declarations. But a major practical issue appeared in real systems: once an interface is used by many classes, adding a new method to that interface breaks all existing implementations.
+
+To solve this backward-compatibility problem, Java introduced **default methods**. A default method allows an interface to provide a **ready-to-use implementation**, so older implementing classes do not break when new functionality is added.
+
+Default methods are a key reason why modern Java libraries can evolve without forcing every project to rewrite code.
+
+
+
+## 2. What Is a Default Method?
+
+A **default method** is a method inside an interface that has a body, written using the `default` keyword.
+
+```java
+interface Logger {
+    default void info(String msg) {
+        System.out.println("INFO: " + msg);
+    }
+}
+````
+
+Here, `info()` already has an implementation, so any class implementing `Logger` automatically gets this method.
+
+
+
+## 3. Why Default Methods Were Introduced
+
+Without default methods, adding a method to an interface forces every implementing class to implement it.
+
+Example: suppose this interface already exists in many projects:
+
+```java
+interface Payment {
+    void pay(double amount);
+}
+```
+
+If later you want to add:
+
+```java
+void refund(double amount);
+```
+
+All existing classes (`UpiPayment`, `CardPayment`, etc.) will fail compilation until they implement `refund()`.
+
+With default methods:
+
+```java
+interface Payment {
+    void pay(double amount);
+
+    default void refund(double amount) {
+        System.out.println("Refund feature not supported by this payment type");
+    }
+}
+```
+
+Now old implementations still compile, and only those classes that need custom refund behavior override it.
+
+This is the main real-world reason default methods exist.
+
+
+
+## 4. Default Method Example (Inheritance of Implementation)
+
+```java
+interface Greeting {
+    default void sayHello() {
+        System.out.println("Hello from interface");
+    }
+}
+
+class User implements Greeting {
+    // no override needed
+}
+
+public class Main {
+    public static void main(String[] args) {
+        User u = new User();
+        u.sayHello();
+    }
+}
+```
+
+Output:
+
+```
+Hello from interface
+```
+
+The class gets the implementation directly from the interface.
+
+
+
+## 5. Overriding a Default Method
+
+A class can override a default method if it needs its own behavior.
+
+```java
+interface Greeting {
+    default void sayHello() {
+        System.out.println("Hello from interface");
+    }
+}
+
+class Admin implements Greeting {
+    @Override
+    public void sayHello() {
+        System.out.println("Hello from Admin");
+    }
+}
+```
+
+Now `Admin` has its own version.
+
+
+
+## 6. Calling the Interface Default Method Explicitly
+
+Sometimes you override a default method but still want to call the interface version as part of your logic.
+Java provides a special syntax:
+
+```java
+InterfaceName.super.methodName();
+```
+
+Example:
+
+```java
+interface Greeting {
+    default void sayHello() {
+        System.out.println("Hello from interface");
+    }
+}
+
+class Admin implements Greeting {
+    @Override
+    public void sayHello() {
+        Greeting.super.sayHello();
+        System.out.println("Extra admin greeting");
+    }
+}
+```
+
+Output:
+
+```
+Hello from interface
+Extra admin greeting
+```
+
+This is helpful when you want to extend the default behavior instead of fully replacing it.
+
+
+
+## 7. Default Method Conflict (Diamond Problem in Interfaces)
+
+A class can implement multiple interfaces, and two interfaces can have the same default method signature.
+In that case, Java forces you to resolve the conflict explicitly.
+
+```java
+interface A {
+    default void show() {
+        System.out.println("A");
+    }
+}
+
+interface B {
+    default void show() {
+        System.out.println("B");
+    }
+}
+
+class C implements A, B {
+    @Override
+    public void show() {
+        A.super.show(); // choose A
+        // or B.super.show();
+    }
+}
+```
+
+Why Java enforces this:
+
+* It prevents ambiguity
+* It ensures the class author decides which implementation is correct
+
+
+
+## 8. Default Method vs Abstract Method in Interface
+
+Default method:
+
+* has body
+* not mandatory to override
+
+Abstract method:
+
+* no body
+* mandatory to override in concrete class
+
+Example:
+
+```java
+interface X {
+    void required(); // must implement
+
+    default void optional() { // can ignore
+        System.out.println("Optional default behavior");
+    }
+}
+```
+
+
+
+## 9. Real Use Case Pattern: Adding Features Safely
+
+Default methods are frequently used when you want to add optional features without breaking older implementations.
+
+Example scenario:
+
+* Many classes implement `Notification`
+* Later you add `schedule()` feature
+* Some implementations support it, some don’t
+
+Default method allows the interface to evolve while keeping implementations stable.
+
+
+
+## 10. Common Mistakes
+
+### 10.1 Thinking default methods replace abstract classes
+
+Default methods add convenience, but interfaces still cannot hold instance fields and constructors like abstract classes.
+
+### 10.2 Ignoring conflict resolution
+
+If two interfaces provide same default method, you must override and explicitly choose one.
+
+### 10.3 Making default methods too large
+
+Default methods should provide small, reusable behavior.
+If too much logic lives there, it can make design harder to maintain.
+
+
+## 10. Summary
+
+* Default methods allow an interface to provide a method implementation.
+* They were introduced mainly for backward compatibility when interfaces evolve.
+* Implementing classes can use the default method directly or override it.
+* If multiple interfaces provide the same default method, the class must resolve the conflict.
+* Default methods are best used for small optional behaviors.
+
+Written By: <a href="https://www.linkedin.com/in/shivasrivastava1/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer">Shiva Srivastava</a>

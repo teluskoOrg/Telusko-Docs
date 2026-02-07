@@ -1,0 +1,216 @@
+---
+title: Marker Interface
+---
+
+## 1. Introduction
+
+A **marker interface** is an interface that contains **no methods and no fields**.  
+Its purpose is not to enforce behavior through method implementation, but to **mark** a class with some special meaning.
+
+In Java, marker interfaces were designed as a lightweight way to attach **metadata-like information** to a class so that the **JVM or frameworks** can treat that class differently.
+
+So the key idea is:
+
+- Normal interfaces define *what a class must do*.
+- Marker interfaces define *what a class is allowed to be treated as*.
+
+
+
+## 2. What Makes an Interface a Marker Interface?
+
+A marker interface has:
+
+- no abstract methods
+- no default methods
+- no static methods (in classic marker style)
+- no fields
+
+Example structure:
+
+```java
+interface Auditable {
+    // no code
+}
+````
+
+A class implements it purely to indicate something:
+
+```java
+class Order implements Auditable {
+    // normal class code
+}
+```
+
+
+
+## 3. Why Marker Interfaces Exist
+
+Marker interfaces solve a specific runtime problem:
+
+Sometimes the runtime needs to check:
+
+* “Is this object eligible for a certain operation?”
+* “Should I enable a special feature for this object type?”
+
+Instead of adding a method just for checking, Java used marker interfaces so checks could be done using `instanceof`.
+
+Example idea:
+
+* If a class implements `Serializable`, then it can be serialized.
+* If it does not, serialization should not happen.
+
+This avoids accidental unsafe operations.
+
+
+
+## 4. The Most Famous Marker Interface: Serializable
+
+`Serializable` is a marker interface in Java.
+
+Meaning:
+
+* if a class implements `Serializable`, objects of that class can be converted into bytes
+* those bytes can be saved to disk or transferred over network
+
+```java
+import java.io.Serializable;
+
+class Student implements Serializable {
+    int id;
+    String name;
+
+    Student(int id, String name) {
+        this.id = id;
+        this.name = name;
+    }
+}
+```
+
+Frameworks and Java’s serialization mechanism check whether the class is serializable before proceeding.
+
+
+
+## 5. Another Classic Marker Interface: Cloneable
+
+`Cloneable` is also a marker interface.
+
+Meaning:
+
+* It signals that the object allows cloning using `Object.clone()`
+
+If a class does not implement `Cloneable` and you try cloning, Java throws `CloneNotSupportedException`.
+
+Basic structure:
+
+```java
+class Demo implements Cloneable {
+    int x = 10;
+}
+```
+
+Marker interface acts as permission.
+
+
+
+## 6. How Marker Interfaces Are Used (Runtime Check)
+
+Marker interfaces are often checked using `instanceof`.
+
+Example:
+
+```java
+if (obj instanceof Serializable) {
+    // allow serialization
+} else {
+    // block serialization
+}
+```
+
+This is simple, fast, and clear.
+
+
+
+## 7. Marker Interface vs Annotation (Modern Alternative)
+
+In modern Java, annotations are often used instead of marker interfaces because annotations can:
+
+* carry extra values (configuration)
+* be used at runtime using reflection
+* be more flexible for frameworks
+
+Example marker-style annotation:
+
+```java
+@interface Auditable { }
+```
+
+However, marker interfaces still exist and are still important because many core Java APIs were designed with them and continue to use them.
+
+So for interviews and concept clarity:
+
+* marker interfaces are a classic Java design approach
+* annotations are a more modern metadata approach
+
+
+
+## 8. Custom Marker Interface Example (Framework-Style)
+
+Imagine you build a logging/auditing feature in your system.
+You want only certain classes to be audited.
+
+Create marker interface:
+
+```java
+interface Auditable { }
+```
+
+Apply it:
+
+```java
+class Payment implements Auditable {
+    double amount;
+}
+
+class TempCache {
+    // not auditable
+}
+```
+
+Now your auditing logic can audit only marked objects.
+
+This pattern is useful when you want a simple opt-in capability.
+
+
+
+## 9. Important Notes and Best Practices
+
+* Marker interfaces do not force any method implementation.
+* The meaning of a marker interface comes from the code/framework that checks it.
+* Prefer marker interface when you want strong type-based capability checks.
+* Prefer annotations when you need metadata values or configuration.
+
+
+
+## 10. Common Mistakes
+
+### 10.1 Expecting marker interface to enforce behavior
+
+Marker interface alone does nothing unless some system checks it.
+
+### 10.2 Overusing custom marker interfaces
+
+If there is no clear runtime logic using it, it becomes dead design.
+
+### 10.3 Confusing marker interface with empty normal interface
+
+A marker interface should have a clear purpose: to signal a capability or classification.
+
+## 11. Summary
+
+* Marker interface is an interface with no methods.
+* It is used to tag a class so runtime/framework can treat it specially.
+* `Serializable` and `Cloneable` are classic marker interfaces.
+* Marker interfaces are often checked using `instanceof`.
+* Annotations are a modern alternative, but marker interfaces remain important in Java core APIs.
+
+Written By: <a href="https://www.linkedin.com/in/shivasrivastava1/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer">Shiva Srivastava</a>
