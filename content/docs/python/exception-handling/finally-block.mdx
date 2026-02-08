@@ -1,0 +1,119 @@
+---
+title: Finally Block
+---
+
+<Steps>
+<Video id="K1n0YQlcPT0" />
+
+---
+
+
+## What Is the finally Block?
+
+The `finally` block:
+
+* **Always executes**
+* Runs whether an exception occurs or not
+* Is used for **cleanup operations**
+
+
+`finally` block is important when working with:
+
+* Files
+* Database connections
+* Network resources
+
+It is the developer’s responsibility to **close resources** properly.
+
+
+### Syntax
+
+```python
+try:
+    risky_code
+except ExceptionType:
+    handling_code
+finally:
+    cleanup_code
+```
+
+![Finally_Block](https://dyz1pdcuffwr5.cloudfront.net/Python/finally_python.png)
+
+
+---
+
+
+## Example with `finally` block
+
+```python
+print("Resource opened successfully")
+
+try:
+    a = int(input("Enter numerator: "))
+    b = int(input("Enter denominator: "))
+    result = a / b
+    print("Result is:", result)
+
+except ZeroDivisionError as zde:
+    print("Division by zero is not allowed.", zde)
+
+except ValueError as ve:
+    print("Invalid input.", ve)
+
+finally:
+    print("Resource closed.")
+
+print("End of execution")
+```
+
+
+**Output**
+
+```
+Resource opened successfully
+Enter numerator: 4
+Enter denominator: 0
+Division by zero is not allowed. division by zero
+Resource closed.
+End of execution
+```
+
+
+---
+
+
+## `finally` Executes Even Without except
+```python
+try:
+    a = int(input("Enter numerator: "))
+    b = int(input("Enter denominator: "))
+    print(a / b)
+finally:
+    print("Resource closed.")
+```
+
+**Output**
+```
+Enter numerator: 4
+Enter denominator: t
+Resource closed.
+ValueError: invalid literal for int()
+
+```
+
+
+---
+
+
+## Summary
+
+- The `finally` block always executes, regardless of whether an exception occurs or not.
+- It is primarily used for **resource cleanup**, such as closing files or database connections.
+- Resources must be released explicitly by the developer to avoid memory leaks and system issues.
+- A `try` block must be followed by at least one `except` or a `finally` block.
+- Using `finally` ensures program stability and proper resource management in real-world applications.
+
+
+</Steps>
+
+Written By: <a href="https://www.linkedin.com/in/muskangarg03/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer"> Muskan Garg <ExternalLink className="w-4 h-4" /></a>

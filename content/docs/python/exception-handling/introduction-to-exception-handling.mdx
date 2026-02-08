@@ -1,0 +1,210 @@
+---
+title: Introduction to Exception Handling
+---
+
+<Steps>
+<Video id="K1n0YQlcPT0" />
+
+---
+
+
+Exception handling is a **core concept in Python** that prevents applications from crashing due to **unexpected runtime errors**.
+It is especially critical in **mission-critical applications** where failures are unacceptable.
+
+Examples include:
+
+* Banking systems
+* Medical devices
+* Automotive software
+* Aviation systems
+
+Without proper exception handling, even a small runtime issue can terminate the entire application and lead to serious consequences.
+
+
+---
+
+
+## Why Exception Handling Is Important
+
+* Prevents sudden application crashes
+* Ensures **smooth execution** even when errors occur
+* Improves **user experience**
+* Essential for **reliable and fault-tolerant software**
+
+In real-world applications, developers cannot control:
+
+* User inputs
+* File deletions
+* Network failures
+
+Therefore, programs must be prepared to **handle failures gracefully**.
+
+![Errors_in_Python](https://dyz1pdcuffwr5.cloudfront.net/Python/errors_python.png)
+
+
+---
+
+
+## Types of Errors in Python
+
+Python errors are broadly classified into **three categories**:
+
+1. **Syntax Errors (Compile-Time Errors)**
+2. **Logical Errors**
+3. **Runtime Errors (Exceptions)**
+
+
+---
+
+<Step>
+## Syntax Errors (Compile-Time Errors)
+
+Syntax errors occur when Python **cannot understand the structure of the code** due to incorrect syntax.
+
+These errors are detected:
+
+* By the Python interpreter
+* Or by the IDE
+* **Before program execution**
+
+### Examples
+
+* Missing colon `:`
+* Incorrect indentation
+* Misspelled keywords
+* Missing parentheses
+
+```python
+if x > 5
+    print("Hello")
+```
+
+**Output:**
+
+```
+SyntaxError: expected ':'
+```
+
+### Key Characteristics
+
+* Program **will not run**
+* Easy to identify and fix
+* Caught immediately
+
+</Step>
+
+---
+
+<Step>
+## Logical Errors
+
+Logical errors occur when the program:
+
+* Runs successfully
+* But produces **incorrect output**
+
+Python does **not raise an error** for logical mistakes.
+
+### Example
+
+```python
+radius = 5
+area = 2 * 3.14 * radius   # Wrong formula
+print(area)
+```
+
+**Output:**
+
+```
+31.4
+```
+
+### Why Logical Errors Are Dangerous
+
+* No error message
+* Incorrect results may go unnoticed
+* Hard to detect without expected output comparison
+
+</Step>
+
+---
+
+<Step>
+## Runtime Errors (Exceptions)
+
+`Runtime errors occur **during program execution**, even though:
+
+* Syntax is correct
+* Logic is intended correctly
+
+They are often caused by:
+
+* User input mistakes
+* Missing files
+* Invalid operations
+  
+
+### Example: Division by Zero
+
+```python
+a = 5
+b = 0
+result = a / b
+print("Result is:", result)
+print("End of execution")
+```
+
+**Output:**
+
+```
+ZeroDivisionError: division by zero
+```
+
+### What Happens Internally?
+
+* Python encounters an error
+* Program **crashes immediately**
+* Code after the error **does not execute**
+
+</Step>
+
+---
+
+
+![Error_Comparison_in_Python](https://dyz1pdcuffwr5.cloudfront.net/Python/error_comparison.png)
+
+
+---
+
+
+## Why Runtime Exceptions Must Be Handled
+
+Consider this scenario:
+
+* A required file is deleted by the user
+* A number input is replaced with text
+* A denominator becomes zero
+
+If not handled:
+
+* Application crashes
+* Execution stops abruptly
+
+Therefore, **exception handling is mandatory** for reliable software.
+
+
+---
+
+
+## Summary
+
+- Exception handling prevents Python applications from crashing due to unexpected runtime errors.
+- Python errors are categorized into **syntax errors, logical errors, and runtime exceptions**, each requiring a different approach.
+- Syntax errors stop execution immediately, while logical errors silently produce incorrect results.
+- Runtime exceptions occur during execution and must be handled to ensure smooth program flow.
+- Proper exception handling is essential for building reliable, user-friendly, and mission-critical applications.
+
+
+</Steps>
+
+Written By: <a href="https://www.linkedin.com/in/muskangarg03/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer"> Muskan Garg <ExternalLink className="w-4 h-4" /></a>

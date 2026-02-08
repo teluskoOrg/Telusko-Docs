@@ -1,0 +1,155 @@
+---
+title: try-except And Exceptional Hierarchy
+---
+
+<Steps>
+<Video id="K1n0YQlcPT0" />
+
+---
+
+
+## Exception Handling Syntax
+
+Python uses **try–except blocks** to handle runtime exceptions and prevent application crashes.
+
+### Basic try–except Syntax
+
+```python
+try:
+    # risky code
+except ErrorType:
+    # handling code
+```
+
+* Code inside `try` is monitored for errors
+* If an exception occurs, Python jumps to the matching `except` block
+
+
+### Example: Handling Division by Zero
+
+```python
+a = 5
+b = 0
+
+try:
+    result = a / b
+    print("Result is:", result)
+except Exception:
+    print("An error occurred: Division by zero is not allowed")
+
+print("End of execution")
+```
+
+**Output**
+
+```
+An error occurred: Division by zero is not allowed
+End of execution
+```
+
+- Application does **not crash**
+- Remaining code executes normally
+
+
+---
+
+
+## Handling Multiple Exceptions
+
+Different errors require **different handling logic**.
+
+### Example
+
+```python
+try:
+    a = int(input("Enter numerator: "))
+    b = int(input("Enter denominator: "))
+    result = a / b
+    print("Result is:", result)
+
+except ZeroDivisionError as zde:
+    print("Division by zero is not allowed.", zde)
+
+except ValueError as ve:
+    print("Invalid input. Please enter numeric values.", ve)
+
+except Exception as e:
+    print("An unexpected error occurred.", e)
+
+print("End of execution")
+```
+
+
+### Sample Outputs
+
+**Case 1: Zero Division**
+
+```
+Enter numerator: 4
+Enter denominator: 0
+Division by zero is not allowed. division by zero
+End of execution
+```
+
+**Case 2: Invalid Input**
+
+```
+Enter numerator: 4
+Enter denominator: t
+Invalid input. Please enter numeric values. invalid literal for int()
+End of execution
+```
+
+
+---
+
+
+![Multiple_Except_Blocks](https://dyz1pdcuffwr5.cloudfront.net/Python/multiple_exception_python.png)
+
+
+---
+
+
+## Python Exception Hierarchy
+
+Python exceptions follow a hierarchical structure.
+
+### Exception Hierarchy Diagram
+
+```
+BaseException
+│
+├── SystemExit
+├── KeyboardInterrupt
+│
+└── Exception
+    ├── ArithmeticError
+    │   └── ZeroDivisionError
+    ├── ValueError
+    ├── TypeError
+    ├── IndexError
+    └── FileNotFoundError
+```
+
+
+### Why Hierarchy Matters?
+
+* Parent exceptions catch child exceptions
+* Use **specific exceptions first**
+* Use generic `Exception` as a fallback
+
+
+---
+
+
+## Summary
+- Python uses `try–except` blocks to handle runtime exceptions and prevent application crashes.
+- Code inside the `try` block is monitored, and matching `except` blocks handle specific errors.
+- Multiple `except` blocks allow handling different exception types with customized messages.
+- Python exceptions follow a hierarchical structure, where parent exceptions can catch child exceptions.
+- Always handle **specific exceptions first** and use `Exception` as a fallback for unexpected errors.
+
+
+</Steps>
+
+Written By: <a href="https://www.linkedin.com/in/muskangarg03/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer"> Muskan Garg <ExternalLink className="w-4 h-4" /></a>
