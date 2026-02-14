@@ -1,0 +1,211 @@
+---
+title: What Is String?
+---
+
+## 1. Introduction
+
+In Java, a **String** is one of the most commonly used classes.  
+It represents a sequence of characters and is widely used in almost every Java program. Whether you're handling user input, displaying messages, or manipulating text, you'll use strings constantly.
+
+Strings are **immutable**, meaning that once a string is created, its value cannot be changed. This immutability ensures security and efficiency when working with strings in Java.
+
+
+
+## 2. What Exactly Is a String?
+
+A **String** is an object that represents a **sequence of characters**.  
+In Java, strings are instances of the `java.lang.String` class, and they are **immutable** by design, meaning their values cannot be changed after they are created.
+
+Example:
+
+```java
+String greeting = "Hello, world!";
+````
+
+Here, `"Hello, world!"` is a string literal, and the `greeting` variable holds a reference to it.
+
+
+
+## 3. String Creation: Literal vs Constructor
+
+In Java, you can create strings in two ways:
+
+1. **Using string literals**:
+
+   * These are directly assigned to variables.
+   * Java maintains a special area in memory called the **string pool** to reuse string literals.
+
+   Example:
+
+   ```java
+   String str1 = "Hello";
+   String str2 = "Hello";
+   ```
+
+   * In this case, both `str1` and `str2` refer to the same string object in the string pool, and no new memory is allocated for the second `"Hello"`.
+
+2. **Using the `new` keyword**:
+
+   * You can explicitly create new string objects using the `new` keyword, but this creates a new object in memory.
+
+   Example:
+
+   ```java
+   String str3 = new String("Hello");
+   ```
+
+   * Even though the string literal `"Hello"` exists in the string pool, this creates a **new instance** on the heap, not using the pool.
+
+
+
+## 4. String Immutability
+
+The key characteristic of the `String` class is **immutability**.
+Once a string is created, you **cannot modify its value** directly. Instead, operations on strings produce new strings.
+
+For example:
+
+```java
+String s = "Hello";
+s = s + " world!";
+```
+
+Here, `"Hello"` and `" world!"` are concatenated to form a new string.
+The original string `"Hello"` is not modified. Instead, a new string `"Hello world!"` is created and assigned to `s`.
+
+
+
+## 5. String Pool and String Interning
+
+Java optimizes string memory by storing string literals in a **string pool**.
+When you create a string literal, Java checks if that string already exists in the pool. If it does, it uses the same reference, avoiding redundant memory usage.
+
+```java
+String a = "Hello";
+String b = "Hello";
+```
+
+* Both `a` and `b` refer to the same object in the string pool.
+
+You can **explicitly intern** strings to add them to the pool using the `intern()` method:
+
+```java
+String str1 = new String("Hello");
+String str2 = str1.intern(); // Adds to string pool
+```
+
+
+
+## 6. String Methods and Manipulations
+
+The `String` class provides many useful methods for working with strings, such as:
+
+* `length()`: Returns the length of the string.
+
+  ```java
+  String s = "Hello";
+  int len = s.length(); // 5
+  ```
+
+* `charAt()`: Returns the character at a specific index.
+
+  ```java
+  char ch = s.charAt(1); // 'e'
+  ```
+
+* `substring()`: Returns a part of the string.
+
+  ```java
+  String sub = s.substring(1, 4); // "ell"
+  ```
+
+* `equals()`: Checks if two strings are equal.
+
+  ```java
+  boolean isEqual = s.equals("Hello"); // true
+  ```
+
+* `toUpperCase()`, `toLowerCase()`: Converts the string to upper or lower case.
+
+  ```java
+  String upper = s.toUpperCase(); // "HELLO"
+  ```
+
+
+
+## 7. StringBuilder vs String
+
+While `String` is immutable, **`StringBuilder`** is a mutable alternative that is more efficient when performing many string manipulations, especially inside loops.
+
+### Example: Using `StringBuilder` for String Concatenation
+
+```java
+StringBuilder sb = new StringBuilder("Hello");
+sb.append(" world!");
+System.out.println(sb.toString()); // "Hello world!"
+```
+
+Unlike `String`, `StringBuilder` modifies the existing object instead of creating new objects each time. This makes it more memory and time efficient for certain operations.
+
+
+
+## 8. String vs StringBuffer
+
+`StringBuffer` is another mutable alternative to `String`, similar to `StringBuilder`.
+The primary difference is that `StringBuffer` is **synchronized**, making it thread-safe but slower than `StringBuilder`.
+
+For most cases, if thread-safety is not a concern, **`StringBuilder`** is preferred for performance.
+
+
+
+## 9. String Comparison
+
+You compare strings using `equals()` method (not `==`):
+
+* `==` compares memory references (addresses), not the actual contents.
+* `equals()` compares the **contents** of the strings.
+
+Example:
+
+```java
+String s1 = "Hello";
+String s2 = "Hello";
+
+System.out.println(s1 == s2);        // true (same reference)
+System.out.println(s1.equals(s2));   // true (same content)
+```
+
+If you use `new String()`:
+
+```java
+String s1 = new String("Hello");
+String s2 = new String("Hello");
+
+System.out.println(s1 == s2);        // false (different memory references)
+System.out.println(s1.equals(s2));   // true (same content)
+```
+
+
+
+## 10. Common Mistakes
+
+### 10.1 Using `==` to compare string content
+
+As mentioned, `==` checks for **reference equality**, not **content equality**.
+Always use `.equals()` to compare string content.
+
+### 10.2 Modifying strings (thinking they're mutable)
+
+Strings are immutable. Be aware that operations on strings like concatenation or replacing characters will create new strings rather than modifying the original.
+
+ 
+
+## 11. Summary
+
+* A **String** is an object in Java that represents a sequence of characters and is **immutable**.
+* Strings can be created using literals or the `new` keyword, with literals being stored in a **string pool** for optimization.
+* String operations like concatenation create new objects because of immutability.
+* **StringBuilder** and **StringBuffer** are mutable alternatives used for more efficient string manipulation in cases where multiple changes are needed.
+* Always use `.equals()` for string comparison, not `==`.
+
+Written By: <a href="https://www.linkedin.com/in/shivasrivastava1/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer">Shiva Srivastava</a>

@@ -1,0 +1,215 @@
+---
+title: Anonymous Inner Class
+---
+
+## 1. Introduction
+
+An **anonymous inner class** is a class **without a name** that is defined **at the point of instantiation**.  
+It is typically used when you need to instantiate a class and override methods or implement an interface **for a one-time use** without creating a separate named class.
+
+Anonymous inner classes are heavily used in:
+
+- Event handling in GUI frameworks (like ActionListener)
+- Implementing interfaces or overriding methods for one-off behavior
+- Reducing boilerplate code when the class is used only once
+
+
+
+## 2. What Is an Anonymous Inner Class?
+
+An anonymous inner class is a class that is defined **in the body of an expression**.  
+It can either implement an interface or extend a class and must provide the implementation of the abstract method(s).
+
+Example:
+
+```java
+interface Greeting {
+    void sayHello();
+}
+
+public class Main {
+    public static void main(String[] args) {
+        Greeting g = new Greeting() {  // Anonymous inner class
+            public void sayHello() {
+                System.out.println("Hello from Anonymous class");
+            }
+        };
+        g.sayHello();
+    }
+}
+````
+
+Here, we create an anonymous class that implements `Greeting` and immediately instantiate it with the method `sayHello()`.
+
+
+
+## 3. Why Use Anonymous Inner Classes?
+
+Anonymous inner classes are particularly useful for:
+
+* **Quick one-time implementations**: When you need a class for just one task and don't want to write an entire named class.
+* **Improved readability**: It reduces the need for creating separate class files or even class declarations.
+* **Encapsulation**: The logic is tightly coupled to the place where it's used, keeping code compact and well-structured.
+
+
+
+## 4. Syntax of Anonymous Inner Class
+
+The basic syntax of an anonymous inner class looks like this:
+
+```java
+new InterfaceName() {
+    // Method implementations
+};
+```
+
+Key points:
+
+* `new InterfaceName()` is how you instantiate the class.
+* Inside `{}`, you provide the implementation of the interface or abstract class methods.
+
+Example:
+
+```java
+Runnable r = new Runnable() {  // Anonymous class
+    public void run() {
+        System.out.println("Running in anonymous class");
+    }
+};
+r.run();
+```
+
+
+
+## 5. Use Case Example: Event Listener in GUI
+
+Anonymous inner classes are most commonly used in event-driven programming, like button click listeners in GUI applications.
+
+```java
+import javax.swing.*;
+import java.awt.event.*;
+
+public class ButtonExample {
+    public static void main(String[] args) {
+        JFrame frame = new JFrame("Button Example");
+        JButton button = new JButton("Click Me");
+
+        // Anonymous inner class to handle button click event
+        button.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                System.out.println("Button clicked!");
+            }
+        });
+
+        frame.add(button);
+        frame.setSize(200, 200);
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setVisible(true);
+    }
+}
+```
+
+Here, the `ActionListener` interface is implemented directly inside the method call with an anonymous inner class.
+
+
+
+## 6. Anonymous Inner Class for Method Overriding
+
+Anonymous inner classes can be used for method overriding in an object without creating a full subclass.
+
+Example:
+
+```java
+class Animal {
+    void sound() {
+        System.out.println("Animal makes a sound");
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+        Animal a = new Animal() {  // Anonymous class extending Animal
+            void sound() {
+                System.out.println("Dog barks");
+            }
+        };
+        a.sound();
+    }
+}
+```
+
+Here, the `Animal` class is extended in an anonymous way, and the `sound()` method is overridden without creating a separate class.
+
+
+
+## 7. Limitations of Anonymous Inner Classes
+
+### 7.1 Cannot have a constructor
+
+Since anonymous inner classes don’t have a name, they cannot have constructors.
+
+```java
+// Error: Anonymous inner class cannot have a constructor
+new Animal() {
+    Animal() {  // Not allowed
+        System.out.println("Anonymous constructor");
+    }
+};
+```
+
+### 7.2 Can only extend one class or implement one interface
+
+Anonymous inner classes can extend only one class or implement one interface at a time. Java does not support multiple inheritance for classes.
+
+```java
+// Error: Anonymous inner class cannot extend multiple classes
+new ClassA() {
+    // Invalid syntax
+    new ClassB() { // Not allowed
+    }
+};
+```
+
+### 7.3 Less flexible than named classes
+
+While anonymous classes are compact, they are not as reusable as named classes because you cannot instantiate them in different places with different configurations.
+
+
+
+## 8. Anonymous Inner Class vs Lambda Expression
+
+Java 8 introduced **lambda expressions** to provide a more concise alternative to anonymous inner classes when the class implements a functional interface.
+
+### Example: Using Lambda for Runnable
+
+```java
+Runnable r = () -> System.out.println("Running with lambda");
+r.run();
+```
+
+Lambda expressions are generally preferred when you have a single method to implement (functional interfaces). They are **shorter** and **cleaner** compared to anonymous inner classes.
+
+However, anonymous inner classes can still be useful when you need to implement multiple methods or when lambda expressions are not applicable (e.g., for non-functional interfaces).
+
+
+
+## 9. Common Mistakes
+
+### 9.1 Confusing Anonymous Inner Class with Lambda
+
+Lambda expressions and anonymous inner classes are related, but they are **not the same**.
+Use lambdas when there is exactly one method to implement in a functional interface.
+
+### 9.2 Overusing Anonymous Inner Classes
+
+While useful, overusing anonymous inner classes can reduce readability, especially when the logic inside the class becomes complex. For complex tasks, prefer regular named classes.
+
+
+## 10. Summary
+
+* Anonymous inner classes are used to implement interfaces or extend classes in a **concise** manner for one-time use.
+* They are ideal for situations where you need to implement or override methods, such as in event-driven programming.
+* They do not have a name, constructors, or reusable instances.
+* Anonymous inner classes can be replaced by **lambda expressions** when dealing with functional interfaces, but they remain a key part of Java programming.
+
+Written By: <a href="https://www.linkedin.com/in/shivasrivastava1/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer">Shiva Srivastava</a>

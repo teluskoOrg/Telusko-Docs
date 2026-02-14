@@ -1,0 +1,180 @@
+---
+title: Abstract Anonymous Inner Class
+---
+
+## 1. Introduction
+
+An **abstract anonymous inner class** is an anonymous class that **extends an abstract class**.  
+This is a combination of two powerful concepts in Java:
+
+1. **Anonymous Inner Class**: A class without a name, defined inline.
+2. **Abstract Class**: A class that cannot be instantiated directly and typically contains abstract methods that need to be implemented by subclasses.
+
+In an **abstract anonymous inner class**, Java allows you to extend an abstract class and provide implementations for the abstract methods inline, without having to create a named subclass.
+
+
+
+## 2. What Is an Abstract Anonymous Inner Class?
+
+An **abstract anonymous inner class** is defined inside a method (or an expression) where the class extends an abstract class and implements its methods directly.  
+It is useful when you need to implement some logic for a class that is not required for reuse and must provide the functionality of an abstract class.
+
+Example:
+
+```java
+abstract class Animal {
+    abstract void sound();
+}
+
+public class Main {
+    public static void main(String[] args) {
+        Animal a = new Animal() {  // Abstract anonymous inner class
+            @Override
+            void sound() {
+                System.out.println("Roar");
+            }
+        };
+        a.sound();  // Output: Roar
+    }
+}
+````
+
+Here, `Animal` is an abstract class, and the anonymous class provides its own implementation of `sound()`.
+
+
+
+## 3. Key Characteristics of Abstract Anonymous Inner Class
+
+* **No name**: It doesn't have a name like a regular class.
+* **Extends an abstract class**: You can use an anonymous inner class to extend an abstract class and implement its abstract methods.
+* **Inline implementation**: The class is instantiated and used immediately without the need for a named class definition.
+* **Single-use**: This class is typically used in places where you only need the behavior once.
+
+
+
+## 4. Benefits of Using Abstract Anonymous Inner Classes
+
+### 4.1 Reduced Boilerplate Code
+
+You don’t need to create a separate class to extend the abstract class.
+The anonymous class is defined and used inline, which reduces code verbosity.
+
+### 4.2 Encapsulation of Logic
+
+If the abstract class is only required for a small piece of logic (such as event handling or a quick behavior change), an anonymous inner class helps encapsulate that logic neatly within the context where it is used.
+
+### 4.3 One-off Implementations
+
+This pattern is helpful when you need a one-off class that extends an abstract class without reusing it later.
+
+
+
+## 5. Example: Abstract Anonymous Inner Class for Event Handling
+
+Imagine you have an abstract class `ButtonListener` with an abstract method `onClick()`.
+
+```java
+abstract class ButtonListener {
+    abstract void onClick();
+}
+
+public class Main {
+    public static void main(String[] args) {
+        // Abstract anonymous inner class
+        ButtonListener listener = new ButtonListener() {
+            @Override
+            void onClick() {
+                System.out.println("Button clicked!");
+            }
+        };
+        listener.onClick();  // Output: Button clicked!
+    }
+}
+```
+
+In this example, the abstract anonymous inner class provides the implementation of `onClick()` inline. This is ideal for simple event handling scenarios.
+
+
+
+## 6. When to Use Abstract Anonymous Inner Classes?
+
+* **Event-driven programming**: Handling events like button clicks, mouse actions, etc., where the behavior is specific and short-lived.
+* **One-time implementation**: When you need to extend an abstract class temporarily for a specific task.
+* **Callback mechanisms**: When you need to pass behavior to methods that require abstract classes or interfaces but don't want to create separate subclasses.
+
+
+
+## 7. Abstract Anonymous Inner Class vs Regular Anonymous Inner Class
+
+The key difference between a regular anonymous inner class and an abstract anonymous inner class is:
+
+* A **regular anonymous inner class** extends a concrete class or implements an interface.
+* An **abstract anonymous inner class** extends an abstract class and provides implementations for its abstract methods.
+
+| Feature                 | Regular Anonymous Inner Class                                   | Abstract Anonymous Inner Class                                 |
+| ----------------------- | --------------------------------------------------------------- | -------------------------------------------------------------- |
+| Class type              | Implements interface or concrete class                          | Extends abstract class                                         |
+| Implementation required | For interface methods or abstract methods                       | For abstract methods only                                      |
+| Use case                | Small, one-off implementation of an interface or concrete class | Used to provide behavior for abstract methods in one-off cases |
+
+
+
+## 8. Limitations of Abstract Anonymous Inner Classes
+
+### 8.1 Cannot have a constructor
+
+Just like regular anonymous classes, abstract anonymous inner classes **cannot have constructors**.
+
+```java
+// Error: Anonymous class cannot have a constructor
+new Animal() {
+    Animal() {  // Not allowed
+        System.out.println("Constructor of anonymous inner class");
+    }
+};
+```
+
+You can't define constructors in anonymous classes because they are instantiated immediately when defined.
+
+### 8.2 Cannot be reused
+
+An anonymous inner class is **not reusable** outside its immediate context.
+If you need to reuse logic, you should use a named subclass instead.
+
+
+
+## 9. Common Mistakes
+
+### 9.1 Forgetting to override abstract methods
+
+```java
+abstract class Animal {
+    abstract void sound();
+}
+
+public class Main {
+    public static void main(String[] args) {
+        Animal a = new Animal() { // Error: Missing override of abstract method
+            // sound() not implemented
+        };
+        a.sound();
+    }
+}
+```
+
+Remember, even though the class is anonymous, you still need to implement all abstract methods from the abstract class.
+
+### 9.2 Confusing anonymous inner class with method-local class
+
+Anonymous inner classes are often confused with method-local classes because they are both defined inside methods.
+However, an **anonymous inner class** extends a class or implements an interface, while a **method-local class** is just a local class in a method without this behavior.
+
+## 10. Summary
+
+* Abstract anonymous inner classes are used when you need to extend an abstract class and provide an implementation for its abstract methods.
+* They help encapsulate logic in a compact and readable manner.
+* They are ideal for one-time use cases, like event handling or implementing abstract behavior.
+* They cannot have constructors and are not reusable.
+* They allow you to avoid writing full class declarations for abstract classes.
+
+Written By: <a href="https://www.linkedin.com/in/shivasrivastava1/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer">Shiva Srivastava</a>

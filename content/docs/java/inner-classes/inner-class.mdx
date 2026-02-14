@@ -1,0 +1,227 @@
+---
+title: Inner Classes
+---
+
+## 1. Introduction
+
+An **inner class** in Java is a class that is **defined within another class**.  
+It is used to represent a **close relationship** between two classes and can access the private members of its outer class.  
+
+Inner classes are a powerful feature in Java, allowing you to logically group classes, improve code readability, and encapsulate functionality.  
+There are different types of inner classes, each serving different use cases:
+
+- **Regular inner class**
+- **Local inner class**
+- **Anonymous inner class**
+- **Static nested class**
+
+This lecture covers the basics and uses of each type of inner class.
+
+
+
+## 2. Regular Inner Class (Non-static Inner Class)
+
+A **regular inner class** (non-static nested class) is a class defined inside another class.  
+It has access to all the members (including private) of its enclosing class.
+
+Example:
+
+```java
+class Outer {
+    private String message = "Hello from Outer class";
+
+    class Inner {
+        void display() {
+            System.out.println(message);  // Accesses outer class member
+        }
+    }
+
+    public void show() {
+        Inner inner = new Inner();
+        inner.display();
+    }
+}
+````
+
+Usage:
+
+```java
+Outer outer = new Outer();
+outer.show();  // Output: Hello from Outer class
+```
+
+
+
+## 3. Why Use Inner Classes?
+
+### 3.1 Grouping Related Classes
+
+Inner classes are useful when a class logically depends on the outer class, and grouping them together improves readability.
+
+Example:
+
+* `List` and `Iterator`
+* `GUI components` like `Button`, `ActionListener`
+
+### 3.2 Accessing Private Members
+
+Inner classes can access **private members** of the outer class, making them a powerful tool for tight coupling between related functionality.
+
+
+
+## 4. Local Inner Class (Defined Inside Method)
+
+A **local inner class** is an inner class that is **defined within a method**.
+It is useful when you want to define a class that is only used within a specific method, making the class tightly scoped.
+
+Example:
+
+```java
+class Outer {
+    void outerMethod() {
+        class LocalInner {
+            void show() {
+                System.out.println("Inside local inner class");
+            }
+        }
+        LocalInner inner = new LocalInner();
+        inner.show();
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+        Outer outer = new Outer();
+        outer.outerMethod();  // Output: Inside local inner class
+    }
+}
+```
+
+Important:
+
+* Local inner classes cannot be declared `static`.
+* They can access **final** or **effectively final** local variables from the enclosing method.
+
+
+
+## 5. Anonymous Inner Class (Inline Class)
+
+An **anonymous inner class** is a class without a name, defined directly in a method call or assignment.
+It is typically used when you want to override a method or implement an interface without creating a separate class.
+
+Example:
+
+```java
+interface Greeting {
+    void sayHello();
+}
+
+public class Main {
+    public static void main(String[] args) {
+        Greeting g = new Greeting() {  // Anonymous inner class
+            public void sayHello() {
+                System.out.println("Hello from Anonymous class");
+            }
+        };
+        g.sayHello();  // Output: Hello from Anonymous class
+    }
+}
+```
+
+Use case:
+
+* Implementing an interface or overriding methods in a compact way.
+* Particularly useful for **event handling** in GUI applications (e.g., button click listeners).
+
+
+
+## 6. Static Nested Class
+
+A **static nested class** is an inner class that is **static**.
+Unlike regular inner classes, static nested classes do not have access to the outer class’s instance variables and methods. They can only access the **static members** of the outer class.
+
+Example:
+
+```java
+class Outer {
+    private static String message = "Hello from static outer class";
+
+    static class StaticNested {
+        void display() {
+            System.out.println(message);  // Accesses static member of outer class
+        }
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+        Outer.StaticNested nested = new Outer.StaticNested();
+        nested.display();  // Output: Hello from static outer class
+    }
+}
+```
+
+Static nested classes are useful when:
+
+* You need to create a helper class that does not need to access the instance fields of the outer class.
+* You want to logically group related classes together.
+
+
+
+## 7. Comparison of Inner Classes
+
+| Feature               | Regular Inner Class                        | Local Inner Class                                     | Anonymous Inner Class                                 | Static Nested Class                               |
+| --------------------- | ------------------------------------------ | ----------------------------------------------------- | ----------------------------------------------------- | ------------------------------------------------- |
+| Access to Outer Class | Can access all members, even private       | Can access final or effectively final local variables | Can access final or effectively final local variables | Can access only static members of the outer class |
+| Instance/Static       | Instance-based                             | Instance-based                                        | Instance-based                                        | Static-based                                      |
+| Use Case              | Group related classes, use private members | Scoped to a method, temporary class                   | Inline method or interface implementation             | Helper class, does not need outer class instance  |
+
+
+
+## 8. When to Use Each Type of Inner Class?
+
+* **Regular Inner Class**: When the inner class logically depends on the outer class and needs access to its private members.
+* **Local Inner Class**: When you need a class that is only used within a specific method.
+* **Anonymous Inner Class**: When you need a one-off class to implement an interface or override a method without creating a separate class.
+* **Static Nested Class**: When the inner class does not need access to instance fields or methods and can be logically grouped with the outer class.
+
+
+
+## 9. Common Mistakes
+
+### 9.1 Trying to use `this` in local/anonymous inner classes
+
+Local and anonymous inner classes do not allow the use of `this` to refer to the outer class.
+Use `OuterClassName.this` to access the outer class.
+
+```java
+class Outer {
+    void outerMethod() {
+        class LocalInner {
+            void show() {
+                System.out.println(Outer.this);  // Accessing outer class instance
+            }
+        }
+    }
+}
+```
+
+### 9.2 Creating anonymous inner classes for large implementations
+
+Anonymous inner classes should be used for small, short implementations.
+For larger logic, prefer a named inner class or regular class.
+
+
+
+## 10. Summary
+
+* Inner classes allow you to logically group related classes and encapsulate functionality.
+* Different types of inner classes serve different purposes:
+
+  * **Regular inner class**: tightly coupled with the outer class
+  * **Local inner class**: temporary class inside a method
+  * **Anonymous inner class**: one-off class implementation
+  * **Static nested class**: static class within an outer class
+* Inner classes help improve readability and encapsulate behavior that belongs together.
+
+Written By: <a href="https://www.linkedin.com/in/shivasrivastava1/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer">Shiva Srivastava</a>

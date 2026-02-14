@@ -18,9 +18,9 @@
         "inheritance",
         "polymorphism",
         "abstraction-and-interfaces",
-        "DISABLED-inner-classes",
+        "inner-classes",
 
-        "DISABLED-strings",
+        "strings",
         "DISABLED-lang-and-util-apis",
         "DISABLED-exception-handling",
 

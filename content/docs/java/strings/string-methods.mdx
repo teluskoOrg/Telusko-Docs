@@ -1,0 +1,216 @@
+---
+title: String Methods
+---
+
+## 1. Introduction
+
+The **String** class in Java provides a wide variety of methods for manipulating and working with strings.  
+These methods allow you to perform common tasks such as:
+
+- Searching and comparing strings
+- Modifying string content
+- Extracting portions of a string
+- Converting strings to different formats
+
+In this lecture, we’ll go over the most commonly used `String` methods and demonstrate how they work.
+
+
+
+## 2. Common String Methods
+
+Java's `String` class has many useful methods that can make string handling easy and efficient. Some of the most commonly used methods are:
+
+- **`length()`**
+- **`charAt()`**
+- **`substring()`**
+- **`equals()`**
+- **`compareTo()`**
+- **`contains()`**
+- **`toUpperCase()` / `toLowerCase()`**
+- **`replace()`**
+- **`trim()`**
+
+Each method has a specific use case, and understanding them is essential for effective string manipulation.
+
+
+
+## 3. `length()`: Get the Length of a String
+
+The `length()` method returns the **number of characters** in a string.
+
+```java
+String str = "Hello";
+int length = str.length();  // Returns 5
+System.out.println(length);  // Output: 5
+````
+
+This method is useful when you need to determine the size of a string.
+
+
+
+## 4. `charAt()`: Get a Character at a Specific Index
+
+The `charAt()` method returns the character at the specified index (zero-based index) in a string.
+
+```java
+String str = "Hello";
+char ch = str.charAt(1);  // Returns 'e'
+System.out.println(ch);    // Output: e
+```
+
+The index must be within the valid range, i.e., `0` to `length() - 1`.
+Attempting to access an invalid index results in an `IndexOutOfBoundsException`.
+
+
+
+## 5. `substring()`: Extract a Part of a String
+
+The `substring()` method extracts a part of a string, starting from a specified index to the end or another index.
+
+### Syntax:
+
+```java
+String substring(int startIndex)
+String substring(int startIndex, int endIndex)
+```
+
+* **`startIndex`**: Starting position (inclusive).
+* **`endIndex`**: Ending position (exclusive).
+
+Example:
+
+```java
+String str = "Hello, World!";
+String sub1 = str.substring(0, 5);  // "Hello"
+String sub2 = str.substring(7);     // "World!"
+System.out.println(sub1);  // Output: Hello
+System.out.println(sub2);  // Output: World!
+```
+
+`substring()` is useful for extracting portions of a string based on specific indices.
+
+
+
+## 6. `equals()`: Compare Two Strings
+
+The `equals()` method compares two strings for **exact content equality**.
+
+```java
+String str1 = "Hello";
+String str2 = "Hello";
+String str3 = "World";
+
+System.out.println(str1.equals(str2));  // Output: true
+System.out.println(str1.equals(str3));  // Output: false
+```
+
+* Returns `true` if the strings have the same content.
+* Returns `false` if they have different content.
+
+Remember: `==` checks for **reference equality**, whereas `equals()` checks for **content equality**.
+
+
+
+## 7. `compareTo()`: Compare Strings Lexicographically
+
+The `compareTo()` method compares two strings lexicographically (alphabetical order). It returns an integer:
+
+* **0** if the strings are equal
+* A **negative value** if the first string is lexicographically less than the second
+* A **positive value** if the first string is lexicographically greater than the second
+
+Example:
+
+```java
+String str1 = "Hello";
+String str2 = "World";
+System.out.println(str1.compareTo(str2));  // Output: -15
+```
+
+Here, `"Hello"` is lexicographically smaller than `"World"`, so the result is negative.
+
+
+
+## 8. `contains()`: Check if a String Contains a Substring
+
+The `contains()` method checks if a string contains a specific sequence of characters (substring).
+
+```java
+String str = "Hello, World!";
+boolean contains = str.contains("World");  // Returns true
+System.out.println(contains);  // Output: true
+```
+
+* Returns `true` if the substring is found.
+* Returns `false` if the substring is not found.
+
+This method is case-sensitive.
+
+
+
+## 9. `toUpperCase()` / `toLowerCase()`: Change Case
+
+The `toUpperCase()` and `toLowerCase()` methods are used to convert a string to all uppercase or lowercase letters, respectively.
+
+```java
+String str = "Hello, World!";
+String upper = str.toUpperCase();  // "HELLO, WORLD!"
+String lower = str.toLowerCase();  // "hello, world!"
+System.out.println(upper);  // Output: HELLO, WORLD!
+System.out.println(lower);  // Output: hello, world!
+```
+
+These methods are commonly used for case-insensitive comparisons or when you want to normalize the case of the string.
+
+
+
+## 10. `replace()`: Replace Characters or Substrings
+
+The `replace()` method is used to replace **characters** or **substrings** in a string with new ones.
+
+### Syntax:
+
+```java
+String replace(char oldChar, char newChar)
+String replace(CharSequence oldSeq, CharSequence newSeq)
+```
+
+Example:
+
+```java
+String str = "Hello, World!";
+String newStr = str.replace('o', 'a');  // "Hella, Warld!"
+System.out.println(newStr);  // Output: Hella, Warld!
+```
+
+You can also replace substrings:
+
+```java
+String newStr2 = str.replace("World", "Java");  // "Hello, Java!"
+System.out.println(newStr2);  // Output: Hello, Java!
+```
+
+
+
+## 11. `trim()`: Remove Leading and Trailing Spaces
+
+The `trim()` method removes **leading and trailing whitespace** from a string.
+
+```java
+String str = "   Hello, World!   ";
+String trimmedStr = str.trim();
+System.out.println(trimmedStr);  // Output: "Hello, World!"
+```
+
+* It does not remove spaces in the middle of the string.
+* Useful for cleaning user input or any string that might have unwanted spaces.
+
+
+## 12. Summary
+
+* **String methods** in Java provide a variety of functionalities to manipulate, modify, and analyze strings.
+* Key methods include `length()`, `charAt()`, `substring()`, `equals()`, `replace()`, and `toUpperCase()`.
+* **Immutability** of strings ensures that each modification creates a new object, avoiding side effects.
+* For efficient string manipulation, consider using `StringBuilder` or `StringBuffer` when many modifications are required.
+
+Written By: <a href="https://www.linkedin.com/in/shivasrivastava1/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer">Shiva Srivastava</a>

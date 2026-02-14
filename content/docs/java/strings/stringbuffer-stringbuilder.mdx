@@ -1,0 +1,151 @@
+---
+title: StringBuffer vs StringBuilder
+---
+
+## 1. Introduction
+
+In Java, both **StringBuffer** and **StringBuilder** are mutable classes that allow you to **modify strings** without creating new objects each time. They are designed to handle situations where frequent changes to strings are necessary, making them more efficient than the immutable **String** class.
+
+However, the main difference between `StringBuffer` and `StringBuilder` lies in **thread safety**. While both classes are used for efficiently manipulating strings, `StringBuffer` is **thread-safe** (synchronized), and `StringBuilder` is **not thread-safe**.
+
+This lecture will explain the differences, use cases, and performance considerations of both classes.
+
+
+
+## 2. StringBuffer vs StringBuilder: Key Differences
+
+| Feature                | StringBuffer                          | StringBuilder                     |
+|------------------------|---------------------------------------|-----------------------------------|
+| **Thread-safety**       | Thread-safe (synchronized methods)     | Not thread-safe                   |
+| **Performance**         | Slower due to synchronization         | Faster due to lack of synchronization |
+| **Usage**               | Used in multi-threaded environments    | Used in single-threaded environments or when thread-safety is not a concern |
+| **Methods**             | Same methods for both classes (e.g., `append()`, `insert()`) |
+| **Default Capacity**    | 16 characters                         | 16 characters                     |
+
+
+
+## 3. StringBuffer: Thread-Safe String Manipulation
+
+`StringBuffer` is a **thread-safe** class, which means that its methods are **synchronized**, ensuring that multiple threads can safely modify a `StringBuffer` instance concurrently without causing data inconsistency.
+
+### Example of StringBuffer:
+
+```java
+StringBuffer sb = new StringBuffer("Hello");
+sb.append(" World");
+System.out.println(sb);  // Output: Hello World
+````
+
+In the above example, the `append()` method modifies the existing `StringBuffer` object by appending `" World"`. The string is modified **in place**, and no new object is created.
+
+### Use Case: Multi-threaded Environment
+
+`StringBuffer` is primarily used when you need to perform string manipulations in a **multi-threaded environment** where the integrity of the string data must be maintained across threads.
+
+
+
+## 4. StringBuilder: Faster String Manipulation
+
+`StringBuilder` is similar to `StringBuffer`, but it is **not thread-safe**. It is more **efficient** in environments where thread safety is not required because it does not incur the overhead of synchronization.
+
+### Example of StringBuilder:
+
+```java
+StringBuilder sb = new StringBuilder("Hello");
+sb.append(" World");
+System.out.println(sb);  // Output: Hello World
+```
+
+The `StringBuilder` works in the same way as `StringBuffer`, but since it is not synchronized, it is faster when used in **single-threaded environments** or when thread safety is not a concern.
+
+### Use Case: Single-threaded Environment
+
+`StringBuilder` is ideal for cases where strings are modified frequently in a **single-threaded environment**, as it offers better performance by avoiding the cost of synchronization.
+
+
+
+## 5. Performance Comparison: StringBuffer vs StringBuilder
+
+Since `StringBuffer` is thread-safe, it has a slight performance **overhead** due to synchronization, especially in environments with a **high number of concurrent threads**.
+
+On the other hand, `StringBuilder` does not synchronize its methods, making it faster than `StringBuffer` in **single-threaded environments** or when thread safety is not needed.
+
+### Performance Example:
+
+```java
+long startTime = System.nanoTime();
+StringBuffer sbf = new StringBuffer("Hello");
+for (int i = 0; i < 100000; i++) {
+    sbf.append(" World");
+}
+long endTime = System.nanoTime();
+System.out.println("StringBuffer time: " + (endTime - startTime));
+
+startTime = System.nanoTime();
+StringBuilder sbl = new StringBuilder("Hello");
+for (int i = 0; i < 100000; i++) {
+    sbl.append(" World");
+}
+endTime = System.nanoTime();
+System.out.println("StringBuilder time: " + (endTime - startTime));
+```
+
+In this case, `StringBuilder` will likely perform better due to its lack of synchronization.
+
+
+
+## 6. Methods in StringBuffer and StringBuilder
+
+Both `StringBuffer` and `StringBuilder` share the same core set of methods for string manipulation:
+
+* `append()`: Appends data to the string.
+* `insert()`: Inserts data at a specific index.
+* `delete()`: Removes characters from the string.
+* `replace()`: Replaces a portion of the string with new content.
+* `reverse()`: Reverses the string.
+* `toString()`: Converts the `StringBuffer` or `StringBuilder` to a `String`.
+
+Example:
+
+```java
+StringBuffer sb = new StringBuffer("Hello");
+sb.insert(5, " World");
+sb.reverse();
+System.out.println(sb);  // Output: dlroW olleH
+```
+
+### Note:
+
+Although the methods are the same, **`StringBuffer` methods are synchronized** (thread-safe), while **`StringBuilder` methods are not** (not thread-safe).
+
+
+
+## 7. Choosing Between StringBuffer and StringBuilder
+
+You should choose `StringBuffer` or `StringBuilder` based on the thread-safety requirement of your program:
+
+* **Use `StringBuffer`** when you need thread safety in a **multi-threaded environment**. For example, when multiple threads are manipulating the same string data, `StringBuffer` ensures that no data inconsistency occurs.
+
+* **Use `StringBuilder`** when performance is a priority, and **thread safety is not a concern** (such as in a **single-threaded environment** or when you are certain that no other threads will modify the same string object).
+
+
+
+## 8. Common Mistakes
+
+### 8.1 Using `StringBuffer` when performance is critical
+
+If your application is single-threaded, using `StringBuffer` is inefficient because of the **synchronization overhead**. In such cases, **`StringBuilder`** should be preferred for better performance.
+
+### 8.2 Ignoring thread-safety when needed
+
+If you are working in a multi-threaded environment and share mutable objects like `StringBuilder` between threads, you might run into issues where one thread modifies the object while another thread reads it, leading to data corruption. Always use `StringBuffer` in such cases.
+
+
+## 9. Summary
+
+* **StringBuffer** is thread-safe but slower due to synchronization, making it ideal for **multi-threaded environments**.
+* **StringBuilder** is not thread-safe but faster, making it suitable for **single-threaded environments**.
+* Both `StringBuffer` and `StringBuilder` offer the same methods for manipulating strings but differ in thread safety and performance.
+* Always choose **StringBuffer** when thread safety is required, and **StringBuilder** when performance is the priority in single-threaded applications.
+
+Written By: <a href="https://www.linkedin.com/in/shivasrivastava1/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer">Shiva Srivastava</a>

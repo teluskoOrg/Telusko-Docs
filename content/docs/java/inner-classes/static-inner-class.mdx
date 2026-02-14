@@ -1,0 +1,217 @@
+---
+title: Static Inner Class
+---
+
+## 1. Introduction
+
+A **static inner class** in Java is an inner class that is **declared static**.  
+Unlike regular inner classes, a static inner class is not associated with an instance of the outer class. It can be instantiated without needing an instance of the outer class.
+
+Static inner classes are useful when the inner class does not require access to the instance variables and methods of the outer class, but still logically belongs to the outer class.
+
+
+
+## 2. What Makes a Class a Static Inner Class?
+
+A static inner class is defined using the `static` keyword:
+
+```java
+class Outer {
+    static class StaticInner {
+        void display() {
+            System.out.println("Inside Static Inner Class");
+        }
+    }
+}
+````
+
+Here, `StaticInner` is a static inner class that can be instantiated without needing an instance of the outer class `Outer`.
+
+
+
+## 3. Key Characteristics of Static Inner Class
+
+* It **does not** have a reference to the outer class instance.
+* It can **only access static members** of the outer class (both variables and methods).
+* It can be instantiated without an instance of the outer class.
+
+
+
+## 4. Example of Static Inner Class
+
+```java
+class Outer {
+    static String message = "Hello from Outer Class";
+
+    static class StaticInner {
+        void show() {
+            System.out.println(message);
+        }
+    }
+
+    public static void main(String[] args) {
+        Outer.StaticInner inner = new Outer.StaticInner();
+        inner.show();
+    }
+}
+```
+
+Output:
+
+```
+Hello from Outer Class
+```
+
+In this example, `StaticInner` is a static inner class, so it can be instantiated without needing an instance of `Outer`. It also accesses the static member `message` of the outer class.
+
+
+
+## 5. When to Use Static Inner Class?
+
+Use a static inner class when:
+
+* You need to logically group a class with its outer class.
+* The inner class doesn't need to access the instance variables or methods of the outer class.
+* You want to save memory by not having an unnecessary reference to the outer class.
+
+Static inner classes are often used in scenarios like:
+
+* Helper classes that don’t require access to the outer class instance.
+* Building large data structures (like binary trees) where nested classes can be used to model internal nodes.
+
+
+
+## 6. Static Inner Class vs Regular Inner Class
+
+| Feature                       | Static Inner Class                               | Regular Inner Class                                            |
+| ----------------------------- | ------------------------------------------------ | -------------------------------------------------------------- |
+| Access to outer class members | Can access only static members                   | Can access both static and instance members                    |
+| Reference to outer class      | Does not hold reference to outer class           | Holds reference to outer class instance                        |
+| Instantiation                 | Can be instantiated without outer class instance | Must be instantiated using outer class instance                |
+| Use case                      | Helper classes, utility classes                  | Tightly coupled logic requiring access to outer class instance |
+
+
+
+## 7. Static Inner Class and Nested Static Classes
+
+Static inner classes are often referred to as **nested static classes** in Java. They are essentially the same thing.
+Both types are used to represent **a class inside another class** but with the key difference that static nested classes are independent of the outer class instance.
+
+Example:
+
+```java
+class Outer {
+    static class StaticNested {
+        void show() {
+            System.out.println("Inside static nested class");
+        }
+    }
+
+    public static void main(String[] args) {
+        Outer.StaticNested nested = new Outer.StaticNested();
+        nested.show();
+    }
+}
+```
+
+This behaves the same way as a static inner class, providing the same benefits and use cases.
+
+
+
+## 8. Static Inner Class and Access to Outer Class Instance
+
+A static inner class **cannot** access instance variables or methods of the outer class directly.
+If you need to access instance variables, you must create an instance of the outer class.
+
+Example:
+
+```java
+class Outer {
+    int instanceVar = 10;
+
+    static class StaticInner {
+        void display() {
+            // Error: Cannot access instanceVar of outer class
+            // System.out.println(instanceVar);  // Not allowed
+        }
+    }
+}
+```
+
+If you want the static inner class to access instance members of the outer class, you must pass an instance of the outer class to the static inner class.
+
+
+
+## 9. Common Use Cases for Static Inner Classes
+
+### 9.1 Singleton Pattern
+
+Static inner classes are often used in **singleton patterns**, where the inner class holds the instance of the outer class.
+
+```java
+class Singleton {
+    private static class SingletonHelper {
+        private static final Singleton INSTANCE = new Singleton();
+    }
+
+    public static Singleton getInstance() {
+        return SingletonHelper.INSTANCE;
+    }
+}
+```
+
+This ensures that the singleton instance is created only once and is thread-safe.
+
+### 9.2 Static Factory Methods
+
+Static inner classes can be used to implement factory methods, which provide a way to create instances of the outer class.
+
+```java
+class Outer {
+    static class Factory {
+        static Outer createInstance() {
+            return new Outer();
+        }
+    }
+
+    public static void main(String[] args) {
+        Outer outer = Outer.Factory.createInstance();
+    }
+}
+```
+
+
+
+## 10. Common Mistakes
+
+### 10.1 Using `this` in a static inner class
+
+Static inner classes do not have an implicit reference to the outer class instance, so `this` refers to the inner class itself, not the outer class.
+
+```java
+class Outer {
+    static class StaticInner {
+        void show() {
+            // Error: Cannot use 'this' to refer to outer class instance
+            // System.out.println(this); // Not allowed
+        }
+    }
+}
+```
+
+To access the outer class instance, you must explicitly use `Outer.this`.
+
+### 10.2 Confusing static inner class with regular inner class
+
+Make sure to distinguish between static and non-static inner classes based on their behavior and usage. A static inner class is independent of the outer class instance, while a regular inner class requires an instance of the outer class.
+
+
+## 11. Summary
+
+* A static inner class is a nested class marked with the `static` keyword.
+* It can be instantiated without an outer class instance.
+* It can access only static members of the outer class.
+* Use static inner classes when the inner class does not need access to instance members of the outer class.
+* Static inner classes are often used in designs like singletons and factory methods.
+
+Written By: <a href="https://www.linkedin.com/in/shivasrivastava1/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer">Shiva Srivastava</a>

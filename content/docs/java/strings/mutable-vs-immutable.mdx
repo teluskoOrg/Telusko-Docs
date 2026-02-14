@@ -1,0 +1,164 @@
+---
+title: Mutable vs Immutable
+---
+
+## 1. Introduction
+
+In programming, the terms **mutable** and **immutable** describe whether or not the state of an object can be changed after it is created.  
+Understanding the difference between mutable and immutable objects is critical to designing efficient, thread-safe, and reliable systems.
+
+- **Mutable objects** can be modified after creation.
+- **Immutable objects** cannot be modified after creation, and any "modification" results in the creation of a new object.
+
+In Java, both mutable and immutable objects are used extensively, and understanding their behavior is key to writing optimal code.
+
+
+
+## 2. What is a Mutable Object?
+
+A **mutable object** is an object whose state or data can be **changed** after it is created.
+
+For example, `StringBuilder` in Java is mutable. You can modify its content using methods like `append()`, `insert()`, and `delete()`, and these methods change the content of the same object.
+
+### Example of Mutable Object:
+
+```java
+StringBuilder sb = new StringBuilder("Hello");
+sb.append(" World");  // Modifies the existing StringBuilder object
+System.out.println(sb);  // Output: Hello World
+````
+
+In this case, `sb` is modified in place. No new object is created during the `append()` operation.
+
+
+
+## 3. What is an Immutable Object?
+
+An **immutable object** is an object whose **state cannot be changed** after it is created.
+Once the object is initialized, any attempt to modify its data will create a **new instance** with the modified data, leaving the original object unchanged.
+
+In Java, **String** is an example of an immutable object. When you modify a string, Java creates a new string object, rather than modifying the original string.
+
+### Example of Immutable Object:
+
+```java
+String str = "Hello";
+str = str + " World";  // Creates a new string object
+System.out.println(str);  // Output: Hello World
+```
+
+In this case, the original string `"Hello"` is **not modified**. Instead, a new string object is created with the new content `"Hello World"`. The original string `"Hello"` remains unchanged.
+
+
+
+## 4. Why Use Immutable Objects?
+
+### 4.1 Thread-Safety
+
+Immutable objects are inherently **thread-safe** because their state cannot change after creation.
+In multi-threaded environments, there is no need for synchronization when accessing immutable objects, which can lead to **simpler, faster, and safer code**.
+
+### 4.2 Security
+
+Immutable objects are often used for **security-sensitive data**. For example, objects like `String`, which are used to represent passwords or API keys, are immutable.
+Once a `String` is created, it cannot be changed, ensuring that the value cannot be altered unexpectedly.
+
+### 4.3 Predictability and Ease of Use
+
+Because immutable objects can't be modified, they offer **predictable behavior**.
+This reduces errors and makes them easier to reason about, especially when passing them between methods or components.
+
+
+
+## 5. Why Use Mutable Objects?
+
+### 5.1 Performance
+
+Mutable objects can be more **efficient** in situations where many changes to the object’s state are required.
+For example, in cases where you are frequently updating data, creating new objects each time (as in the case of immutable objects) would be inefficient, both in terms of time and memory.
+
+### 5.2 Flexibility
+
+Mutable objects are more flexible in scenarios where you need to **modify** the object’s state multiple times.
+For instance, collections like `ArrayList` or `HashMap` are mutable because they are designed to have their elements added, removed, or modified.
+
+
+
+## 6. Example: Mutable vs Immutable in Java
+
+### 6.1 Mutable Example - `StringBuilder`
+
+```java
+StringBuilder sb = new StringBuilder("Java");
+sb.append(" Programming");  // Modifies the original object
+System.out.println(sb);  // Output: Java Programming
+```
+
+In this example, the `StringBuilder` object is mutable, and its state is changed by the `append()` method.
+
+### 6.2 Immutable Example - `String`
+
+```java
+String str = "Java";
+str = str + " Programming";  // Creates a new string object
+System.out.println(str);  // Output: Java Programming
+```
+
+Here, the string is immutable, and a new string object is created by concatenating the original string with another string.
+
+
+
+## 7. Mutable vs Immutable Objects: Comparison Table
+
+| Feature             | Mutable Objects                         | Immutable Objects                            |
+| ------------------- | --------------------------------------- | -------------------------------------------- |
+| **State change**    | Can be modified after creation          | Cannot be modified after creation            |
+| **Thread-safety**   | Requires synchronization for safety     | Thread-safe by default                       |
+| **Performance**     | More efficient for frequent changes     | May have overhead due to new object creation |
+| **Flexibility**     | More flexible for in-place changes      | Limited to creating new objects for changes  |
+| **Common Examples** | `StringBuilder`, `ArrayList`, `HashMap` | `String`, `Integer`, `LocalDate`             |
+
+
+
+## 8. Example: Why Immutability Can Be Better for Security
+
+Consider a scenario where sensitive data is passed around in your application, like a user’s credit card number.
+
+If this data were stored in an **immutable object**, you could guarantee that once it is set, it cannot be changed. If the data was in a **mutable object**, you would need to be careful about accidental modifications.
+
+Example with immutable `String`:
+
+```java
+String creditCardNumber = "1234-5678-9876-5432";
+```
+
+Once this string is created, it cannot be changed. You can pass it around securely without worrying about its value being altered.
+
+
+
+## 9. Common Mistakes
+
+### 9.1 Attempting to Modify Immutable Objects
+
+```java
+String str = "Hello";
+str.concat(" World");  // Does not modify the original string
+System.out.println(str);  // Output: Hello
+```
+
+The `concat()` method creates a new string but does not change the original string.
+
+### 9.2 Overusing Mutable Objects
+
+While mutable objects are efficient, using them excessively in places where immutability is preferable can lead to issues like **shared mutable state**, making code harder to understand and prone to bugs.
+
+
+
+## 10. Summary
+
+* **Mutable objects** can be modified after creation, offering flexibility and efficiency in some cases.
+* **Immutable objects** cannot be modified after creation, ensuring thread-safety, security, and predictability.
+* **StringBuilder** is an example of a mutable object, while **String** is immutable.
+* Use mutable objects when performance and flexibility are required, but prefer immutable objects for thread-safety and predictable behavior.
+
+Written By: <a href="https://www.linkedin.com/in/shivasrivastava1/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer">Shiva Srivastava</a>

@@ -1,0 +1,242 @@
+---
+title: Method Local Inner Class
+---
+
+## 1. Introduction
+
+A **method-local inner class** is a type of inner class that is defined **inside a method**.  
+It is **scoped** to the method in which it is defined and can be used only within that method.
+
+Method-local inner classes are useful when you need to define a class that is **specific to one method's functionality**. They allow for better encapsulation and readability, as the class is closely tied to the logic of the method.
+
+
+
+## 2. What Is a Method Local Inner Class?
+
+A method-local inner class is an inner class that is declared **inside a method**.
+
+Example:
+
+```java
+class Outer {
+    void outerMethod() {
+        class Inner {
+            void display() {
+                System.out.println("Inside inner class");
+            }
+        }
+
+        Inner inner = new Inner();
+        inner.display();
+    }
+}
+````
+
+Here, `Inner` is defined inside `outerMethod()`, and it can only be used within that method.
+
+
+
+## 3. Characteristics of Method Local Inner Class
+
+* It can access **local variables** of the method, **but only if those variables are `final`** (or effectively final in Java 8+).
+* It can access **instance variables** and **methods** of the outer class, just like regular inner classes.
+* It has a **method-level scope**, meaning it cannot be accessed outside the method it is defined in.
+
+
+
+## 4. Example: Using Method Local Inner Class
+
+```java
+class Outer {
+    void displayMessage(String msg) {
+        class Inner {
+            void printMessage() {
+                System.out.println("Message: " + msg);
+            }
+        }
+
+        Inner inner = new Inner();
+        inner.printMessage();
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+        Outer outer = new Outer();
+        outer.displayMessage("Hello, world!");
+    }
+}
+```
+
+Output:
+
+```
+Message: Hello, world!
+```
+
+Here, `Inner` class is scoped to `displayMessage` method and cannot be used outside that method.
+
+
+
+## 5. Accessing Final or Effectively Final Local Variables
+
+Method-local inner classes can **access local variables** of the method, but they must be **final** or **effectively final**.
+
+Example:
+
+```java
+class Outer {
+    void outerMethod() {
+        final int number = 5;
+
+        class Inner {
+            void printNumber() {
+                System.out.println(number);
+            }
+        }
+
+        Inner inner = new Inner();
+        inner.printNumber();
+    }
+}
+```
+
+Here, `number` is `final`, so it can be accessed by the inner class.
+In Java 8+, you don't need to explicitly declare the variable as `final`, as long as it is not modified after initialization (effectively final).
+
+
+
+## 6. When to Use Method Local Inner Class?
+
+Method-local inner classes are useful in scenarios where:
+
+* You want a class that is **closely tied** to a single method.
+* The class does not need to be reused outside of the method.
+* You need to **encapsulate logic** within the method to improve readability.
+
+They are often used in event-driven programming or when the class will only be used for a single specific task.
+
+
+
+## 7. Scope of Method Local Inner Class
+
+Since method-local inner classes are defined inside a method, their scope is limited to that method.
+They **cannot** be used outside of the method, meaning:
+
+* They cannot be returned or passed around.
+* They cannot be accessed by other methods in the outer class.
+
+Example of invalid access:
+
+```java
+class Outer {
+    void outerMethod() {
+        class Inner {
+            void display() {
+                System.out.println("Inside Inner");
+            }
+        }
+
+        Inner inner = new Inner();
+        inner.display();
+    }
+
+    void anotherMethod() {
+        // Inner inner = new Inner(); // Error: cannot access Inner class
+    }
+}
+```
+
+
+
+## 8. Method Local Inner Class vs Regular Inner Class
+
+| Feature                     | Method Local Inner Class                                          | Regular Inner Class                                   |
+| --------------------------- | ----------------------------------------------------------------- | ----------------------------------------------------- |
+| Scope                       | Limited to the method                                             | Can be accessed anywhere within the enclosing class   |
+| Access to outer class       | Can access outer class instance variables and methods             | Can access outer class instance variables and methods |
+| Access to local variables   | Can access local variables if they are final or effectively final | Cannot access local variables directly                |
+| Can be instantiated outside | No                                                                | Yes                                                   |
+
+
+
+## 9. Example Use Case: Button Click Handler in GUI
+
+In GUI programming, method-local inner classes are often used to handle events, such as button clicks.
+
+```java
+import javax.swing.*;
+import java.awt.event.ActionListener;
+import java.awt.event.ActionEvent;
+
+public class ButtonClickExample {
+    public static void main(String[] args) {
+        JFrame frame = new JFrame("Button Click Example");
+        JButton button = new JButton("Click Me");
+
+        button.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                System.out.println("Button Clicked");
+            }
+        });
+
+        frame.add(button);
+        frame.setSize(200, 200);
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setVisible(true);
+    }
+}
+```
+
+In this example, the anonymous inner class (which is a form of method-local class) is used to handle button clicks. Similarly, you can define custom logic within methods for handling UI interactions.
+
+
+
+## 10. Common Mistakes
+
+### 10.1 Trying to use non-final local variables
+
+```java
+class Outer {
+    void outerMethod() {
+        int number = 5; // Non-final variable
+
+        class Inner {
+            void printNumber() {
+                System.out.println(number); // Error: local variables must be final or effectively final
+            }
+        }
+    }
+}
+```
+
+### 10.2 Misunderstanding method-local class scope
+
+```java
+class Outer {
+    void outerMethod() {
+        class Inner {
+            void show() {
+                System.out.println("Inside inner class");
+            }
+        }
+
+        Inner inner = new Inner();
+        inner.show();
+    }
+
+    void anotherMethod() {
+        // Cannot create Inner class here as it's scoped to outerMethod
+    }
+}
+```
+
+
+## 11. Summary
+
+* Method-local inner classes are defined inside a method and scoped only to that method.
+* They can access the outer class’s instance variables and methods, but only final or effectively final local variables from the enclosing method.
+* These classes are useful for logic that is tightly scoped to a method.
+* They cannot be instantiated or accessed outside the method.
+
+Written By: <a href="https://www.linkedin.com/in/shivasrivastava1/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer">Shiva Srivastava</a>
