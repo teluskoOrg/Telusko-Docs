@@ -4,8 +4,6 @@ title: Serialization
 
 <Steps>
 
----
-
 
 ## What Is Serialization?
 
@@ -429,24 +427,24 @@ class NonSerializableChild extends SerializableParent {
 
 | # | Advantage                            | Details                                                                                                                                                           |
 | - | ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1 | Built-in Java Feature                | - No external libraries needed <br> </br>- Part of core Java API <br /> - Widely supported across Java ecosystem                                                         |
-| 2 | Simple to Implement                  | - Just implement `Serializable` interface <br /> - No methods to implement for basic serialization <br /> - Automatic handling of object graphs                       |
-| 3 | Customizable                         | - Override `writeObject()` and `readObject()` for custom behavior <br /> - Control serialization using `transient` <br /> - Manage versioning with `serialVersionUID` |
-| 4 | Universal Support                    | - Works across different JVM implementations <br /> - Cross-platform compatibility <br /> - Standard mechanism understood by all Java developers                      |
-| 5 | Supports Encryption and Compression  | - Can wrap streams with encryption/compression <br /> - `CipherOutputStream` for encryption <br /> - `GZIPOutputStream` for compression                               |
-| 6 | Foundation for Critical Technologies | - RMI (Remote Method Invocation) <br /> - JPA (Java Persistence API) <br /> - EJB (Enterprise JavaBeans) <br /> - Many caching frameworks                               |
+| 1 | Built-in Java Feature                | - No external libraries needed <br> - Part of core Java API <br> - Widely supported across Java ecosystem                                                         |
+| 2 | Simple to Implement                  | - Just implement `Serializable` interface <br> - No methods to implement for basic serialization <br> - Automatic handling of object graphs                       |
+| 3 | Customizable                         | - Override `writeObject()` and `readObject()` for custom behavior <br> - Control serialization using `transient` <br> - Manage versioning with `serialVersionUID` |
+| 4 | Universal Support                    | - Works across different JVM implementations <br> - Cross-platform compatibility <br> - Standard mechanism understood by all Java developers                      |
+| 5 | Supports Encryption and Compression  | - Can wrap streams with encryption/compression <br> - `CipherOutputStream` for encryption <br> - `GZIPOutputStream` for compression                               |
+| 6 | Foundation for Critical Technologies | - RMI (Remote Method Invocation) <br> - JPA (Java Persistence API) <br> - EJB (Enterprise JavaBeans) <br> - Many caching frameworks                               |
 
 
 ### Disadvantages of Serialization
 
 | # | Disadvantage                   | Details                                                                                                                           |
 | - | ------------------------------ | --------------------------------------------------------------------------------------------------------------------------------- |
-| 1 | Brittle Objects                | - Class structure changes can break deserialization <br /> - Field type modifications may cause failures                            |
-| 2 | Transient Variable Issues      | - `transient` variables become `null` after deserialization <br /> - Must override `readObject()` to reinitialize                   |
-| 3 | Inefficient Memory Utilization | - Includes class metadata in serialized form <br> - Larger than raw data <br /> - Large object graphs increase size significantly   |
-| 4 | No Concurrent Access Control   | - No built-in thread safety <br /> - Requires external synchronization <br /> - Race conditions possible                              |
-| 5 | Security Vulnerabilities       | - Deserialization can execute arbitrary code <br /> - Source of many security exploits <br /> - Untrusted data can compromise systems |
-| 6 | Performance Overhead           | - Slower than formats like Protocol Buffers <br /> - More CPU intensive than simple formats <br /> - Reflection-based overhead        |
+| 1 | Brittle Objects                | - Class structure changes can break deserialization <br> - Field type modifications may cause failures                            |
+| 2 | Transient Variable Issues      | - `transient` variables become `null` after deserialization <br> - Must override `readObject()` to reinitialize                   |
+| 3 | Inefficient Memory Utilization | - Includes class metadata in serialized form <br> - Larger than raw data <br> - Large object graphs increase size significantly   |
+| 4 | No Concurrent Access Control   | - No built-in thread safety <br> - Requires external synchronization <br> - Race conditions possible                              |
+| 5 | Security Vulnerabilities       | - Deserialization can execute arbitrary code <br> - Source of many security exploits <br> - Untrusted data can compromise systems |
+| 6 | Performance Overhead           | - Slower than formats like Protocol Buffers <br> - More CPU intensive than simple formats <br> - Reflection-based overhead        |
 
 
 ---
