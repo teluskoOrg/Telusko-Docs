@@ -1,5 +1,5 @@
 {
-    "root": false,
+    "title": "File Handling",
     "pages": [
         "file-reading-writing.mdx",
         "buffered-io.mdx",
