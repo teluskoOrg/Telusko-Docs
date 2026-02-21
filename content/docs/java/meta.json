@@ -30,10 +30,10 @@
 
         "DISABLED-concurrency-advanced",
         "DISABLED-jvm-internals",
-        "DISABLED-nio",
+        "nio",
         "DISABLED-modern-java",
 
-        "DISABLED-file-handling",
+        "file-handling",
         "DISABLED-design-patterns",
         "DISABLED-testing",
         "DISABLED-build-tools",
