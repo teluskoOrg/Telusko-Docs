@@ -1,0 +1,279 @@
+---
+title: Wrapper Classes
+---
+
+## 1. Introduction
+
+In Java, **wrapper classes** are object representations of primitive data types.
+
+Java is an object-oriented language, but primitive types like `int`, `double`, and `char` are not objects.  
+To use primitives in places where objects are required (such as collections), Java provides wrapper classes.
+
+Wrapper classes:
+
+- Convert primitives into objects
+- Provide utility methods
+- Enable use inside collections
+- Support generics
+- Support null values
+
+
+
+## 2. Primitive Types and Their Wrapper Classes
+
+Each primitive type has a corresponding wrapper class:
+
+| Primitive Type | Wrapper Class |
+|---------------|---------------|
+| byte          | Byte          |
+| short         | Short         |
+| int           | Integer       |
+| long          | Long          |
+| float         | Float         |
+| double        | Double        |
+| char          | Character     |
+| boolean       | Boolean       |
+
+All wrapper classes belong to the `java.lang` package.
+
+
+
+## 3. Why Wrapper Classes Are Needed
+
+There are several situations where primitives cannot be used directly.
+
+### 3.1 Collections Require Objects
+
+Example:
+
+```java
+import java.util.ArrayList;
+
+ArrayList<Integer> list = new ArrayList<>();
+list.add(10);
+````
+
+Collections store objects, not primitives.
+So `Integer` is required instead of `int`.
+
+
+
+### 3.2 Generics Require Reference Types
+
+```java
+ArrayList<int> list; // Not allowed
+ArrayList<Integer> list; // Allowed
+```
+
+Generics only work with objects.
+
+
+
+### 3.3 Utility Methods
+
+Wrapper classes provide useful static methods like:
+
+```java
+Integer.parseInt("123");
+Double.parseDouble("10.5");
+```
+
+Primitives cannot provide methods.
+
+
+
+## 4. Creating Wrapper Objects
+
+### 4.1 Using Constructor (Old Way)
+
+```java
+Integer num = new Integer(10);
+```
+
+This is outdated and not recommended.
+
+
+
+### 4.2 Using valueOf() (Recommended)
+
+```java
+Integer num = Integer.valueOf(10);
+```
+
+
+
+### 4.3 Using Autoboxing (Modern Way)
+
+```java
+Integer num = 10; // Autoboxing
+```
+
+Java automatically converts primitive to wrapper.
+
+
+
+## 5. Autoboxing and Unboxing
+
+### 5.1 Autoboxing
+
+Automatic conversion from primitive to wrapper.
+
+```java
+int x = 5;
+Integer obj = x; // Autoboxing
+```
+
+
+
+### 5.2 Unboxing
+
+Automatic conversion from wrapper to primitive.
+
+```java
+Integer obj = 10;
+int x = obj; // Unboxing
+```
+
+Java automatically handles this internally.
+
+
+
+## 6. Common Wrapper Methods
+
+### 6.1 parse Methods
+
+```java
+int num = Integer.parseInt("100");
+double d = Double.parseDouble("3.14");
+```
+
+Used to convert string to primitive.
+
+
+
+### 6.2 valueOf()
+
+```java
+Integer num = Integer.valueOf("200");
+```
+
+Returns wrapper object.
+
+
+
+### 6.3 toString()
+
+```java
+Integer num = 10;
+String s = num.toString();
+```
+
+
+
+### 6.4 compareTo()
+
+```java
+Integer a = 10;
+Integer b = 20;
+System.out.println(a.compareTo(b)); // negative value
+```
+
+
+
+## 7. Wrapper Classes and Null
+
+Primitives cannot be null:
+
+```java
+int x = null; // Error
+```
+
+But wrapper classes can:
+
+```java
+Integer x = null; // Valid
+```
+
+This is useful in:
+
+* Databases
+* Optional fields
+* Frameworks like Spring and Hibernate
+
+
+
+## 8. Performance Consideration
+
+Wrapper classes use more memory than primitives.
+
+Example:
+
+* `int` → 4 bytes
+* `Integer` → object overhead + 4 bytes
+
+Using wrapper classes unnecessarily can reduce performance.
+
+Use primitives when:
+
+* Working with calculations
+* Performance-critical code
+
+Use wrappers when:
+
+* Using collections
+* Need null values
+* Need object behavior
+
+
+
+## 9. Integer Caching Concept
+
+Java caches Integer values between **-128 to 127**.
+
+Example:
+
+```java
+Integer a = 100;
+Integer b = 100;
+
+System.out.println(a == b); // true
+```
+
+But:
+
+```java
+Integer a = 200;
+Integer b = 200;
+
+System.out.println(a == b); // false
+```
+
+Because only -128 to 127 are cached.
+
+Always use `.equals()` for comparison.
+
+
+
+## 10. Comparison: Primitive vs Wrapper
+
+| Feature               | Primitive | Wrapper Class   |
+| --------------------- | --------- | --------------- |
+| Memory usage          | Less      | More            |
+| Null allowed          | No        | Yes             |
+| Stored in collections | No        | Yes             |
+| Has methods           | No        | Yes             |
+| Faster                | Yes       | Slightly slower |
+
+
+## 11. Summary
+
+* Wrapper classes convert primitive types into objects.
+* Needed for collections and generics.
+* Support autoboxing and unboxing.
+* Provide useful utility methods.
+* Allow null values.
+* Slightly slower than primitives.
+* Always use `.equals()` for comparison.
+
+Written By: <a href="https://www.linkedin.com/in/shivasrivastava1/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer">Shiva Srivastava</a>
+ 

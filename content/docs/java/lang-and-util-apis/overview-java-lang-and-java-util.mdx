@@ -1,0 +1,235 @@
+---
+title: Overview of java.lang and java.util
+---
+
+## 1. Introduction
+
+Java provides thousands of built-in classes organized into **packages**.  
+Two of the most important and commonly used packages are:
+
+- `java.lang`
+- `java.util`
+
+Every Java program automatically uses classes from `java.lang`.  
+`java.util` provides utility classes that help with collections, dates, randomness, and more.
+
+Understanding these two packages is essential because:
+
+- Almost every Java program depends on them.
+- They form the foundation of core Java programming.
+- Most interview questions involve classes from these packages.
+
+
+
+## 2. What is a Package in Java?
+
+A **package** is a namespace that groups related classes and interfaces.
+
+Benefits of packages:
+
+- Avoid name conflicts
+- Organize code
+- Improve readability
+- Control access
+
+Example:
+
+```java
+import java.util.ArrayList;
+import java.util.Scanner;
+````
+
+Here, `ArrayList` and `Scanner` belong to `java.util`.
+
+
+
+## 3. Overview of java.lang Package
+
+`java.lang` is the **most fundamental package** in Java.
+
+Important points:
+
+* Automatically imported
+* No need to write `import java.lang.*`
+* Contains core language classes
+
+Example:
+
+```java
+String s = "Java";   // String belongs to java.lang
+System.out.println(s); // System belongs to java.lang
+```
+
+You never import these explicitly.
+
+
+
+## 4. Important Classes in java.lang
+
+Some commonly used classes:
+
+### 4.1 String
+
+Represents immutable sequence of characters.
+
+### 4.2 Object
+
+Root class of all Java classes.
+
+### 4.3 System
+
+Provides system-level utilities like input/output.
+
+### 4.4 Math
+
+Contains mathematical operations.
+
+### 4.5 Wrapper Classes
+
+* Integer
+* Double
+* Boolean
+* Character
+
+### 4.6 Thread
+
+Used for multithreading.
+
+### 4.7 Runtime
+
+Interacts with JVM runtime environment.
+
+
+
+## 5. Example Usage of java.lang Classes
+
+```java
+int max = Math.max(10, 20);
+System.out.println(max);
+
+Integer num = 100;
+String str = num.toString();
+```
+
+All of these belong to `java.lang`.
+
+
+
+## 6. Overview of java.util Package
+
+`java.util` stands for **Java Utilities**.
+
+Unlike `java.lang`, this package must be imported.
+
+It provides:
+
+* Collection framework
+* Date and time utilities
+* Random number generation
+* Scanner class
+* Optional class
+* UUID generation
+
+Example:
+
+```java
+import java.util.ArrayList;
+import java.util.Random;
+```
+
+
+
+## 7. Important Classes in java.util
+
+### 7.1 Collections Framework
+
+* ArrayList
+* LinkedList
+* HashSet
+* TreeSet
+* HashMap
+* TreeMap
+* Queue
+* PriorityQueue
+
+### 7.2 Scanner
+
+Used for user input.
+
+```java
+Scanner sc = new Scanner(System.in);
+```
+
+### 7.3 Random
+
+Generates random numbers.
+
+```java
+Random r = new Random();
+int num = r.nextInt(100);
+```
+
+### 7.4 Date and Time
+
+* Date
+* Calendar
+* TimeZone
+
+(Modern Java uses `java.time` package instead.)
+
+### 7.5 Optional
+
+Helps avoid null pointer exceptions.
+
+
+
+## 8. java.lang vs java.util
+
+| Feature                | java.lang            | java.util                  |
+| ---------------------- | -------------------- | -------------------------- |
+| Imported automatically | Yes                  | No                         |
+| Core language support  | Yes                  | No                         |
+| Collections available  | No                   | Yes                        |
+| Utility classes        | Limited              | Extensive                  |
+| Common classes         | String, Object, Math | ArrayList, Scanner, Random |
+
+
+
+## 9. When to Use java.lang
+
+You use it:
+
+* Always (automatically)
+* For basic data handling
+* For strings and math operations
+* For thread operations
+* For wrapper classes
+
+It forms the base layer of Java.
+
+
+
+## 10. When to Use java.util
+
+You use it when:
+
+* You need dynamic data structures
+* You need random numbers
+* You need user input handling
+* You need utility functions
+* You need collections like List, Set, Map
+
+It supports higher-level programming tasks.
+
+
+
+## 11. Summary
+
+* `java.lang` is automatically imported and contains core classes.
+* `java.util` provides utility classes including collections and helper tools.
+* `java.lang` is fundamental; `java.util` enhances functionality.
+* Almost every Java program uses both packages.
+* Mastering these packages is essential for strong Java fundamentals.
+
+Written By: <a href="https://www.linkedin.com/in/shivasrivastava1/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer">Shiva Srivastava</a>
+ 

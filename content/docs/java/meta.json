@@ -21,7 +21,7 @@
         "inner-classes",
 
         "strings",
-        "DISABLED-lang-and-util-apis",
+        "lang-and-util-apis",
         "DISABLED-exception-handling",
 
         "DISABLED-collections",

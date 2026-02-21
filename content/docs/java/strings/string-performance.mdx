@@ -1,0 +1,228 @@
+---
+title: String Performance
+---
+
+## 1. Introduction
+
+String performance in Java is closely related to **immutability**, **memory allocation**, and **object creation**.
+
+Because `String` objects are immutable:
+
+- Every modification creates a **new object**
+- Old objects become eligible for garbage collection
+- Excessive concatenation can reduce performance
+
+Understanding how strings behave internally helps you:
+
+- Write memory-efficient code
+- Avoid unnecessary object creation
+- Improve runtime performance
+
+
+
+## 2. Why String Can Be Slow in Some Cases
+
+The main reason is **immutability**.
+
+Example:
+
+```java
+String s = "Java";
+s = s + " Programming";
+````
+
+What actually happens:
+
+1. "Java" exists in memory.
+2. A new string "Java Programming" is created.
+3. The old reference is discarded.
+
+If this happens repeatedly (especially inside loops), performance degrades.
+
+
+
+## 3. String Concatenation Inside Loops (Problem)
+
+Consider this example:
+
+```java
+String result = "";
+for(int i = 0; i < 5; i++) {
+    result = result + i;
+}
+System.out.println(result);
+```
+
+What happens internally:
+
+* Each iteration creates a new String object.
+* Previous object becomes garbage.
+* Multiple heap allocations occur.
+
+If the loop runs 10,000 times, 10,000 objects are created.
+
+This is inefficient.
+
+
+
+## 4. How Java Actually Handles Concatenation
+
+When you write:
+
+```java
+String s = a + b;
+```
+
+The compiler converts it into something like:
+
+```java
+String s = new StringBuilder()
+              .append(a)
+              .append(b)
+              .toString();
+```
+
+So internally, Java uses `StringBuilder`.
+
+But in loops, this optimization is not enough because:
+
+* A new `StringBuilder` may be created each iteration
+* Repeated conversions happen
+
+
+
+## 5. Better Approach: Use StringBuilder
+
+Instead of using String in loops:
+
+```java
+StringBuilder sb = new StringBuilder();
+
+for(int i = 0; i < 5; i++) {
+    sb.append(i);
+}
+
+String result = sb.toString();
+System.out.println(result);
+```
+
+Why this is better:
+
+* Only one object is created
+* No repeated intermediate string objects
+* Much faster for large concatenations
+
+
+
+## 6. Performance Comparison Example
+
+Inefficient:
+
+```java
+String s = "";
+for(int i = 0; i < 10000; i++) {
+    s = s + i;
+}
+```
+
+Efficient:
+
+```java
+StringBuilder sb = new StringBuilder();
+for(int i = 0; i < 10000; i++) {
+    sb.append(i);
+}
+String s = sb.toString();
+```
+
+Second version:
+
+* Uses less memory
+* Runs significantly faster
+* Avoids excessive garbage collection
+
+
+
+## 7. String vs StringBuilder vs StringBuffer Performance
+
+| Class         | Mutable | Thread Safe | Performance                    |
+| ------------- | ------- | ----------- | ------------------------------ |
+| String        | No      | Yes         | Slow for repeated modification |
+| StringBuilder | Yes     | No          | Fastest                        |
+| StringBuffer  | Yes     | Yes         | Slower than StringBuilder      |
+
+Guideline:
+
+* Single-threaded → use StringBuilder
+* Multi-threaded → use StringBuffer
+* Simple fixed strings → use String
+
+
+
+## 8. When String Is Perfectly Fine
+
+Using String is not always bad.
+
+Use String when:
+
+* Value does not change
+* You are not inside large loops
+* Concatenation is minimal
+* Readability is more important than micro-optimization
+
+Example:
+
+```java
+String message = "Welcome " + name;
+```
+
+This is fine for normal usage.
+
+
+
+## 9. Impact on Garbage Collection
+
+Frequent string creation leads to:
+
+* More temporary objects
+* Increased garbage collection
+* Higher CPU usage
+
+Especially in high-performance systems like:
+
+* Logging systems
+* Large data processing
+* Web servers
+
+Using `StringBuilder` reduces GC pressure.
+
+
+
+## 10. Best Practices for String Performance
+
+1. Avoid string concatenation inside loops.
+2. Use StringBuilder for repeated modifications.
+3. Use String literals instead of `new String()`.
+4. Pre-size StringBuilder when possible:
+
+```java
+StringBuilder sb = new StringBuilder(1000);
+```
+
+This avoids internal resizing.
+
+5. Avoid unnecessary `toString()` calls.
+
+
+
+## 11. Summary
+
+* String is immutable, so modifications create new objects.
+* Repeated concatenation reduces performance.
+* StringBuilder is best for frequent modifications.
+* StringBuffer is thread-safe but slightly slower.
+* Avoid concatenation inside loops.
+* Understand memory behavior to write efficient code.
+
+Written By: <a href="https://www.linkedin.com/in/shivasrivastava1/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer">Shiva Srivastava</a>
+ 
