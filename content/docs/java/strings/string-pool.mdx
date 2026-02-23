@@ -1,0 +1,253 @@
+---
+title: String Pool
+---
+
+## 1. Introduction
+
+The **String Pool** is a special memory area inside the **Heap memory** where Java stores **string literals**.
+
+It is one of the most important internal optimizations related to the `String` class.
+
+Because strings are used very frequently in applications, Java introduced the string pool to:
+
+- Avoid duplicate objects
+- Save memory
+- Improve performance
+- Make string comparison faster
+
+Understanding the string pool helps you understand why `==` sometimes works with strings and sometimes does not.
+
+
+
+## 2. Where Is String Pool Located?
+
+The **String Pool** is located inside the **Heap memory**.
+
+Heap memory contains:
+
+- Objects created using `new`
+- String literals stored in the String Pool
+- Other runtime objects
+
+The string pool is sometimes called:
+
+- String Constant Pool
+- Intern Pool
+
+It is managed automatically by the JVM.
+
+
+
+## 3. How String Pool Works
+
+When you create a string using a **literal**, Java first checks the string pool:
+
+1. If the string already exists → reuse the same reference.
+2. If it does not exist → create a new string in the pool.
+
+Example:
+
+```java
+String a = "Java";
+String b = "Java";
+````
+
+Here:
+
+* `"Java"` is created once.
+* Both `a` and `b` point to the same memory location in the string pool.
+
+So:
+
+```java
+System.out.println(a == b); // true
+```
+
+Because both references point to the same object.
+
+
+
+## 4. String Created Using new Keyword
+
+When you create a string using `new`, Java creates:
+
+* One object in the string pool (if not already present)
+* One separate object in heap memory
+
+Example:
+
+```java
+String a = new String("Java");
+String b = new String("Java");
+```
+
+Now:
+
+* Two separate objects are created in heap
+* Literal `"Java"` exists once in pool
+
+So:
+
+```java
+System.out.println(a == b); // false
+System.out.println(a.equals(b)); // true
+```
+
+Because:
+
+* `==` checks reference
+* `equals()` checks content
+
+
+
+## 5. Memory Representation Example
+
+```java
+String s1 = "Hello";
+String s2 = "Hello";
+String s3 = new String("Hello");
+```
+
+Memory behavior:
+
+* One `"Hello"` in string pool
+* `s1` and `s2` → same reference
+* `s3` → different heap object
+
+Comparison results:
+
+```java
+s1 == s2      // true
+s1 == s3      // false
+s1.equals(s3) // true
+```
+
+
+
+## 6. Why String Pool Is Needed
+
+Without string pool:
+
+* Every string literal would create a new object
+* Huge memory waste
+* Slower comparisons
+
+With string pool:
+
+* Duplicate literals are avoided
+* Memory is optimized
+* `==` comparison works for same literals
+
+Since strings are immutable, sharing them is safe.
+
+
+
+## 7. The intern() Method
+
+Java provides the `intern()` method to manually place a string into the string pool.
+
+Example:
+
+```java
+String s1 = new String("Java");
+String s2 = s1.intern();
+String s3 = "Java";
+
+System.out.println(s2 == s3); // true
+```
+
+What happens:
+
+* `intern()` returns reference from pool
+* If string not present → added to pool
+* If present → returns existing reference
+
+
+
+## 8. String Pool and Immutability
+
+The string pool works efficiently because:
+
+* Strings are immutable
+* Their values cannot change
+
+If strings were mutable:
+
+* One reference changing the value
+* Would affect all references
+* Cause serious bugs
+
+So immutability makes string pooling safe.
+
+
+
+## 9. Performance Consideration
+
+Using string literals is:
+
+* More memory efficient
+* Faster
+* Recommended in most cases
+
+Using `new String()` unnecessarily:
+
+* Creates extra objects
+* Increases memory usage
+* Should generally be avoided
+
+Best practice:
+
+```java
+String s = "Java"; // preferred
+```
+
+Avoid:
+
+```java
+String s = new String("Java"); // unnecessary
+```
+
+
+
+## 10. Common Mistakes
+
+### 10.1 Using == for Content Comparison
+
+```java
+String a = new String("Java");
+String b = new String("Java");
+
+System.out.println(a == b); // false
+```
+
+Always use:
+
+```java
+a.equals(b);
+```
+
+
+
+### 10.2 Confusing Pool with Heap
+
+Remember:
+
+* String pool is inside heap
+* But it is a special managed area
+* Not all heap objects are in string pool
+
+
+
+
+## 11. Summary
+
+* String Pool is a special memory area inside Heap.
+* String literals are stored only once in the pool.
+* If a literal already exists, JVM reuses it.
+* `new String()` creates separate heap objects.
+* `intern()` moves or retrieves string from pool.
+* String immutability makes pooling safe.
+* Always use `.equals()` for content comparison.
+
+Written By: <a href="https://www.linkedin.com/in/shivasrivastava1/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer">Shiva Srivastava</a>
+ 

@@ -1,0 +1,264 @@
+---
+title: Math Class
+---
+
+## 1. Introduction
+
+The `Math` class in Java provides **built-in mathematical functions** such as:
+
+- power and square root
+- rounding methods
+- absolute value
+- min/max comparisons
+- trigonometry (sin, cos, tan)
+- random number generation
+
+It belongs to `java.lang`, so it is **automatically available** without importing anything.
+
+Most methods in `Math` are:
+
+- `static`
+- pure functions (no object state)
+- used directly as `Math.methodName(...)`
+
+
+
+## 2. Why Math Class Exists
+
+In real projects, you frequently need mathematical operations without writing custom logic repeatedly.
+
+Math class helps by providing:
+
+- tested, optimized implementations
+- readable and clean code
+- common operations in one place
+
+Example:
+
+```java
+int max = Math.max(10, 20);
+double root = Math.sqrt(25);
+````
+
+
+
+## 3. Basic Usage Pattern
+
+You do not create object of `Math`.
+
+```java
+// Math m = new Math(); // Not allowed (Math has private constructor)
+```
+
+You call methods directly:
+
+```java
+double p = Math.pow(2, 5);
+System.out.println(p); // 32.0
+```
+
+
+
+## 4. Commonly Used Methods
+
+### 4.1 abs()
+
+Returns absolute value.
+
+```java
+System.out.println(Math.abs(-10)); // 10
+System.out.println(Math.abs(5));   // 5
+```
+
+
+
+### 4.2 max() and min()
+
+Returns maximum / minimum.
+
+```java
+System.out.println(Math.max(10, 20)); // 20
+System.out.println(Math.min(10, 20)); // 10
+```
+
+
+
+### 4.3 pow()
+
+Returns `a` raised to the power of `b`.
+
+```java
+System.out.println(Math.pow(3, 2)); // 9.0
+System.out.println(Math.pow(2, 10)); // 1024.0
+```
+
+Note: Return type is `double`.
+
+
+
+### 4.4 sqrt()
+
+Returns square root.
+
+```java
+System.out.println(Math.sqrt(49)); // 7.0
+```
+
+
+
+### 4.5 cbrt()
+
+Returns cube root.
+
+```java
+System.out.println(Math.cbrt(27)); // 3.0
+```
+
+
+
+## 5. Rounding Methods (Very Important)
+
+Rounding is common in billing systems, discounts, stats, etc.
+
+### 5.1 round()
+
+Rounds to nearest integer.
+
+```java
+System.out.println(Math.round(4.4)); // 4
+System.out.println(Math.round(4.6)); // 5
+```
+
+* `round(float)` returns `int`
+* `round(double)` returns `long`
+
+
+
+### 5.2 ceil()
+
+Rounds up to next integer (returns double).
+
+```java
+System.out.println(Math.ceil(4.1)); // 5.0
+System.out.println(Math.ceil(4.0)); // 4.0
+```
+
+
+
+### 5.3 floor()
+
+Rounds down to previous integer (returns double).
+
+```java
+System.out.println(Math.floor(4.9)); // 4.0
+System.out.println(Math.floor(4.0)); // 4.0
+```
+
+
+
+## 6. Trigonometry Methods
+
+All trig methods take angles in **radians**, not degrees.
+
+Common methods:
+
+* `sin()`, `cos()`, `tan()`
+* `toRadians()`, `toDegrees()`
+
+Example:
+
+```java
+double angle = Math.toRadians(90);
+System.out.println(Math.sin(angle)); // close to 1.0
+```
+
+
+
+## 7. Random Numbers Using Math.random()
+
+`Math.random()` returns a double in range:
+
+* **0.0 (inclusive)** to **1.0 (exclusive)**
+
+Example:
+
+```java
+double r = Math.random();
+System.out.println(r);
+```
+
+Generating random integer between 0 and 9:
+
+```java
+int n = (int)(Math.random() * 10);
+System.out.println(n);
+```
+
+If you need better control, use `java.util.Random` (covered separately).
+
+
+
+## 8. Constants in Math Class
+
+Math provides some important constants:
+
+* `Math.PI` → value of π
+* `Math.E` → value of Euler’s number
+
+Example:
+
+```java
+System.out.println(Math.PI);
+System.out.println(Math.E);
+```
+
+
+
+## 9. Practical Example: Bill Rounding
+
+Suppose you have a bill amount and want to round it up to the next integer.
+
+```java
+double bill = 149.2;
+int payable = (int) Math.ceil(bill);
+System.out.println(payable); // 150
+```
+
+This is common in pricing systems.
+
+
+
+## 10. Common Mistakes
+
+### 10.1 Confusing ceil() and round()
+
+* `round(4.1)` → 4
+* `ceil(4.1)` → 5
+
+### 10.2 Forgetting radians in trigonometry
+
+```java
+System.out.println(Math.sin(90)); // wrong if you expect 1
+```
+
+Correct:
+
+```java
+System.out.println(Math.sin(Math.toRadians(90)));
+```
+
+### 10.3 Assuming pow() returns int
+
+`Math.pow()` returns double, so type casting might be needed.
+
+
+## 11. Summary
+
+* `Math` class is in `java.lang` and is automatically available.
+* All methods are static, so you call them as `Math.method()`.
+* Common methods: abs, min, max, pow, sqrt, round, ceil, floor.
+* Trigonometric functions use radians.
+* `Math.random()` generates a value between 0.0 and 1.0.
+* Very useful for real-world calculations and rounding.
+
+Written By: <a href="https://www.linkedin.com/in/shivasrivastava1/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer">Shiva Srivastava</a>

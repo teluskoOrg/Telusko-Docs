@@ -1,0 +1,258 @@
+---
+title: System and Runtime Class
+---
+
+## 1. Introduction
+
+In Java, the `System` and `Runtime` classes provide access to **low-level system resources** and **JVM-level operations**.
+
+They belong to the `java.lang` package and are automatically available in every Java program.
+
+- `System` → Provides access to standard input/output, environment variables, system properties, time, and garbage collection.
+- `Runtime` → Represents the runtime environment of the JVM and allows interaction with system-level operations like memory and process execution.
+
+These classes are powerful and commonly used in real-world applications.
+
+
+
+## 2. System Class Overview
+
+The `System` class provides:
+
+- Standard input/output streams
+- Access to system properties
+- Access to environment variables
+- Time measurement
+- Manual garbage collection request
+- Program termination
+
+Important fact:
+All members of `System` are **static**.
+
+You cannot create an object of `System`.
+
+
+
+## 3. Standard Input and Output
+
+### 3.1 System.out
+
+Used for standard output.
+
+```java
+System.out.println("Hello Java");
+````
+
+`out` is a static PrintStream object.
+
+
+
+### 3.2 System.err
+
+Used for error messages.
+
+```java
+System.err.println("Error occurred");
+```
+
+
+
+### 3.3 System.in
+
+Used for input.
+
+```java
+import java.util.Scanner;
+
+Scanner sc = new Scanner(System.in);
+int num = sc.nextInt();
+```
+
+
+
+## 4. System Properties
+
+System properties provide JVM and OS-related information.
+
+```java
+System.out.println(System.getProperty("java.version"));
+System.out.println(System.getProperty("os.name"));
+System.out.println(System.getProperty("user.name"));
+```
+
+You can also set properties:
+
+```java
+System.setProperty("myKey", "myValue");
+```
+
+
+
+## 5. Environment Variables
+
+Environment variables come from the operating system.
+
+```java
+String path = System.getenv("PATH");
+System.out.println(path);
+```
+
+Difference:
+
+* System properties → JVM-specific
+* Environment variables → OS-level
+
+
+
+## 6. Time Methods
+
+### 6.1 currentTimeMillis()
+
+Returns time in milliseconds since 1970.
+
+```java
+long time = System.currentTimeMillis();
+System.out.println(time);
+```
+
+Used in performance measurement.
+
+
+
+### 6.2 nanoTime()
+
+Returns high-precision time.
+
+```java
+long start = System.nanoTime();
+// code
+long end = System.nanoTime();
+System.out.println(end - start);
+```
+
+Better for measuring execution time.
+
+
+
+## 7. System.exit()
+
+Terminates the program.
+
+```java
+System.exit(0);
+```
+
+* `0` → Normal termination
+* Non-zero → Abnormal termination
+
+Once called, program stops immediately.
+
+
+
+## 8. System.gc()
+
+Requests garbage collection.
+
+```java
+System.gc();
+```
+
+Important:
+
+* It only suggests GC.
+* JVM decides whether to run it or not.
+
+
+
+## 9. Runtime Class Overview
+
+The `Runtime` class represents the running JVM.
+
+Unlike `System`, you get its instance using:
+
+```java
+Runtime rt = Runtime.getRuntime();
+```
+
+You cannot create Runtime object directly.
+
+
+
+## 10. Memory Information Using Runtime
+
+You can check memory details:
+
+```java
+Runtime rt = Runtime.getRuntime();
+
+System.out.println("Available Processors: " + rt.availableProcessors());
+System.out.println("Free Memory: " + rt.freeMemory());
+System.out.println("Total Memory: " + rt.totalMemory());
+System.out.println("Max Memory: " + rt.maxMemory());
+```
+
+These are useful for performance tuning.
+
+
+
+## 11. Executing External Programs
+
+You can execute OS commands:
+
+```java
+Runtime rt = Runtime.getRuntime();
+rt.exec("notepad");
+```
+
+On Linux:
+
+```java
+rt.exec("gedit");
+```
+
+Important:
+This starts a new system process.
+
+
+
+## 12. Runtime vs System
+
+| Feature           | System       | Runtime          |
+| ----------------- | ------------ | ---------------- |
+| Access type       | Static class | Singleton object |
+| Input/Output      | Yes          | No               |
+| System properties | Yes          | No               |
+| Memory info       | No           | Yes              |
+| Execute programs  | No           | Yes              |
+| Program exit      | Yes          | No               |
+
+
+
+## 13. Practical Example: Measuring Execution Time
+
+```java
+long start = System.nanoTime();
+
+for(int i = 0; i < 1000000; i++) {
+    int x = i * i;
+}
+
+long end = System.nanoTime();
+System.out.println("Time Taken: " + (end - start));
+```
+
+This is commonly used in performance analysis.
+
+
+
+## 14. Summary
+
+* `System` provides static utilities for I/O, properties, time, and program control.
+* `Runtime` represents the JVM runtime environment.
+* Use `System` for general system-level tasks.
+* Use `Runtime` for memory management and executing external processes.
+* Both belong to `java.lang` and are automatically available.
+* They are powerful and should be used carefully.
+
+Written By: <a href="https://www.linkedin.com/in/shivasrivastava1/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer">Shiva Srivastava</a>
+
