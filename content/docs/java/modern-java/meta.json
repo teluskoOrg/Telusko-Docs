@@ -6,7 +6,7 @@
         "sealed-classes.mdx",
         "switch-expressions.mdx",
         "text-blocks.mdx",
-        "pattern-matching-instanceof.mdx",
-        "virtual-threads.mdx"
+        "DISABLED-pattern-matching-instanceof",
+        "DISABLED-virtual-threads"
     ]
 }

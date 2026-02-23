@@ -1,0 +1,555 @@
+---
+title: Text Blocks
+---
+
+<Steps>
+
+
+## Introduction
+
+Text blocks, introduced as a **preview feature in Java 13** and **standardized in Java 15**, revolutionize how developers work with multi-line strings in Java. They provide a clean, readable way to write strings that span multiple lines without the need for concatenation, escape sequences, or manual formatting—making code more maintainable and dramatically improving readability.
+
+Text blocks are particularly valuable for:
+- **HTML/XML content**
+- **JSON/YAML data**
+- **SQL queries**
+- **Multi-line documentation**
+- **Code snippets and templates**
+
+
+---
+
+
+## The Problem with Traditional Strings
+
+Before text blocks, writing multi-line strings in Java was difficult, messy, and prone to mistakes due to constant concatenation and escape characters.
+
+### Example 1: HTML Content
+
+```java
+// Traditional approach - Ugly and hard to maintain
+String html = "<html>\n" +
+              "  <body>\n" +
+              "    <h1>Welcome</h1>\n" +
+              "    <p>Hello, World!</p>\n" +
+              "  </body>\n" +
+              "</html>";
+```
+
+**Problems:**
+- ❌ Lots of `+` concatenation operators
+- ❌ Explicit `\n` escape sequences everywhere
+- ❌ Hard to visualize the actual output
+- ❌ Easy to make mistakes with quotes and escapes
+- ❌ Difficult to maintain and modify
+- ❌ Poor readability
+
+### Example 2: JSON Data
+
+```java
+// Traditional approach - Messy and error-prone
+String json = "{\n" +
+              "  \"name\": \"John Doe\",\n" +
+              "  \"age\": 30,\n" +
+              "  \"address\": {\n" +
+              "    \"street\": \"123 Main St\",\n" +
+              "    \"city\": \"New York\"\n" +
+              "  }\n" +
+              "}";
+```
+
+**Problems:**
+- ❌ Every quote needs to be escaped: `\"`
+- ❌ Manual newline insertion: `\n`
+- ❌ Tedious concatenation with `+`
+- ❌ Hard to spot syntax errors
+
+### Example 3: SQL Query
+
+```java
+// Traditional approach - Unreadable
+String sql = "SELECT users.id, users.name, orders.total\n" +
+             "FROM users\n" +
+             "INNER JOIN orders ON users.id = orders.user_id\n" +
+             "WHERE orders.status = 'completed'\n" +
+             "ORDER BY orders.total DESC\n" +
+             "LIMIT 10";
+```
+
+**Problems:**
+- ❌ SQL query structure is obscured
+- ❌ Difficult to align and format
+- ❌ Maintenance nightmare when queries change
+
+
+---
+
+
+## Text Blocks 
+
+Text blocks solve these problems with a clean, natural syntax using triple quotes (`"""`).
+
+### Basic Syntax
+
+```java
+String textBlock = """
+                   Content goes here
+                   Multiple lines are natural
+                   No escaping needed (usually)
+                   """;
+```
+
+**Key Components:**
+1. **Opening delimiter**: `"""` followed by a line terminator (newline)
+2. **Content**: The actual text, spanning multiple lines
+3. **Closing delimiter**: `"""` on its own line or at the end of content
+
+### Example 1: HTML with Text Blocks
+
+```java
+// With text blocks - Clean and readable!
+String html = """
+              <html>
+                <body>
+                  <h1>Welcome</h1>
+                  <p>Hello, World!</p>
+                </body>
+              </html>
+              """;
+```
+
+**Benefits:**
+- ✅ Natural formatting
+- ✅ No concatenation needed
+- ✅ No escape sequences
+- ✅ Visually matches output
+- ✅ Easy to maintain
+
+### Example 2: JSON with Text Blocks
+
+```java
+// With text blocks - Beautiful!
+String json = """
+              {
+                "name": "John Doe",
+                "age": 30,
+                "address": {
+                  "street": "123 Main St",
+                  "city": "New York"
+                }
+              }
+              """;
+```
+
+**Benefits:**
+- ✅ No quote escaping needed (double quotes work naturally)
+- ✅ No `\n` needed
+- ✅ Proper indentation preserved
+- ✅ Easy to validate and edit
+
+### Example 3: SQL with Text Blocks
+
+```java
+// With text blocks - Crystal clear!
+String sql = """
+             SELECT users.id, users.name, orders.total
+             FROM users
+             INNER JOIN orders ON users.id = orders.user_id
+             WHERE orders.status = 'completed'
+             ORDER BY orders.total DESC
+             LIMIT 10
+             """;
+```
+
+**Benefits:**
+- ✅ SQL query is immediately readable
+- ✅ Proper formatting maintained
+- ✅ Easy to modify and debug
+
+
+---
+
+
+## Text Block Rules and Behavior
+
+### 1. Opening Delimiter Requirements
+
+The opening `"""` **must** be followed by a line terminator:
+
+```java
+// WRONG: No line terminator after opening delimiter
+String text = """Hello World""";
+
+// CORRECT: Line terminator after opening delimiter
+String text = """
+              Hello World
+              """;
+
+// ALSO CORRECT: Closing delimiter on same line as content
+String text = """
+              Hello World""";
+```
+
+### 2. Indentation Handling (Incidental Whitespace)
+
+Text blocks automatically strip **incidental indentation**, the common leading whitespace from all lines.
+
+```java
+public class Example {
+    public static void main(String[] args) {
+        String text = """
+                      Line 1
+                      Line 2
+                        Line 3 (extra indent)
+                      """;
+
+        System.out.println(text);
+    }
+}
+
+// Output:
+// Line 1
+// Line 2
+//   Line 3 (extra indent)
+```
+
+**How it works:**
+1. The compiler finds the line with the **least indentation** (excluding empty lines)
+2. That indentation level is stripped from all lines
+3. The closing `"""` position determines the baseline indentation
+
+**Example with closing delimiter:**
+
+```java
+// Closing delimiter at column 10
+String text = """
+              Hello
+              World
+              """; // This line determines indentation
+
+// Closing delimiter at column 0
+String text = """
+              Hello
+              World
+"""; // Different indentation!
+```
+
+### 3. Escape Sequences
+
+Most escape sequences work normally, but some have special handling:
+
+```java
+// Regular escape sequences work
+String text = """
+              Line 1\tTab here
+              Line 2\nExtra newline follows
+              """;
+
+// Special: Escape newline to join lines
+String text = """
+              This is a \
+              single line
+              """;
+// Output: "This is a single line"
+
+// Special: Escape space to preserve trailing whitespace
+String text = """
+              Line with trailing space\s
+              """;
+```
+
+**Common Escape Sequences:**
+- `\n` - Newline (usually not needed)
+- `\t` - Tab
+- `\"` - Double quote (usually not needed in text blocks)
+- `\\` - Backslash
+- `\s` - Space (preserves trailing whitespace)
+- `\` (at line end) - Escape newline (line continuation)
+
+### 4. Quote Handling
+
+Double quotes (`"`) don't need escaping in text blocks:
+
+```java
+String text = """
+              She said, "Hello!"
+              JSON: {"key": "value"}
+              """;
+// No escaping needed!
+```
+
+**Exception:** Three consecutive double quotes need escaping:
+
+```java
+// WRONG: Closes text block early
+String text = """
+              Code: String s = """;
+              """;
+
+// CORRECT: Escape one quote
+String text = """
+              Code: String s = \""";
+              """;
+
+// OR: Use different formatting
+String text = """
+              Code: String s = "" ";
+              """;
+```
+
+### 5. Line Terminators
+
+Text blocks preserve line terminators as `\n`, regardless of the platform:
+
+```java
+String text = """
+              Line 1
+              Line 2
+              """;
+
+// On Windows: Still uses \n (not \r\n)
+// On Unix/Mac: Uses \n
+// Consistent across all platforms!
+```
+
+
+---
+
+
+## Practical Examples
+
+### Example: JSON API Response
+
+```java
+public class ApiResponse {
+    public static String createUserResponse(String id, String name, String email, boolean active) {
+        return """
+               {
+                 "status": "success",
+                 "data": {
+                   "id": "%s",
+                   "name": "%s",
+                   "email": "%s",
+                   "active": %b,
+                   "created_at": "2024-01-15T10:30:00Z"
+                 }
+               }
+               """.formatted(id, name, email, active);
+    }
+
+    public static void main(String[] args) {
+        String response = createUserResponse("123", "John Doe", "john@example.com", true);
+        System.out.println(response);
+    }
+}
+```
+
+
+### Example: Multi-line Log Messages
+
+```java
+public class Logger {
+    public static void logError(String operation, String error, String stackTrace) {
+        String message = """
+                         ================== ERROR ==================
+                         Operation: %s
+                         Error: %s
+                         Timestamp: %s
+                         Stack Trace:
+                         %s
+                         ===========================================
+                         """.formatted(operation, error, java.time.Instant.now(), stackTrace);
+
+        System.err.println(message);
+    }
+}
+```
+
+
+---
+
+
+## String Methods with Text Blocks
+
+### 1. formatted() Method
+
+Returns a new formatted string by replacing format specifiers (like `%s`, `%d`) with the provided arguments.
+
+```java
+String name = "Alice";
+int age = 30;
+
+String message = """
+                 Name: %s
+                 Age: %d
+                 Status: Active
+                 """.formatted(name, age);
+```
+
+### 2. String.format()
+
+Formats a string using placeholders and arguments, similar to `printf`, and returns the formatted result.
+
+```java
+String formatted = String.format("""
+                                 {
+                                   "user": "%s",
+                                   "score": %d
+                                 }
+                                 """, "Bob", 95);
+```
+
+### 3. replace(), replaceAll()
+
+Replaces occurrences of specified text (`replace`) or regex patterns (`replaceAll`) with new values in a string.
+
+```java
+String template = """
+                  Hello, {{name}}!
+                  Your balance is {{balance}}.
+                  """;
+
+String message = template
+    .replace("{{name}}", "Charlie")
+    .replace("{{balance}}", "$1,234.56");
+```
+
+### 4. stripIndent(), translateEscapes()
+
+`stripIndent()` removes common leading whitespace from each line, while `translateEscapes()` converts escape sequences (like `\n`, `\t`) into their actual characters.
+
+```java
+// stripIndent() - manually strip incidental indentation
+String text = "  Line 1\n  Line 2\n  Line 3";
+String stripped = text.stripIndent();
+
+// translateEscapes() - process escape sequences
+String raw = "Line 1\\nLine 2\\tTabbed";
+String processed = raw.translateEscapes();
+```
+
+### 5. split(), lines()
+
+`split()` divides a string into an array based on a delimiter, while `lines()` returns a stream of individual lines separated by line terminators.
+
+```java
+String text = """
+              Line 1
+              Line 2
+              Line 3
+              """;
+
+// Get as array
+String[] lines = text.split("\n");
+
+// Get as Stream
+text.lines().forEach(System.out::println);
+```
+
+
+---
+
+
+## Advanced Techniques
+
+### 1. Line Continuation
+
+Use `\` at the end of a line to continue on the next line without a newline:
+
+```java
+String sentence = """
+                  This is a very long sentence that spans \
+                  multiple lines in the code but appears as \
+                  a single line in the output.
+                  """;
+
+// Output: "This is a very long sentence that spans multiple lines in the code but appears as a single line in the output."
+```
+
+### 2. Preserving Trailing Whitespace
+
+Use `\s` to preserve trailing spaces:
+
+```java
+String text = """
+              Line with trailing space\s
+              Another line\s\s
+              """;
+
+// Without \s, trailing spaces would be stripped
+```
+
+### 3. Empty Lines
+
+Empty lines are preserved in text blocks:
+
+```java
+String text = """
+              Paragraph 1
+
+              Paragraph 2
+              """;
+
+// Output includes the blank line
+```
+
+### 4. Mixing with Regular Strings
+
+```java
+String header = "=".repeat(50);
+String body = """
+              This is the main content.
+              It can span multiple lines.
+              """;
+String footer = "=".repeat(50);
+
+String document = header + "\n" + body + footer;
+```
+
+
+---
+
+
+## String Templates (Java 21+ Preview)
+
+> String templates are a preview feature in Java 21 and may change.
+
+String templates provide a more powerful way to interpolate values:
+
+```java
+// Java 21+ String Templates (Preview)
+String name = "Alice";
+int age = 30;
+
+String message = STR."""
+                 Name: \{name}
+                 Age: \{age}
+                 Year of Birth: \{2024 - age}
+                 """;
+
+// More concise than formatted()
+```
+
+**Key differences:**
+- Uses `\{expression}` syntax
+- Evaluates expressions inline
+- More natural and readable
+- Still in preview (syntax may change)
+
+
+---
+
+
+## Summary
+
+* **Introduced in Java 15**, text blocks simplify writing multi-line strings using `"""` delimiters.
+* **Improve readability** by preserving natural formatting without concatenation or manual `\n` characters.
+* **Reduce escaping complexity**, especially for quotes and structured content like JSON or HTML.
+* **Automatically manage indentation**, producing cleaner and more maintainable code.
+* **Ideal for embedded content** such as SQL queries, HTML/XML templates, JSON, and configuration data.
+* **Best Practice**: Prefer text blocks whenever working with multi-line structured content to enhance clarity and maintainability.
+
+
+</Steps>
+
+Written By: <a href="https://www.linkedin.com/in/muskangarg03/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer"> Muskan Garg <ExternalLink className="w-4 h-4" /></a>

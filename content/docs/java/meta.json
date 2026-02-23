@@ -31,7 +31,7 @@
         "DISABLED-concurrency-advanced",
         "DISABLED-jvm-internals",
         "nio",
-        "DISABLED-modern-java",
+        "modern-java",
 
         "file-handling",
         "DISABLED-design-patterns",
