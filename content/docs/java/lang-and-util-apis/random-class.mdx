@@ -1,0 +1,205 @@
+---
+title: Random Class
+---
+
+
+## 1. Introduction
+
+The `Random` class in Java (from `java.util`) is used to generate **pseudo-random numbers**.
+
+It helps you generate values like:
+
+- random integers
+- random doubles
+- random booleans
+- random numbers within a range
+
+The randomness is called **pseudo-random** because the values are generated using a mathematical algorithm based on a **seed**.  
+So the values look random, but they are actually predictable if the seed is known.
+
+
+
+## 2. Why Random Class Is Needed
+
+Although `Math.random()` exists, `Random` is preferred when you need:
+
+- more methods (int, long, boolean, etc.)
+- controlled range generation
+- reproducible output using seed
+- cleaner design for multiple random values
+
+`Random` is widely used in:
+
+- games
+- simulations
+- OTP-like demo systems
+- randomized testing
+- shuffling logic
+
+
+
+## 3. Creating a Random Object
+
+Basic creation:
+
+```java
+import java.util.Random;
+
+Random random = new Random();
+````
+
+This uses a default seed based on the current time.
+
+If you want reproducible output:
+
+```java
+Random random = new Random(100);
+```
+
+Using the same seed produces the same sequence.
+
+
+
+## 4. Generating Random Integers
+
+### 4.1 nextInt()
+
+```java
+Random r = new Random();
+int n = r.nextInt();
+System.out.println(n);
+```
+
+This can be any integer value.
+
+
+
+### 4.2 nextInt(bound)
+
+Generates a number from `0` to `bound - 1`.
+
+```java
+int n = r.nextInt(10);
+System.out.println(n); // 0 to 9
+```
+
+
+
+## 5. Generating Random Numbers in a Range
+
+If you need random number between **min and max inclusive**:
+
+Example: 50 to 100
+
+```java
+int min = 50;
+int max = 100;
+
+int n = r.nextInt((max - min) + 1) + min;
+System.out.println(n); // 50 to 100
+```
+
+This is one of the most important patterns.
+
+
+
+## 6. Random Double and Float
+
+### 6.1 nextDouble()
+
+Returns a double in the range:
+
+* 0.0 (inclusive) to 1.0 (exclusive)
+
+```java
+double d = r.nextDouble();
+System.out.println(d);
+```
+
+### 6.2 nextFloat()
+
+```java
+float f = r.nextFloat();
+System.out.println(f);
+```
+
+
+
+## 7. Random Boolean
+
+Returns `true` or `false`.
+
+```java
+boolean b = r.nextBoolean();
+System.out.println(b);
+```
+
+Used in simulations and random decisions.
+
+
+
+## 8. Random Long and Other Types
+
+```java
+long l = r.nextLong();
+System.out.println(l);
+```
+
+Similarly:
+
+* `nextGaussian()` gives values in a normal distribution (advanced use).
+
+
+
+## 9. Seed Concept (Very Important)
+
+A **seed** is the initial value used by the random generator.
+
+If seed is fixed:
+
+* output becomes predictable
+* sequence becomes repeatable
+
+Example:
+
+```java
+Random r1 = new Random(10);
+Random r2 = new Random(10);
+
+System.out.println(r1.nextInt(100));
+System.out.println(r2.nextInt(100));
+```
+
+Both lines print the same result.
+
+This is useful for:
+
+* testing
+* debugging
+* simulations where repeatability matters
+
+
+
+## 10. Random vs Math.random()
+
+| Feature                       | Random    | Math.random()    |
+| ----------------------------- | --------- | ---------------- |
+| Package                       | java.util | java.lang        |
+| Object required               | Yes       | No               |
+| Multiple types supported      | Yes       | No (only double) |
+| Better for many random values | Yes       | Not ideal        |
+| Range control                 | Easier    | Manual formula   |
+
+Use `Random` when you need more flexibility.
+
+
+## 11. Summary
+
+* `Random` belongs to `java.util`.
+* It generates pseudo-random values using a seed.
+* Common methods: `nextInt()`, `nextInt(bound)`, `nextDouble()`, `nextBoolean()`.
+* Range generation uses the formula: `nextInt((max-min)+1)+min`.
+* Same seed produces same output sequence, useful for testing.
+* `Random` is more flexible than `Math.random()`.
+
+Written By: <a href="https://www.linkedin.com/in/shivasrivastava1/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer">Shiva Srivastava</a>

@@ -1,0 +1,310 @@
+---
+title: Optional Class
+---
+
+## 1. Introduction
+
+`Optional` is a container object introduced in Java 8 (in `java.util`) that may or may not contain a non-null value.
+
+Its main goal is to reduce `NullPointerException` by making "value can be absent" explicit in code.
+
+Instead of returning `null` from a method, you can return an `Optional<T>` and force the caller to handle the missing value properly.
+
+
+
+## 2. Why Optional Was Introduced
+
+In many programs, `null` causes runtime issues because developers forget to check it.
+
+Example problem:
+
+```java
+String name = getName();
+System.out.println(name.length()); // crashes if name is null
+````
+
+With Optional, the method can clearly communicate:
+
+* value may exist
+* value may not exist
+* caller must decide what to do if it's absent
+
+This improves:
+
+* readability
+* safety
+* code discipline
+
+
+
+## 3. Creating Optional Objects
+
+### 3.1 Optional.of()
+
+Use when value is guaranteed non-null.
+
+```java
+Optional<String> op = Optional.of("Java");
+```
+
+If you pass null here, it throws `NullPointerException`.
+
+
+
+### 3.2 Optional.ofNullable()
+
+Use when value may be null.
+
+```java
+String value = null;
+Optional<String> op = Optional.ofNullable(value);
+```
+
+This is the safest way to create Optional from uncertain data.
+
+
+
+### 3.3 Optional.empty()
+
+Represents no value.
+
+```java
+Optional<String> op = Optional.empty();
+```
+
+
+
+## 4. Checking Value Presence
+
+### 4.1 isPresent()
+
+```java
+Optional<String> op = Optional.of("Java");
+
+if (op.isPresent()) {
+    System.out.println(op.get());
+}
+```
+
+This works, but it often looks similar to null checks. It is not the most preferred style.
+
+
+
+### 4.2 ifPresent()
+
+Runs code only if value exists.
+
+```java
+Optional<String> op = Optional.of("Java");
+
+op.ifPresent(v -> System.out.println(v));
+```
+
+This keeps logic clean and avoids explicit checks.
+
+
+
+## 5. Getting the Value
+
+### 5.1 get()
+
+```java
+Optional<String> op = Optional.of("Java");
+System.out.println(op.get());
+```
+
+Important:
+If Optional is empty, `get()` throws:
+
+* `NoSuchElementException`
+
+So avoid using `get()` unless you are sure the value exists.
+
+
+
+## 6. Handling Missing Values (Most Useful Part)
+
+### 6.1 orElse()
+
+Provides default value.
+
+```java
+Optional<String> op = Optional.empty();
+String val = op.orElse("Default");
+System.out.println(val);
+```
+
+Output:
+
+```
+Default
+```
+
+
+
+### 6.2 orElseGet()
+
+Default value comes from a supplier (lazy).
+
+```java
+Optional<String> op = Optional.empty();
+String val = op.orElseGet(() -> "Generated Default");
+System.out.println(val);
+```
+
+Difference:
+
+* `orElse()` always evaluates the default argument
+* `orElseGet()` evaluates only when Optional is empty
+
+
+
+### 6.3 orElseThrow()
+
+Throws custom exception when value not present.
+
+```java
+Optional<String> op = Optional.empty();
+
+String val = op.orElseThrow(() -> new IllegalArgumentException("Value missing"));
+```
+
+This is useful when missing value is an error condition.
+
+
+
+## 7. Transforming Values: map() and flatMap()
+
+### 7.1 map()
+
+Applies transformation if value exists.
+
+```java
+Optional<String> op = Optional.of("java");
+
+Optional<String> upper = op.map(String::toUpperCase);
+System.out.println(upper.orElse("NA"));
+```
+
+Output:
+
+```
+JAVA
+```
+
+
+
+### 7.2 flatMap()
+
+Used when transformation already returns Optional.
+
+```java
+Optional<String> op = Optional.of("123");
+
+Optional<Integer> num = op.flatMap(s -> {
+    try {
+        return Optional.of(Integer.parseInt(s));
+    } catch (Exception e) {
+        return Optional.empty();
+    }
+});
+
+System.out.println(num.orElse(0));
+```
+
+`flatMap()` avoids Optional inside Optional.
+
+
+
+## 8. Filtering Optional Values: filter()
+
+`filter()` keeps the value only if the condition is true.
+
+```java
+Optional<String> op = Optional.of("Java");
+
+Optional<String> result = op.filter(s -> s.length() > 3);
+
+System.out.println(result.orElse("Too short"));
+```
+
+Output:
+
+```
+Java
+```
+
+If condition fails, Optional becomes empty.
+
+
+
+## 9. Optional in Method Return (Best Use Case)
+
+Instead of returning `null`:
+
+```java
+String findUserNameById(int id) {
+    return null; // not good
+}
+```
+
+Return Optional:
+
+```java
+Optional<String> findUserNameById(int id) {
+    return Optional.empty();
+}
+```
+
+Caller is forced to handle it:
+
+```java
+String name = findUserNameById(10).orElse("Guest");
+```
+
+
+
+## 10. Optional Misuse (Important)
+
+### 10.1 Do not use Optional for fields in entities
+
+Optional is not recommended for:
+
+* class fields
+* JPA entities
+* DTO properties
+
+Use Optional mainly for:
+
+* method return types
+* stream pipelines
+
+
+
+### 10.2 Do not use Optional as method parameter in normal code
+
+Instead of:
+
+```java
+void process(Optional<String> name) {}
+```
+
+Prefer:
+
+```java
+void process(String name) {}
+```
+
+and handle null properly.
+
+
+## 11. Summary
+
+* `Optional<T>` represents a value that may or may not exist.
+* Prevents accidental `NullPointerException` by making missing values explicit.
+* Create Optional using `of()`, `ofNullable()`, `empty()`.
+* Handle absence using `orElse()`, `orElseGet()`, `orElseThrow()`.
+* Use `map()`, `filter()`, `flatMap()` for clean transformations.
+* Best use case is method return type, not fields or parameters.
+
+Written By: <a href="https://www.linkedin.com/in/shivasrivastava1/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer">Shiva Srivastava</a>

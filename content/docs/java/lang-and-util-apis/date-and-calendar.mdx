@@ -1,0 +1,239 @@
+---
+title: Date and Calendar
+---
+
+## 1. Introduction
+
+Before Java 8 introduced the modern `java.time` API, date and time handling was done using:
+
+- `java.util.Date`
+- `java.util.Calendar`
+
+These classes are still important because:
+
+- Legacy systems use them
+- Many old APIs return `Date`
+- Interviews often ask about them
+- You may need to convert between old and new APIs
+
+However, they have design limitations, which is why Java 8 introduced better alternatives.
+
+
+
+## 2. java.util.Date Class
+
+The `Date` class represents:
+
+- A specific instant in time
+- Stored internally as milliseconds since January 1, 1970 (UTC)
+
+Basic example:
+
+```java
+import java.util.Date;
+
+Date now = new Date();
+System.out.println(now);
+````
+
+Output example:
+
+```
+Tue Jan 23 14:35:20 IST 2026
+```
+
+Internally, it stores time as:
+
+```
+milliseconds since 1970-01-01
+```
+
+
+
+## 3. Getting Time in Milliseconds
+
+```java
+Date now = new Date();
+long millis = now.getTime();
+
+System.out.println(millis);
+```
+
+This value is useful for:
+
+* Storing timestamps
+* Comparing dates
+* Calculating duration
+
+
+
+## 4. Problems with Date Class
+
+The `Date` class has several issues:
+
+* Many methods are deprecated
+* Not intuitive for date manipulation
+* Not thread-safe
+* Month indexing is confusing in older constructors
+
+Example of confusing constructor:
+
+```java
+Date d = new Date(126, 0, 23); 
+```
+
+This means:
+
+* Year = 2026 (1900 + 126)
+* Month = January (0-based)
+
+This design is error-prone.
+
+
+
+## 5. java.util.Calendar Class
+
+To fix manipulation issues, Java introduced `Calendar`.
+
+`Calendar` allows:
+
+* Getting year, month, day
+* Setting date values
+* Adding/subtracting days
+* Comparing dates
+
+You cannot create Calendar directly. Use:
+
+```java
+import java.util.Calendar;
+
+Calendar cal = Calendar.getInstance();
+```
+
+
+
+## 6. Getting Date Components Using Calendar
+
+```java
+Calendar cal = Calendar.getInstance();
+
+int year = cal.get(Calendar.YEAR);
+int month = cal.get(Calendar.MONTH);
+int day = cal.get(Calendar.DAY_OF_MONTH);
+
+System.out.println(year + "-" + (month + 1) + "-" + day);
+```
+
+Important:
+Month is zero-based (January = 0).
+
+
+
+## 7. Setting Date Using Calendar
+
+```java
+Calendar cal = Calendar.getInstance();
+cal.set(2026, Calendar.JANUARY, 23);
+
+System.out.println(cal.getTime());
+```
+
+`getTime()` returns a `Date` object.
+
+
+
+## 8. Adding and Subtracting Dates
+
+```java
+Calendar cal = Calendar.getInstance();
+cal.add(Calendar.DAY_OF_MONTH, 5);
+
+System.out.println(cal.getTime());
+```
+
+You can also subtract:
+
+```java
+cal.add(Calendar.MONTH, -2);
+```
+
+This modifies the existing Calendar object.
+
+
+
+## 9. Comparing Dates
+
+Using Date:
+
+```java
+Date d1 = new Date();
+Date d2 = new Date(System.currentTimeMillis() + 10000);
+
+System.out.println(d1.before(d2));  // true
+System.out.println(d1.after(d2));   // false
+```
+
+Using Calendar:
+
+```java
+Calendar c1 = Calendar.getInstance();
+Calendar c2 = Calendar.getInstance();
+c2.add(Calendar.HOUR, 1);
+
+System.out.println(c1.before(c2));  // true
+```
+
+
+
+## 10. Converting Between Date and Calendar
+
+From Calendar to Date:
+
+```java
+Calendar cal = Calendar.getInstance();
+Date date = cal.getTime();
+```
+
+From Date to Calendar:
+
+```java
+Date date = new Date();
+
+Calendar cal = Calendar.getInstance();
+cal.setTime(date);
+```
+
+This conversion is common in legacy systems.
+
+
+
+## 11. Limitations of Date and Calendar
+
+Major issues:
+
+* Not thread-safe
+* Mutable (state can change)
+* Confusing design
+* Month indexing starts from 0
+* Many deprecated methods
+
+Because of these issues, Java 8 introduced:
+
+* `LocalDate`
+* `LocalTime`
+* `LocalDateTime`
+* `ZonedDateTime`
+
+Modern projects should use `java.time` instead.
+
+
+## 12. Summary
+
+* `Date` represents a timestamp (milliseconds since 1970).
+* `Calendar` allows manipulation of date components.
+* Month indexing starts from 0 in Calendar.
+* Both are mutable and not thread-safe.
+* Modern applications should prefer `java.time`.
+* Still important for legacy system understanding.
+
+Written By: <a href="https://www.linkedin.com/in/shivasrivastava1/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer">Shiva Srivastava</a>

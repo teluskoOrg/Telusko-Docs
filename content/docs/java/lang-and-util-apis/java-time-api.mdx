@@ -1,0 +1,303 @@
+---
+title: Java Time API (java.time)
+---
+
+## 1. Introduction
+
+In Java 8, a completely new Date and Time API was introduced in the package:
+
+```
+
+java.time
+
+````
+
+This API was designed to fix the problems of:
+
+- `java.util.Date`
+- `java.util.Calendar`
+
+The modern Java Time API is:
+
+- Immutable
+- Thread-safe
+- Cleaner to use
+- More readable
+- Less error-prone
+
+Today, in all modern Java applications, `java.time` is the recommended way to handle date and time.
+
+
+
+## 2. Why Java Time API Was Introduced
+
+The old Date and Calendar classes had issues:
+
+- Mutable objects (state changes unexpectedly)
+- Not thread-safe
+- Confusing month indexing (0-based months)
+- Many deprecated methods
+- Hard to understand
+
+The Java Time API solves these issues by:
+
+- Using immutable objects
+- Clear class separation (Date-only, Time-only, DateTime)
+- Better naming
+- Better formatting and parsing
+
+
+
+## 3. Important Classes in java.time
+
+Here are the most important classes:
+
+| Class | Purpose |
+|--------|----------|
+| `LocalDate` | Date only (year, month, day) |
+| `LocalTime` | Time only (hour, minute, second) |
+| `LocalDateTime` | Date + Time |
+| `ZonedDateTime` | Date + Time + Time Zone |
+| `Instant` | Machine timestamp (UTC) |
+| `Period` | Date difference |
+| `Duration` | Time difference |
+| `DateTimeFormatter` | Formatting and parsing |
+
+
+
+## 4. LocalDate (Date Only)
+
+Represents only date, no time.
+
+```java
+import java.time.LocalDate;
+
+LocalDate today = LocalDate.now();
+System.out.println(today);
+````
+
+Output:
+
+```
+2026-01-23
+```
+
+Create specific date:
+
+```java
+LocalDate date = LocalDate.of(2026, 1, 23);
+System.out.println(date);
+```
+
+Months are 1-based (January = 1). No confusion.
+
+
+
+## 5. LocalTime (Time Only)
+
+Represents only time.
+
+```java
+import java.time.LocalTime;
+
+LocalTime now = LocalTime.now();
+System.out.println(now);
+```
+
+Create specific time:
+
+```java
+LocalTime time = LocalTime.of(14, 30);
+System.out.println(time);
+```
+
+
+
+## 6. LocalDateTime (Date + Time)
+
+Combines date and time.
+
+```java
+import java.time.LocalDateTime;
+
+LocalDateTime now = LocalDateTime.now();
+System.out.println(now);
+```
+
+Create specific:
+
+```java
+LocalDateTime dt = LocalDateTime.of(2026, 1, 23, 14, 30);
+System.out.println(dt);
+```
+
+
+
+## 7. ZonedDateTime (Time with Zone)
+
+Used when working with different time zones.
+
+```java
+import java.time.ZonedDateTime;
+import java.time.ZoneId;
+
+ZonedDateTime zdt = ZonedDateTime.now(ZoneId.of("Asia/Kolkata"));
+System.out.println(zdt);
+```
+
+Useful in:
+
+* Global applications
+* Scheduling systems
+* Distributed systems
+
+
+
+## 8. Instant (Machine Timestamp)
+
+Represents a point in time in UTC.
+
+```java
+import java.time.Instant;
+
+Instant now = Instant.now();
+System.out.println(now);
+```
+
+Used in:
+
+* Logging
+* Backend systems
+* Storing timestamps in databases
+
+
+
+## 9. Date Manipulation (Plus and Minus)
+
+All classes are immutable.
+
+```java
+LocalDate today = LocalDate.now();
+
+LocalDate future = today.plusDays(5);
+LocalDate past = today.minusMonths(2);
+
+System.out.println(future);
+System.out.println(past);
+```
+
+Original object is not modified.
+
+
+
+## 10. Period and Duration
+
+### 10.1 Period (Date Difference)
+
+```java
+import java.time.*;
+
+LocalDate start = LocalDate.of(2026, 1, 1);
+LocalDate end = LocalDate.of(2026, 3, 1);
+
+Period period = Period.between(start, end);
+System.out.println(period);
+```
+
+Output example:
+
+```
+P2M
+```
+
+
+
+### 10.2 Duration (Time Difference)
+
+```java
+LocalTime t1 = LocalTime.of(10, 0);
+LocalTime t2 = LocalTime.of(12, 30);
+
+Duration duration = Duration.between(t1, t2);
+System.out.println(duration.toMinutes());
+```
+
+Output:
+
+```
+150
+```
+
+
+
+## 11. Formatting and Parsing
+
+Using `DateTimeFormatter`.
+
+```java
+import java.time.*;
+import java.time.format.DateTimeFormatter;
+
+LocalDate date = LocalDate.now();
+
+DateTimeFormatter formatter =
+    DateTimeFormatter.ofPattern("dd-MM-yyyy");
+
+String formatted = date.format(formatter);
+System.out.println(formatted);
+```
+
+Parsing:
+
+```java
+String input = "23-01-2026";
+LocalDate parsed =
+    LocalDate.parse(input, formatter);
+
+System.out.println(parsed);
+```
+
+
+
+## 12. Converting Between Old and New API
+
+From Date to LocalDate:
+
+```java
+import java.util.Date;
+import java.time.*;
+import java.time.ZoneId;
+
+Date oldDate = new Date();
+
+LocalDate newDate =
+    oldDate.toInstant()
+           .atZone(ZoneId.systemDefault())
+           .toLocalDate();
+```
+
+This is common in legacy migration.
+
+
+
+## 13. Key Advantages
+
+* Immutable
+* Thread-safe
+* Clear separation of responsibilities
+* Easy formatting
+* Easy manipulation
+* No deprecated methods
+* No confusing month indexing
+
+
+## 14. Summary
+
+* Java 8 introduced `java.time` to replace Date and Calendar.
+* Core classes: LocalDate, LocalTime, LocalDateTime, ZonedDateTime, Instant.
+* Immutable and thread-safe.
+* Supports plus/minus operations easily.
+* Supports formatting and parsing with DateTimeFormatter.
+* Recommended for all modern Java applications.
+
+Written By: <a href="https://www.linkedin.com/in/shivasrivastava1/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer">Shiva Srivastava</a>

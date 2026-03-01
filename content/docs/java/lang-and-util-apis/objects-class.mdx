@@ -1,0 +1,252 @@
+---
+title: Objects Class
+---
+
+## 1. Introduction
+
+The `Objects` class in Java belongs to the `java.util` package and provides **utility methods for operating on objects**.
+
+It helps in:
+
+- Null-safe comparisons
+- Null checks
+- Hash code generation
+- toString handling
+- Validation
+
+Instead of writing repetitive null checks and comparison logic manually, the `Objects` class provides clean and readable alternatives.
+
+
+
+## 2. Why Objects Class Is Needed
+
+Before Java 7, developers had to manually write null checks like:
+
+```java
+if (obj != null) {
+    obj.equals(other);
+}
+````
+
+This made code:
+
+* Verbose
+* Error-prone
+* Hard to maintain
+
+The `Objects` class simplifies such operations.
+
+
+
+## 3. Commonly Used Methods
+
+### 3.1 equals()
+
+Performs null-safe equality check.
+
+```java
+import java.util.Objects;
+
+String a = null;
+String b = "Java";
+
+System.out.println(Objects.equals(a, b)); // false
+```
+
+If you use:
+
+```java
+a.equals(b);
+```
+
+It would throw `NullPointerException`.
+
+`Objects.equals()` prevents that.
+
+
+
+### 3.2 isNull() and nonNull()
+
+Used for null checking.
+
+```java
+String str = null;
+
+System.out.println(Objects.isNull(str));    // true
+System.out.println(Objects.nonNull(str));   // false
+```
+
+Often used in streams:
+
+```java
+list.stream()
+    .filter(Objects::nonNull)
+    .forEach(System.out::println);
+```
+
+
+
+### 3.3 requireNonNull()
+
+Ensures that an object is not null.
+
+```java
+String name = Objects.requireNonNull(inputName);
+```
+
+If `inputName` is null → throws `NullPointerException`.
+
+With custom message:
+
+```java
+String name = Objects.requireNonNull(inputName, "Name cannot be null");
+```
+
+Very useful for:
+
+* Constructor validation
+* Method argument validation
+
+
+
+### 3.4 hash()
+
+Generates hash code for multiple fields.
+
+```java
+int hash = Objects.hash(id, name, age);
+```
+
+Useful in `hashCode()` method implementation.
+
+
+
+### 3.5 toString()
+
+Null-safe string conversion.
+
+```java
+String str = null;
+System.out.println(Objects.toString(str));        // "null"
+System.out.println(Objects.toString(str, "NA"));  // "NA"
+```
+
+
+
+## 4. Using Objects in equals() Method
+
+Common implementation pattern:
+
+```java
+import java.util.Objects;
+
+class Person {
+    private String name;
+    private int age;
+
+    Person(String name, int age) {
+        this.name = name;
+        this.age = age;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Person)) return false;
+
+        Person p = (Person) o;
+        return age == p.age &&
+               Objects.equals(name, p.name);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(name, age);
+    }
+}
+```
+
+This makes the code:
+
+* Cleaner
+* Safer
+* Easier to maintain
+
+
+
+## 5. Objects vs Object Class
+
+Do not confuse:
+
+* `Object` (root class of Java)
+* `Objects` (utility class)
+
+| Object                                | Objects                       |
+| ------------------------------------- | ----------------------------- |
+| Root of class hierarchy               | Utility helper class          |
+| Has methods like toString(), equals() | Has static helper methods     |
+| Every class extends Object            | Must import java.util.Objects |
+
+
+
+## 6. Practical Use Case: Constructor Validation
+
+Example:
+
+```java
+class Student {
+    private String name;
+
+    Student(String name) {
+        this.name = Objects.requireNonNull(name, "Name cannot be null");
+    }
+}
+```
+
+This prevents:
+
+* Accidental null assignment
+* Later runtime errors
+
+
+
+## 7. Advantages of Objects Class
+
+* Reduces boilerplate code
+* Avoids NullPointerException
+* Makes code readable
+* Simplifies equals() and hashCode() implementations
+* Encourages defensive programming
+
+
+
+## 8. Common Mistakes
+
+### 8.1 Confusing equals with ==
+
+Even when using `Objects.equals()`, remember:
+
+* It compares content
+* Not references
+
+
+
+### 8.2 Overusing requireNonNull
+
+Only use it when null is truly invalid.
+Otherwise, use Optional or proper validation logic.
+
+
+
+## 9. Summary
+
+* `Objects` class belongs to `java.util`.
+* Provides null-safe utility methods.
+* Common methods: equals(), hash(), requireNonNull(), isNull(), nonNull().
+* Makes equals() and hashCode() implementations cleaner.
+* Prevents NullPointerException.
+* Do not confuse `Objects` with `Object`.
+
+Written By: <a href="https://www.linkedin.com/in/shivasrivastava1/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer">Shiva Srivastava</a>
+
+ 

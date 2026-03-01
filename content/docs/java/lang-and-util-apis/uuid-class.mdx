@@ -1,0 +1,261 @@
+---
+title: UUID Class
+---
+
+## 1. Introduction
+
+`UUID` stands for **Universally Unique Identifier**.
+
+In Java, the `UUID` class is available in:
+
+```
+
+java.util.UUID
+
+````
+
+It is used to generate **unique identifiers** that are extremely unlikely to duplicate.
+
+UUIDs are commonly used in:
+
+- Database primary keys
+- Distributed systems
+- Microservices
+- Session identifiers
+- API tokens
+- Order IDs
+
+
+
+## 2. What Is a UUID?
+
+A UUID is a 128-bit number represented as a 36-character string.
+
+Example:
+
+```text
+550e8400-e29b-41d4-a716-446655440000
+````
+
+Structure:
+
+```
+8-4-4-4-12 characters (hexadecimal)
+```
+
+It contains:
+
+* Letters (a–f)
+* Numbers (0–9)
+* Hyphens separating sections
+
+
+
+## 3. Why UUID Is Important
+
+In distributed systems:
+
+* Multiple servers generate IDs
+* There is no central authority
+* Auto-increment IDs can collide
+
+UUID solves this by generating IDs that are:
+
+* Practically unique
+* Globally unique
+* Safe across systems
+
+It avoids database bottlenecks caused by sequential IDs.
+
+
+
+## 4. Generating Random UUID
+
+Most common way:
+
+```java
+import java.util.UUID;
+
+UUID id = UUID.randomUUID();
+System.out.println(id);
+```
+
+Output example:
+
+```text
+c9b1d7f4-3f23-4b8e-9c0f-5b9f1234abcd
+```
+
+Each time you run, a different value is generated.
+
+
+
+## 5. Converting UUID to String
+
+```java
+UUID id = UUID.randomUUID();
+String value = id.toString();
+
+System.out.println(value);
+```
+
+UUID is commonly stored as String in:
+
+* Databases
+* JSON responses
+* API payloads
+
+
+
+## 6. Creating UUID from String
+
+If you already have UUID in string form:
+
+```java
+String str = "550e8400-e29b-41d4-a716-446655440000";
+
+UUID id = UUID.fromString(str);
+System.out.println(id);
+```
+
+If the string is invalid format, it throws:
+
+* `IllegalArgumentException`
+
+
+
+## 7. UUID Version Concept
+
+UUID has different versions.
+
+The most commonly used in Java:
+
+* Version 4 → Random-based UUID
+
+`UUID.randomUUID()` generates Version 4 UUID.
+
+You can check version:
+
+```java
+UUID id = UUID.randomUUID();
+System.out.println(id.version());
+```
+
+Output:
+
+```
+4
+```
+
+
+
+## 8. Getting Most and Least Significant Bits
+
+Internally UUID is stored as two long values:
+
+```java
+UUID id = UUID.randomUUID();
+
+long most = id.getMostSignificantBits();
+long least = id.getLeastSignificantBits();
+
+System.out.println(most);
+System.out.println(least);
+```
+
+Used in:
+
+* Low-level systems
+* Performance-optimized storage
+
+
+
+## 9. UUID in Databases
+
+Instead of:
+
+```sql
+id INT AUTO_INCREMENT
+```
+
+You can store:
+
+```sql
+id VARCHAR(36)
+```
+
+Or in modern databases:
+
+```sql
+id UUID
+```
+
+Advantages:
+
+* No collision across systems
+* Safer in distributed architecture
+
+Disadvantages:
+
+* Larger storage size
+* Not sequential (affects index performance)
+
+
+
+## 10. UUID vs Auto-Increment ID
+
+| Feature           | UUID            | Auto-Increment |
+| ----------------- | --------------- | -------------- |
+| Global uniqueness | Yes             | No             |
+| Distributed safe  | Yes             | No             |
+| Predictable       | No              | Yes            |
+| Storage size      | Larger          | Smaller        |
+| Index performance | Slightly slower | Faster         |
+
+Use UUID when:
+
+* System is distributed
+* IDs must not be predictable
+* Security matters
+
+
+
+## 11. Practical Example: Generating Order ID
+
+```java
+import java.util.UUID;
+
+class Order {
+    private String orderId;
+
+    public Order() {
+        this.orderId = UUID.randomUUID().toString();
+    }
+
+    public String getOrderId() {
+        return orderId;
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+        Order order = new Order();
+        System.out.println(order.getOrderId());
+    }
+}
+```
+
+Each order will have a unique ID.
+
+
+## 12. Summary
+
+* `UUID` is in `java.util`.
+* Represents a 128-bit unique identifier.
+* Generated using `UUID.randomUUID()`.
+* Commonly used in distributed systems and databases.
+* Version 4 UUID is random-based.
+* Stored as String or native UUID type in database.
+* Provides global uniqueness with minimal collision risk.
+
+Written By: <a href="https://www.linkedin.com/in/shivasrivastava1/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer">Shiva Srivastava</a>

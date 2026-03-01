@@ -1,0 +1,274 @@
+---
+title: Collections Utility Class
+---
+
+## 1. Introduction
+
+In Java, `Collections` (plural) is a **utility class** inside `java.util` that provides helpful static methods to work with **Collection framework objects** like:
+
+- List
+- Set
+- Map
+- Queue (some operations)
+
+Important clarification:
+
+- `Collection` (singular) is an interface.
+- `Collections` (plural) is a helper class with static methods.
+
+`Collections` class is used to perform common operations such as:
+
+- sorting
+- searching
+- finding min/max
+- reversing
+- shuffling
+- creating unmodifiable collections
+- creating synchronized collections
+- filling and copying lists
+
+
+
+## 2. Why Collections Utility Class Is Needed
+
+Collections like `ArrayList` and `HashSet` store data, but many common operations require extra logic.
+
+Without `Collections`, you would write manual code to:
+
+- sort list
+- reverse list
+- shuffle elements
+- find minimum/maximum
+
+`Collections` provides these operations in a clean, reliable, and optimized way.
+
+
+
+## 3. Import and Usage Pattern
+
+`Collections` is in `java.util`, so import it:
+
+```java
+import java.util.Collections;
+````
+
+Methods are static:
+
+```java
+Collections.methodName(collection);
+```
+
+
+
+## 4. Sorting a List: sort()
+
+### 4.1 Natural Sorting
+
+```java
+import java.util.*;
+
+List<Integer> nums = new ArrayList<>();
+nums.add(5);
+nums.add(2);
+nums.add(9);
+nums.add(1);
+
+Collections.sort(nums);
+System.out.println(nums);
+```
+
+Output:
+
+```
+[1, 2, 5, 9]
+```
+
+This sorts in ascending order.
+
+
+
+### 4.2 Sorting with Comparator
+
+```java
+import java.util.*;
+
+List<String> names = Arrays.asList("Shiva", "Aman", "Rohit");
+
+Collections.sort(names, (a, b) -> b.compareTo(a));
+System.out.println(names);
+```
+
+Output:
+
+```
+[Shiva, Rohit, Aman]
+```
+
+This sorts in descending order.
+
+
+
+## 5. Finding min() and max()
+
+```java
+import java.util.*;
+
+List<Integer> nums = Arrays.asList(10, 5, 30, 2);
+
+System.out.println(Collections.min(nums)); // 2
+System.out.println(Collections.max(nums)); // 30
+```
+
+Works using natural ordering.
+
+
+
+## 6. Reversing List: reverse()
+
+```java
+import java.util.*;
+
+List<Integer> nums = new ArrayList<>(Arrays.asList(1, 2, 3, 4));
+Collections.reverse(nums);
+System.out.println(nums);
+```
+
+Output:
+
+```
+[4, 3, 2, 1]
+```
+
+This reverses the list in place.
+
+
+
+## 7. Shuffling List: shuffle()
+
+`shuffle()` randomizes order of elements.
+
+```java
+import java.util.*;
+
+List<Integer> nums = new ArrayList<>(Arrays.asList(1, 2, 3, 4, 5));
+Collections.shuffle(nums);
+System.out.println(nums);
+```
+
+Output will be random order each time.
+
+Used in:
+
+* games
+* random quizzes
+* random test cases
+
+
+
+## 8. Searching in Sorted List: binarySearch()
+
+Works only when list is sorted.
+
+```java
+import java.util.*;
+
+List<Integer> nums = new ArrayList<>(Arrays.asList(1, 2, 5, 9));
+
+int index = Collections.binarySearch(nums, 5);
+System.out.println(index);
+```
+
+Output:
+
+```
+2
+```
+
+If element not found, it returns negative value.
+
+
+
+## 9. Frequency and Disjoint
+
+### 9.1 frequency()
+
+Counts occurrences of an element.
+
+```java
+import java.util.*;
+
+List<String> items = Arrays.asList("a", "b", "a", "c", "a");
+System.out.println(Collections.frequency(items, "a"));
+```
+
+Output:
+
+```
+3
+```
+
+
+
+### 9.2 disjoint()
+
+Checks if two collections have no common elements.
+
+```java
+import java.util.*;
+
+List<Integer> a = Arrays.asList(1, 2, 3);
+List<Integer> b = Arrays.asList(4, 5, 6);
+
+System.out.println(Collections.disjoint(a, b)); // true
+```
+
+
+
+## 10. Unmodifiable Collections (Read-Only)
+
+To prevent modification:
+
+```java
+import java.util.*;
+
+List<Integer> list = new ArrayList<>(Arrays.asList(1, 2, 3));
+List<Integer> unmodifiable = Collections.unmodifiableList(list);
+
+unmodifiable.add(4); // Throws UnsupportedOperationException
+```
+
+This is useful when you want to share data safely without allowing edits.
+
+
+
+## 11. Synchronized Collections (Thread-Safe)
+
+Collections like ArrayList are not thread-safe by default.
+
+You can wrap them:
+
+```java
+import java.util.*;
+
+List<Integer> list = new ArrayList<>();
+List<Integer> syncList = Collections.synchronizedList(list);
+```
+
+This is used in multi-threaded environment when multiple threads access a shared collection.
+
+
+## 12. Summary
+
+* `Collections` is a utility class inside `java.util`.
+* Provides static helper methods for List, Set, Map operations.
+* Common methods:
+
+  * `sort()`, `reverse()`, `shuffle()`
+  * `min()`, `max()`
+  * `binarySearch()` (requires sorted list)
+  * `frequency()`, `disjoint()`
+  * `unmodifiableList()` for read-only
+  * `synchronizedList()` for thread-safety
+* Helps avoid writing manual code for common collection operations.
+
+Written By: <a href="https://www.linkedin.com/in/shivasrivastava1/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer">Shiva Srivastava</a>
