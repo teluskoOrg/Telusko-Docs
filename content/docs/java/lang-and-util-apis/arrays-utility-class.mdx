@@ -1,0 +1,267 @@
+---
+title: Arrays Utility Class
+---
+
+## 1. Introduction
+
+The `Arrays` class in Java (from `java.util`) is a **utility/helper class** that provides ready-made methods to work with arrays.
+
+Arrays in Java are fixed-size and do not come with rich methods like collections.  
+So `java.util.Arrays` gives you powerful operations such as:
+
+- sorting arrays
+- searching values
+- filling values
+- comparing arrays
+- converting array to string
+- copying arrays
+- working with streams
+
+It is one of the most useful classes when working with arrays in real projects and interviews.
+
+
+
+## 2. Why Arrays Utility Class Is Needed
+
+If you work with raw arrays, you often need to write logic manually:
+
+- loop for sorting
+- loop for searching
+- loop for printing
+
+This is slow and error-prone.
+
+`Arrays` class solves this by providing tested and optimized implementations.
+
+
+
+## 3. Import and Basic Usage
+
+`Arrays` is in `java.util`, so import it:
+
+```java
+import java.util.Arrays;
+````
+
+You do not create object of `Arrays` because its methods are static.
+
+Usage pattern:
+
+```java
+Arrays.methodName(array);
+```
+
+
+
+## 4. Printing Arrays: toString() and deepToString()
+
+### 4.1 toString() for 1D Arrays
+
+```java
+int[] a = {10, 20, 30};
+System.out.println(Arrays.toString(a));
+```
+
+Output:
+
+```
+[10, 20, 30]
+```
+
+Without `Arrays.toString()`, printing an array gives memory reference.
+
+
+
+### 4.2 deepToString() for 2D Arrays
+
+```java
+int[][] m = {{1, 2}, {3, 4}};
+System.out.println(Arrays.deepToString(m));
+```
+
+Output:
+
+```
+[[1, 2], [3, 4]]
+```
+
+
+
+## 5. Sorting Arrays: sort()
+
+Sorts the array in ascending order.
+
+```java
+int[] nums = {5, 2, 9, 1};
+Arrays.sort(nums);
+System.out.println(Arrays.toString(nums));
+```
+
+Output:
+
+```
+[1, 2, 5, 9]
+```
+
+Important:
+
+* Sorting happens in-place (same array gets modified).
+* For objects, it uses natural order or comparator (advanced).
+
+
+
+## 6. Searching in Sorted Array: binarySearch()
+
+`binarySearch()` works only if the array is already sorted.
+
+```java
+int[] nums = {1, 2, 5, 9};
+int index = Arrays.binarySearch(nums, 5);
+System.out.println(index);
+```
+
+Output:
+
+```
+2
+```
+
+If element not found, it returns a negative value.
+
+Common mistake:
+Using binarySearch on unsorted array gives wrong results.
+
+
+
+## 7. Filling Array: fill()
+
+Sets same value at all positions.
+
+```java
+int[] a = new int[5];
+Arrays.fill(a, 7);
+System.out.println(Arrays.toString(a));
+```
+
+Output:
+
+```
+[7, 7, 7, 7, 7]
+```
+
+Also supports range filling:
+
+```java
+int[] b = {1, 2, 3, 4, 5};
+Arrays.fill(b, 1, 4, 0);
+System.out.println(Arrays.toString(b));
+```
+
+Output:
+
+```
+[1, 0, 0, 0, 5]
+```
+
+Range rule:
+
+* start index inclusive
+* end index exclusive
+
+
+
+## 8. Comparing Arrays: equals() and deepEquals()
+
+### 8.1 equals() for 1D arrays
+
+```java
+int[] a = {1, 2, 3};
+int[] b = {1, 2, 3};
+
+System.out.println(Arrays.equals(a, b)); // true
+```
+
+`==` would return false because it checks reference.
+
+
+
+### 8.2 deepEquals() for 2D arrays
+
+```java
+int[][] x = {{1, 2}, {3, 4}};
+int[][] y = {{1, 2}, {3, 4}};
+
+System.out.println(Arrays.deepEquals(x, y)); // true
+```
+
+
+
+## 9. Copying Arrays: copyOf() and copyOfRange()
+
+### 9.1 copyOf()
+
+Creates a new array and copies data.
+
+```java
+int[] a = {1, 2, 3};
+int[] copy = Arrays.copyOf(a, a.length);
+
+System.out.println(Arrays.toString(copy));
+```
+
+
+
+### 9.2 copyOfRange()
+
+Copies part of an array.
+
+```java
+int[] a = {10, 20, 30, 40, 50};
+int[] part = Arrays.copyOfRange(a, 1, 4);
+
+System.out.println(Arrays.toString(part));
+```
+
+Output:
+
+```
+[20, 30, 40]
+```
+
+
+
+## 10. Converting Array to Stream (Modern Use)
+
+You can create stream from array for advanced operations.
+
+```java
+int[] nums = {1, 2, 3, 4};
+
+int sum = Arrays.stream(nums).sum();
+System.out.println(sum);
+```
+
+Output:
+
+```
+10
+```
+
+This is useful when combining arrays with Stream API.
+
+
+## 11. Summary
+
+* `java.util.Arrays` is a utility class for array operations.
+* Common methods:
+
+  * `toString()`, `deepToString()`
+  * `sort()`
+  * `binarySearch()` (requires sorted array)
+  * `fill()`
+  * `equals()`, `deepEquals()`
+  * `copyOf()`, `copyOfRange()`
+  * `stream()`
+* It reduces manual loops and provides efficient implementations.
+
+Written By: <a href="https://www.linkedin.com/in/shivasrivastava1/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer">Shiva Srivastava</a>

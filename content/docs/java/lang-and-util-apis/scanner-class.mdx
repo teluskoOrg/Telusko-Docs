@@ -1,0 +1,235 @@
+---
+title: Scanner Class
+---
+
+## 1. Introduction
+
+The `Scanner` class in Java (from `java.util`) is used to **read input** from different sources like:
+
+- keyboard (System.in)
+- files
+- strings
+
+It is most commonly used to take **user input from the console** in beginner and intermediate Java programs.
+
+`Scanner` makes input handling easier because it can directly read different data types like:
+
+- int
+- long
+- double
+- boolean
+- String (word or full line)
+
+
+
+## 2. Why Scanner Class Is Needed
+
+Before `Scanner`, input was commonly taken using `BufferedReader` and manual parsing.  
+That approach is faster but requires more code.
+
+`Scanner` is popular because:
+
+- simple syntax
+- supports many data types directly
+- beginner friendly
+- useful for quick programs and competitive coding basics
+
+
+
+## 3. Import and Setup
+
+`Scanner` is in `java.util`, so you must import it:
+
+```java
+import java.util.Scanner;
+````
+
+Create Scanner object for keyboard input:
+
+```java
+Scanner sc = new Scanner(System.in);
+```
+
+
+
+## 4. Reading Integers
+
+Use `nextInt()` to read integer:
+
+```java
+Scanner sc = new Scanner(System.in);
+
+System.out.print("Enter age: ");
+int age = sc.nextInt();
+
+System.out.println("Age: " + age);
+```
+
+If user types `25`, output becomes:
+
+```
+Age: 25
+```
+
+
+
+## 5. Reading Other Primitive Types
+
+### 5.1 nextLong()
+
+```java
+long salary = sc.nextLong();
+```
+
+### 5.2 nextDouble()
+
+```java
+double price = sc.nextDouble();
+```
+
+### 5.3 nextBoolean()
+
+```java
+boolean isActive = sc.nextBoolean();
+```
+
+Scanner automatically converts input to the requested type.
+
+
+
+## 6. Reading String Input (Word vs Line)
+
+### 6.1 next() for single word
+
+`next()` reads input until space.
+
+```java
+String name = sc.next();
+```
+
+If input is:
+
+```
+Shiva Srivastava
+```
+
+Then `next()` reads only:
+
+```
+Shiva
+```
+
+
+
+### 6.2 nextLine() for full line
+
+`nextLine()` reads the entire line including spaces.
+
+```java
+String fullName = sc.nextLine();
+```
+
+If input is:
+
+```
+Shiva Srivastava
+```
+
+Then it reads full line.
+
+
+
+## 7. Very Common Issue: nextInt() + nextLine() Problem
+
+This is the most common Scanner confusion.
+
+Example:
+
+```java
+int age = sc.nextInt();
+String name = sc.nextLine();
+```
+
+Problem:
+
+* `nextInt()` reads only number
+* newline remains in buffer
+* `nextLine()` immediately consumes that newline and returns empty string
+
+Fix:
+
+```java
+int age = sc.nextInt();
+sc.nextLine(); // consume leftover newline
+String name = sc.nextLine();
+```
+
+This is mandatory when mixing `nextInt()` and `nextLine()`.
+
+
+
+## 8. Input Validation and Exceptions
+
+If user enters invalid input type, Scanner throws:
+
+* `InputMismatchException`
+
+Example: expecting int but user enters "abc".
+
+Best practice for safer input:
+
+```java
+if (sc.hasNextInt()) {
+    int n = sc.nextInt();
+} else {
+    System.out.println("Please enter a valid number");
+}
+```
+
+This avoids runtime exception.
+
+
+
+## 9. Using Scanner with Loops
+
+Example: Keep reading numbers until user enters 0
+
+```java
+Scanner sc = new Scanner(System.in);
+
+while (true) {
+    int n = sc.nextInt();
+    if (n == 0) break;
+    System.out.println("You entered: " + n);
+}
+```
+
+Used in many interactive programs.
+
+
+
+## 10. Closing Scanner (Important)
+
+Always close scanner when done:
+
+```java
+sc.close();
+```
+
+But note:
+If you close a Scanner on `System.in`, you cannot read input again from `System.in` in the same program.
+
+So in small programs, closing is fine.
+In long-running apps, handle input streams carefully.
+
+
+## 11. Summary
+
+* `Scanner` is in `java.util` and used for reading input.
+* It supports many data types using methods like `nextInt()`, `nextDouble()`, `nextBoolean()`.
+* `next()` reads one word, `nextLine()` reads full line.
+* Mixing `nextInt()` and `nextLine()` requires consuming newline using `sc.nextLine()`.
+* Use `hasNextInt()` and similar methods for validation.
+* Close Scanner carefully when using `System.in`.
+
+Written By: <a href="https://www.linkedin.com/in/shivasrivastava1/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer">Shiva Srivastava</a>
