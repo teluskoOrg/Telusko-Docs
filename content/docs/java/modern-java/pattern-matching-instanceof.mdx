@@ -1,0 +1,353 @@
+---
+title: Pattern Matching InstanceOf
+---
+
+<Steps>
+
+
+**Pattern matching for instanceof**, introduced as a **preview feature in Java 14-15** and **standardized in Java 16**, modernizes how developers perform type checks and casts in Java. This feature eliminates the repetitive pattern of checking a type with `instanceof`, casting it, and then using it, reducing boilerplate code and making Java programs more concise, readable, and less error-prone.
+
+Before pattern matching, the `instanceof` operator was used to test whether an object is an instance of a particular class, subclass, or interface. It returns a boolean value (`true` or `false`).
+
+
+## What is `instanceof`?
+
+The `instanceof` operator checks whether an object is:
+
+* An instance of a specific class
+* An instance of a subclass (inheritance)
+* An implementation of an interface
+
+### Syntax
+
+```java
+objectReference instanceof ClassName
+```
+
+### Returns
+
+* `true` → If object is an instance of the specified type
+* `false` → If object is not an instance or is `null`
+
+
+---
+
+
+## Basic Examples
+
+### 1. Class Check
+
+```java
+MyObject obj = new MyObject();
+System.out.println(obj instanceof MyObject); // true
+```
+
+
+### 2. Inheritance Check
+
+```java
+class Bird {}
+class Eagle extends Bird {}
+
+Eagle eagle = new Eagle();
+
+System.out.println(eagle instanceof Bird);  // true
+System.out.println(eagle instanceof Eagle); // true
+
+Bird bird = new Bird();
+System.out.println(bird instanceof Eagle);  // false
+```
+
+* A subclass object is an instance of its superclass
+* A superclass object is not an instance of its subclass
+
+
+### 3. Null Safety
+
+```java
+Eagle eagle = null;
+
+System.out.println(eagle instanceof Bird);  // false
+```
+
+`instanceof` automatically handles null, no need for explicit `!= null`.
+
+
+### 4. Interface Check
+
+```java
+interface Bird {}
+class Eagle implements Bird {}
+
+Eagle eagle = new Eagle();
+System.out.println(eagle instanceof Bird); // true
+```
+
+
+---
+
+
+## The Problem with Traditional Approach
+
+Before pattern matching, using `instanceof` required three steps:
+
+1. Type check
+2. Explicit cast
+3. Use the object
+
+```java
+if (obj instanceof Dog) {
+    Dog dog = (Dog) obj;
+    dog.bark();
+}
+```
+
+## Problems
+
+* Type name repeated multiple times
+* Explicit casting required
+* Verbose and cluttered
+* Error-prone (wrong cast, typos)
+* Boilerplate-heavy
+
+
+---
+
+
+## Pattern Matching for `instanceof`
+
+Pattern matching combines **type check + variable declaration + cast** into one step.
+
+## New Syntax
+
+```java
+if (objectReference instanceof ClassName variableName) {
+    // variableName is already casted
+}
+```
+
+
+### Comparison: Before and After
+
+**Before**
+
+```java
+if (obj instanceof Dog) {
+    Dog dog = (Dog) obj;
+    dog.bark();
+}
+```
+
+**After (Modern Java)**
+
+```java
+if (obj instanceof Dog dog) {
+    dog.bark(); // No cast needed
+}
+```
+
+**Benefits**
+
+* Type mentioned only once
+* No explicit cast
+* Cleaner and shorter
+* Safer and more readable
+
+
+### Practical Example
+
+```java
+public static void printAnimalSound(Object obj) {
+    if (obj instanceof Dog dog) {
+        dog.bark();
+    } else if (obj instanceof Cat cat) {
+        cat.meow();
+    }
+}
+```
+
+* No casting
+* No repetition
+* Clear intent
+
+
+---
+
+
+## How Pattern Matching Works?
+
+### Variable Scope
+
+Pattern variables are only available where the compiler guarantees the type match succeeded.
+
+```java
+if (obj instanceof String str) {
+    System.out.println(str.length()); // OK
+}
+// str not accessible here
+```
+
+
+### Flow Scoping
+
+The compiler intelligently extends scope when safe.
+
+```java
+if (!(obj instanceof String str)) {
+    return;
+}
+
+System.out.println(str.length()); // OK
+```
+
+Since the method exits if not a `String`, the compiler guarantees `str` exists afterward.
+
+
+---
+
+
+## Logical Operators with Pattern Matching
+
+### Using AND (`&&`) – Supported
+
+```java
+if (obj instanceof String str && str.length() > 5) {
+    System.out.println("Long string: " + str);
+}
+```
+
+* Pattern variable available on right side
+* Safe and clean
+
+
+### Using OR (`||`) – Not Allowed
+
+```java
+if (obj instanceof String str || obj instanceof Integer num) {
+    // Cannot use str or num here
+}
+```
+
+* Compiler error
+Because only one condition may be true, type is not guaranteed.
+
+
+### Negation Pattern
+
+```java
+if (!(obj instanceof String str)) {
+    return;
+}
+
+System.out.println(str.length());
+```
+
+* Very clean and recommended pattern
+
+
+---
+
+
+## Before vs After Comparison
+
+### Before Pattern Matching
+
+```java
+if (shape instanceof Circle) {
+    Circle circle = (Circle) shape;
+    System.out.println(circle.radius);
+}
+```
+
+### After Pattern Matching
+
+```java
+if (shape instanceof Circle circle) {
+    System.out.println(circle.radius);
+}
+```
+
+### Improvements
+
+* Explicit casts removed
+* Reduced repetition
+* Cleaner structure
+* Less error-prone
+
+
+---
+
+
+## Best Practices
+
+### Use Meaningful Variable Names
+
+```java
+if (shape instanceof Circle circle) { }
+```
+
+Avoid:
+
+```java
+if (shape instanceof Circle c) { }
+```
+
+
+### Use Early Returns
+
+Cleaner and flatter code:
+
+```java
+if (!(obj instanceof User user)) {
+    return;
+}
+```
+
+
+---
+
+
+## Limitations
+
+### Cannot Be Used with Primitive Types
+
+```java
+int x = 10;
+// x instanceof Integer ❌ Not allowed
+```
+
+Only works with reference types.
+
+
+### Pattern Variables Are Effectively Final
+
+```java
+if (obj instanceof String str) {
+    // str = "New"; ❌ Not allowed
+}
+```
+
+They cannot be reassigned.
+
+
+---
+
+
+![Matching_Patterns](https://dyz1pdcuffwr5.cloudfront.net/Java/modern-java/pattern_matching.png)
+
+
+---
+
+
+## Summary 
+
+* Pattern matching for `instanceof` simplifies type checking by combining the type test and casting into a single step.
+* It removes unnecessary boilerplate code and eliminates explicit casting.
+* The feature improves readability and reduces the chances of casting errors.
+* Pattern variables are only available where the type check is guaranteed to be true, ensuring safety.
+* It is an important modern Java feature that integrates well with records, sealed classes, and switch expressions.
+
+
+</Steps>
+
+Written By: <a href="https://www.linkedin.com/in/muskangarg03/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer"> Muskan Garg <ExternalLink className="w-4 h-4" /></a>
