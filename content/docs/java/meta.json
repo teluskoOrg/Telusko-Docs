@@ -29,7 +29,7 @@
         "DISABLED-stream-api",
 
         "DISABLED-concurrency-advanced",
-        "DISABLED-jvm-internals",
+        "jvm-internals",
         "nio",
         "modern-java",
 

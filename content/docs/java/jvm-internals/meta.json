@@ -6,6 +6,6 @@
         "jit-compiler.mdx",
         "garbage-collector-types.mdx",
         "memory-leaks.mdx",
-        "jvm-performance-tuning.mdx"
+        "DISABLED-jvm-performance-tuning.mdx"
     ]
 }
