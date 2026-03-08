@@ -1,0 +1,344 @@
+---
+title: Garbage Collector Types
+---
+
+<Steps>
+
+
+Garbage Collection (GC) in Java is the automatic process of reclaiming heap memory occupied by objects that are no longer reachable. Unlike manual memory management in C or C++, Java delegates memory cleanup to the JVM, reducing memory leaks, dangling pointers, and segmentation faults.
+
+GC is part of the JVM’s memory management system and plays a critical role in application performance, scalability, and responsiveness.
+
+
+## What is Garbage Collection?
+
+Garbage Collection is the process of:
+
+1. Identifying unreachable objects
+2. Reclaiming memory used by those objects
+3. Optionally compacting memory to reduce fragmentation
+
+Example:
+
+```java
+public class GCExample {
+    public static void main(String[] args) {
+        User user = new User("Alice");  // Allocated on Heap
+        user = null;                    // Now unreachable
+
+        System.gc(); // Suggests GC (not guaranteed)
+    }
+}
+```
+
+The object becomes eligible for GC once no active reference points to it.
+
+
+---
+
+
+## Core GC Concepts
+
+### 1. Reachability
+
+An object is eligible for GC if it is not reachable from GC Roots.
+
+GC Roots include:
+
+* Local variables on the stack
+* Static fields
+* Active threads
+* JNI references
+
+Example:
+
+```java
+public class ReachabilityExample {
+    static User staticUser = new User("Bob");
+
+    public static void main(String[] args) {
+        User localUser = new User("Alice");
+        User temp = new User("Charlie");
+
+        temp = null; // Eligible for GC
+    }
+}
+```
+
+Only objects reachable from roots are preserved.
+
+
+### 2. Generational Hypothesis
+
+The JVM is based on the observation that:
+
+Most objects die young.
+
+To optimize for this, the heap is divided into generations:
+
+Heap Structure:
+
+* Young Generation
+
+  * Eden
+  * Survivor 0
+  * Survivor 1
+
+* Old Generation (Tenured)
+
+Young generation is collected frequently and quickly.
+Old generation is collected less often.
+
+
+### 3. Types of GC Events
+
+Minor GC
+
+* Collects Young Generation
+* Fast and frequent
+
+Major GC
+
+* Collects Old Generation
+* Slower
+
+Full GC
+
+* Collects entire heap (Young + Old)
+* Slowest
+* Causes full application pause
+
+
+### 4. Stop-The-World (STW)
+
+During certain GC phases, application threads are paused.
+
+Application Running → STW Pause → GC → Resume
+
+Reducing pause time is critical for low-latency systems.
+
+
+---
+
+
+## Object Lifecycle in Generational GC
+
+1. Objects are created in Eden space.
+2. When Eden fills, Minor GC runs.
+3. Surviving objects move to Survivor spaces.
+4. After surviving multiple cycles, objects are promoted to Old Generation.
+
+Example:
+
+```java
+for (int i = 0; i < 1000; i++) {
+    User user = new User("User" + i);
+}
+```
+
+Most objects die in Eden and never reach Old Generation.
+
+
+---
+
+
+![Garbage_Collection_Algorithms](https://dyz1pdcuffwr5.cloudfront.net/Java/jvm-internals/garbage_algorithms.png)
+
+
+---
+
+
+## Types of Garbage Collectors in Java
+
+Java provides multiple GC implementations optimized for different goals.
+
+### 1. Serial GC
+
+Single-threaded collector. Performs all GC work using one thread.
+
+Characteristics:
+
+* Stop-The-World for Young and Old
+* Uses Copying (Young) and Mark-Sweep-Compact (Old)
+* Minimal overhead
+
+Use Case:
+
+* Small heaps
+* Single-core systems
+* Client applications
+
+Enable:
+
+```bash
+java -XX:+UseSerialGC MyApp
+```
+
+Limitation:
+Not suitable for large or latency-sensitive systems.
+
+
+### 2. Parallel GC (Throughput Collector)
+
+Multi-threaded version of Serial GC.
+
+Characteristics:
+
+* Stop-The-World
+* High throughput
+* Uses multiple CPU cores
+* Default in Java 8
+
+Use Case:
+
+* Batch processing
+* CPU-intensive applications
+* Throughput-oriented systems
+
+Enable:
+
+```bash
+java -XX:+UseParallelGC MyApp
+```
+
+Strength:
+Maximizes overall application work.
+
+Weakness:
+Long pause times.
+
+
+### 3. CMS (Concurrent Mark Sweep) – Deprecated
+
+Designed to reduce pause times.
+
+Characteristics:
+
+* Concurrent marking and sweeping
+* Shorter STW pauses
+* No compaction (can cause fragmentation)
+* Removed in Java 14
+
+Use Case (historical):
+
+* Low-latency web applications
+
+Replaced by G1 GC.
+
+
+### 4. G1 GC (Garbage-First)
+
+Default GC in Java 9+.
+
+Divides heap into small regions instead of fixed generations.
+
+Characteristics:
+
+* Predictable pause times
+* Concurrent marking
+* Region-based collection
+* Compacts memory
+* Handles large heaps efficiently
+
+Enable:
+
+```bash
+java -XX:+UseG1GC MyApp
+```
+
+Set pause goal:
+
+```bash
+java -XX:MaxGCPauseMillis=200 MyApp
+```
+
+Best for:
+
+* Most production systems
+* Large heaps
+* Balanced throughput and latency
+
+
+### 5. ZGC (Z Garbage Collector)
+
+Ultra-low latency collector introduced in Java 11.
+
+Characteristics:
+
+* Pause times typically &lt 10ms
+* Pause time independent of heap size
+* Fully concurrent
+* Scales to multi-terabyte heaps
+
+Enable:
+
+```bash
+java -XX:+UseZGC MyApp
+```
+
+Best for:
+
+* Financial systems
+* Real-time processing
+* Very large heaps
+
+Trade-off:
+Higher CPU and memory overhead.
+
+
+### 6. Shenandoah GC
+
+Low-latency collector similar to ZGC.
+
+Characteristics:
+
+* Concurrent evacuation
+* Pause times independent of heap size
+* Designed for large heaps
+
+Enable:
+
+```bash
+java -XX:+UseShenandoahGC MyApp
+```
+
+Used in:
+
+* Large-scale, low-latency systems
+
+
+### 7. Epsilon GC
+
+No-op collector.
+
+Characteristics:
+
+* Performs no garbage collection
+* Allocates memory until exhausted
+
+Enable:
+
+```bash
+java -XX:+UseEpsilonGC MyApp
+```
+
+Used for:
+
+* Performance testing
+* Short-lived applications
+  
+
+---
+
+
+## Summary
+
+* Garbage Collection is the core of Java’s automatic memory management, using reachability analysis and generational design to efficiently reclaim unused heap memory.
+* Different garbage collectors are optimized for specific goals, such as high throughput (Parallel GC), balanced performance (G1), ultra-low latency (ZGC, Shenandoah), or simplicity for small applications (Serial GC).
+* Selecting the appropriate collector depends on application requirements like heap size, latency sensitivity, and workload type.
+* A clear understanding of GC behavior, pause times, and heap tuning is essential for designing scalable and high-performance Java applications.
+
+
+</Steps>
+
+Written By: <a href="https://www.linkedin.com/in/muskangarg03/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer"> Muskan Garg <ExternalLink className="w-4 h-4" /></a>

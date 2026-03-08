@@ -1,0 +1,243 @@
+---
+title: Virtual Threads
+---
+
+<Steps>
+
+
+## Introduction
+
+Virtual threads are a major enhancement to Java’s concurrency model, introduced as a preview feature in Java 19 and finalized in Java 21 under Project Loom.
+
+They allow developers to create millions of lightweight threads while writing simple, synchronous-style code. Virtual threads combine:
+
+* The simplicity of traditional blocking code
+* The scalability of asynchronous/reactive systems
+
+This makes high-concurrency programming significantly easier and more accessible.
+
+
+---
+
+
+## The Problem with Platform Threads
+
+### What Are Platform Threads?
+
+Traditionally, every Java `Thread` maps 1:1 to an operating system (OS) thread. These are called platform threads.
+
+```java
+Thread thread = new Thread(() -> {
+    System.out.println("Running on platform thread");
+});
+thread.start();
+```
+
+**Characteristics**
+
+* Heavy (~1 MB stack per thread)
+* Managed and scheduled by the OS
+* Expensive to create and destroy
+* Limited scalability (thousands at most)
+
+
+### Scalability Issues
+
+When handling large numbers of concurrent tasks (e.g., web requests):
+
+* Memory exhaustion (each thread consumes significant memory)
+* Excessive context switching
+* Thread creation overhead
+* Blocked threads waste system resources
+
+Example problem pattern:
+
+```java
+while (true) {
+    Socket client = server.accept();
+    new Thread(() -> handleRequest(client)).start();
+}
+```
+
+Each request creates a new platform thread which is not scalable.
+
+
+---
+
+
+## Traditional Workarounds (Before Virtual Threads)
+
+### 1. Thread Pools
+
+```java
+ExecutorService executor = Executors.newFixedThreadPool(100);
+executor.submit(() -> handleRequest(client));
+```
+
+Limits thread count, but scalability is still capped.
+
+
+### 2. Asynchronous Programming
+
+```java
+CompletableFuture.supplyAsync(() -> readFromDatabase())
+    .thenApply(data -> processData(data))
+    .thenAccept(result -> sendResponse(result));
+```
+
+Better resource usage, but code becomes complex.
+
+
+### 3. Reactive Programming
+
+Highly scalable, but:
+
+* Complex programming model
+* Harder debugging
+* Steep learning curve
+
+
+### The Trade-off
+
+Simple blocking code → Poor scalability
+Scalable async code → High complexity
+
+Virtual threads remove this trade-off.
+
+
+---
+
+
+## What Are Virtual Threads?
+
+Virtual threads are lightweight, JVM-managed threads.
+
+They:
+
+* Use very little memory (few KB)
+* Are scheduled by the JVM, not the OS
+* Can scale to millions
+* Use the same `Thread` API
+
+Example:
+
+```java
+Thread.startVirtualThread(() -> {
+    System.out.println("Running on a virtual thread");
+});
+```
+
+
+---
+
+
+## How Virtual Threads Work?
+
+### Carrier Threads
+
+The JVM maintains a small pool of platform threads called carrier threads (usually equal to CPU cores).
+
+Virtual threads run on top of these carrier threads.
+
+
+### Mounting and Unmounting
+
+Virtual threads are mounted and unmounted from carrier threads:
+
+1. Virtual thread starts → mounted on carrier thread
+2. Blocking operation occurs (I/O, sleep) → unmounted
+3. Carrier thread becomes free
+4. When ready → virtual thread remounted
+
+This enables massive scalability.
+
+Key idea: The OS only sees carrier threads, not virtual threads.
+
+
+### Operations That Cause Unmounting
+
+* File I/O
+* Network I/O
+* `Thread.sleep()`
+* `Object.wait()`
+* `BlockingQueue.take()`
+* `join()`
+
+Example:
+
+```java
+Thread.startVirtualThread(() -> {
+    readFromDatabase();   // unmount
+    Thread.sleep(100);    // unmount
+    callExternalApi();    // unmount
+});
+```
+
+
+---
+
+
+## Creating Virtual Threads
+
+### 1. Direct Creation
+
+```java
+Thread.startVirtualThread(() -> {
+    System.out.println("Hello");
+});
+```
+
+### 2. Using Thread Builder
+
+```java
+Thread.ofVirtual()
+      .name("my-virtual-thread")
+      .start(() -> doWork());
+```
+
+### 3. Virtual Thread Executor (Recommended)
+
+```java
+try (ExecutorService executor =
+         Executors.newVirtualThreadPerTaskExecutor()) {
+
+    executor.submit(() -> handleTask());
+}
+```
+
+Each task gets its own virtual thread.
+
+
+![Virtual_Threads_Usage](https://dyz1pdcuffwr5.cloudfront.net/Java/modern-java/virtual_threads.png)
+
+
+---
+
+
+## Comparison Overview
+
+| Feature      | Platform Threads | Virtual Threads |
+| ------------ | ---------------- | --------------- |
+| OS Mapping   | 1:1              | Many-to-few     |
+| Memory Usage | High (~1 MB)     | Low (few KB)    |
+| Scalability  | Thousands        | Millions        |
+| Code Style   | Blocking         | Blocking        |
+| Best For     | CPU-bound        | I/O-bound       |
+
+
+
+---
+
+
+## Summary
+
+* Virtual threads are lightweight JVM-managed threads designed for high scalability.
+* They are not tied permanently to OS threads and can efficiently mount and unmount from carrier threads.
+* They allow applications to handle thousands or even millions of concurrent tasks using simple blocking code.
+* Virtual threads are best suited for I/O-bound workloads and do not improve CPU-bound performance.
+* Virtual threads simplify concurrent programming while enabling cloud-scale application design.
+
+
+</Steps>
+
+Written By: <a href="https://www.linkedin.com/in/muskangarg03/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer"> Muskan Garg <ExternalLink className="w-4 h-4" /></a>
