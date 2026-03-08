@@ -1,0 +1,365 @@
+---
+title: Try Catch
+---
+
+## 1. Introduction
+
+In Java, the `try-catch` block is used to **handle exceptions** so that the program does not terminate abruptly.
+
+When risky code is placed inside a `try` block, Java watches that code for exceptions.  
+If an exception occurs, control immediately moves to the matching `catch` block, where the error can be handled.
+
+This allows the program to:
+
+- handle runtime problems gracefully
+- show user-friendly messages
+- continue execution when possible
+- avoid sudden crashes
+
+
+
+## 2. Why Try-Catch Is Needed
+
+Without exception handling, if an exception occurs, the JVM stops the program.
+
+Example:
+
+```java
+public class Demo {
+    public static void main(String[] args) {
+        int a = 10;
+        int b = 0;
+
+        int result = a / b;
+        System.out.println(result);
+
+        System.out.println("Program ended");
+    }
+}
+````
+
+Output:
+
+```text
+Exception in thread "main" java.lang.ArithmeticException: / by zero
+```
+
+The line `"Program ended"` never executes because the program crashes.
+
+Now with `try-catch`, the program can handle the error and continue.
+
+
+
+## 3. Basic Syntax of Try-Catch
+
+```java
+try {
+    // risky code
+} catch (ExceptionType e) {
+    // handling code
+}
+```
+
+Explanation:
+
+* `try` block contains code that may throw an exception
+* `catch` block handles that exception
+* `e` is the exception object
+
+
+
+## 4. First Example of Try-Catch
+
+```java
+public class Demo {
+    public static void main(String[] args) {
+        int a = 10;
+        int b = 0;
+
+        try {
+            int result = a / b;
+            System.out.println(result);
+        } catch (ArithmeticException e) {
+            System.out.println("Cannot divide by zero");
+        }
+
+        System.out.println("Program ended safely");
+    }
+}
+```
+
+Output:
+
+```text
+Cannot divide by zero
+Program ended safely
+```
+
+Here:
+
+* exception occurs inside `try`
+* JVM jumps to `catch`
+* program continues after catch block
+
+
+
+## 5. How Try-Catch Works Internally
+
+The flow is:
+
+* Java starts executing code inside `try`
+* If no exception occurs, `catch` block is skipped
+* If exception occurs, remaining code in `try` is skipped
+* Matching `catch` block executes
+* Program continues after `catch`
+
+Important point: once exception occurs, the rest of the `try` block does not run.
+
+Example:
+
+```java
+try {
+    System.out.println("Line 1");
+    int x = 10 / 0;
+    System.out.println("Line 2");
+} catch (ArithmeticException e) {
+    System.out.println("Exception handled");
+}
+```
+
+Output:
+
+```text
+Line 1
+Exception handled
+```
+
+`Line 2` is skipped.
+
+
+
+## 6. Exception Object in Catch Block
+
+The variable inside `catch` stores the exception object.
+
+Example:
+
+```java
+catch (ArithmeticException e) {
+    System.out.println(e);
+}
+```
+
+Possible output:
+
+```text
+java.lang.ArithmeticException: / by zero
+```
+
+Useful methods of exception object:
+
+```java
+e.getMessage();     // error message only
+e.toString();       // exception type + message
+e.printStackTrace(); // full stack trace
+```
+
+Example:
+
+```java
+catch (ArithmeticException e) {
+    System.out.println("Message: " + e.getMessage());
+}
+```
+
+Output:
+
+```text
+Message: / by zero
+```
+
+
+
+## 7. Catching Different Types of Exceptions
+
+A `catch` block handles only the exception type it is designed for.
+
+Example:
+
+```java
+public class Demo {
+    public static void main(String[] args) {
+        try {
+            int[] arr = {1, 2, 3};
+            System.out.println(arr[5]);
+        } catch (ArrayIndexOutOfBoundsException e) {
+            System.out.println("Invalid array index");
+        }
+
+        System.out.println("Program continues");
+    }
+}
+```
+
+Output:
+
+```text
+Invalid array index
+Program continues
+```
+
+
+
+## 8. Generic Exception Catching
+
+You can catch a general `Exception` type:
+
+```java
+try {
+    int x = 10 / 0;
+} catch (Exception e) {
+    System.out.println("Some exception occurred");
+}
+```
+
+This works because `ArithmeticException` is a subclass of `Exception`.
+
+But best practice:
+Catch the **specific exception** whenever possible.
+
+Why:
+
+* better readability
+* better debugging
+* more precise handling
+
+
+
+## 9. Common Mistakes in Try-Catch
+
+### 9.1 Writing Wrong Catch Type
+
+```java
+try {
+    int x = 10 / 0;
+} catch (ArrayIndexOutOfBoundsException e) {
+    System.out.println("Handled");
+}
+```
+
+This will not handle the exception because the thrown exception is `ArithmeticException`.
+
+
+
+### 9.2 Putting Too Much Code in Try Block
+
+Bad style:
+
+```java
+try {
+    // many unrelated lines
+}
+```
+
+Good style:
+Put only the risky code inside the `try` block.
+This makes debugging easier.
+
+
+
+### 9.3 Using Exception for Normal Logic
+
+Do not use `try-catch` as a replacement for proper conditions.
+
+Bad example:
+
+```java
+try {
+    int result = 10 / b;
+} catch (Exception e) {
+    System.out.println("b was zero");
+}
+```
+
+Better:
+
+```java
+if (b != 0) {
+    int result = 10 / b;
+} else {
+    System.out.println("b was zero");
+}
+```
+
+Use exceptions for **exceptional situations**, not normal control flow.
+
+
+
+## 10. Nested Try-Catch
+
+Java allows `try-catch` inside another `try` or inside methods that already use exception handling.
+
+Example:
+
+```java
+public class Demo {
+    public static void main(String[] args) {
+        try {
+            try {
+                int x = 10 / 0;
+            } catch (ArithmeticException e) {
+                System.out.println("Inner catch handled arithmetic error");
+            }
+
+            int[] arr = {1, 2};
+            System.out.println(arr[5]);
+        } catch (ArrayIndexOutOfBoundsException e) {
+            System.out.println("Outer catch handled array error");
+        }
+    }
+}
+```
+
+This is allowed, but should be used carefully because too much nesting reduces readability.
+
+
+
+## 11. Best Practices
+
+* Catch specific exceptions instead of generic `Exception`
+* Keep `try` block small
+* Print meaningful messages
+* Use `getMessage()` or `printStackTrace()` during debugging
+* Do not silently ignore exceptions
+* Do not use exceptions for normal decision making
+
+Bad practice:
+
+```java
+catch (Exception e) {
+}
+```
+
+This hides the problem.
+
+Better:
+
+```java
+catch (Exception e) {
+    System.out.println("Error: " + e.getMessage());
+}
+```
+
+
+
+## 12. Summary
+
+* `try-catch` is used to handle exceptions in Java.
+* Risky code is placed in `try`.
+* If exception occurs, matching `catch` block handles it.
+* Program can continue after handling.
+* The rest of the `try` block is skipped once exception occurs.
+* Catch specific exceptions whenever possible.
+* Use exception handling to build safe and stable programs.
+
+Written By: <a href="https://www.linkedin.com/in/shivasrivastava1/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer">Shiva Srivastava</a>

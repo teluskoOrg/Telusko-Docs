@@ -1,0 +1,296 @@
+---
+title: throw vs throws
+---
+
+## 1. Introduction
+
+In Java exception handling, the keywords **`throw`** and **`throws`** are used to work with exceptions, but they serve different purposes.
+
+Both keywords are related to exception propagation, but they operate at different levels of the program.
+
+- `throw` → used to **explicitly throw an exception object**
+- `throws` → used to **declare that a method may throw an exception**
+
+Understanding the difference between these two keywords is important for writing robust and maintainable Java programs.
+
+
+
+## 2. What is `throw`
+
+The `throw` keyword is used to **explicitly create and throw an exception object** inside a method or block of code.
+
+When `throw` is executed:
+
+- an exception object is created
+- the exception is thrown
+- program execution stops at that line
+- control transfers to the nearest exception handler
+
+Syntax:
+
+```java
+throw new ExceptionType("message");
+````
+
+Example:
+
+```java
+public class Demo {
+
+    public static void main(String[] args) {
+
+        int age = 15;
+
+        if (age < 18) {
+            throw new ArithmeticException("Not eligible to vote");
+        }
+
+        System.out.println("Eligible");
+    }
+}
+```
+
+Output:
+
+```text
+Exception in thread "main" java.lang.ArithmeticException: Not eligible to vote
+```
+
+Explanation:
+
+* If the condition is true, the program throws an exception manually.
+
+
+
+## 3. When to Use `throw`
+
+The `throw` keyword is typically used when:
+
+* validating input
+* enforcing business rules
+* detecting illegal program states
+* manually triggering exceptions
+
+Example: validating user input
+
+```java
+public class Demo {
+
+    static void withdraw(int amount) {
+
+        if (amount <= 0) {
+            throw new IllegalArgumentException("Invalid amount");
+        }
+
+        System.out.println("Withdrawal successful");
+    }
+
+    public static void main(String[] args) {
+        withdraw(-100);
+    }
+}
+```
+
+
+
+## 4. What is `throws`
+
+The `throws` keyword is used in **method declarations**.
+
+It tells the compiler and the caller that the method **may throw certain exceptions**.
+
+Syntax:
+
+```java
+returnType methodName() throws ExceptionType
+```
+
+Example:
+
+```java
+import java.io.FileReader;
+
+public class Demo {
+
+    public static void readFile() throws Exception {
+        FileReader f = new FileReader("data.txt");
+    }
+
+    public static void main(String[] args) throws Exception {
+        readFile();
+    }
+}
+```
+
+Explanation:
+
+* `readFile()` may throw an exception.
+* The method declares this using `throws`.
+
+
+
+## 5. Why `throws` is Needed
+
+Some exceptions are **checked exceptions**.
+
+Checked exceptions must either be:
+
+* handled using `try-catch`, or
+* declared using `throws`
+
+Example:
+
+```java
+import java.io.FileReader;
+
+public class Demo {
+
+    public static void readFile() throws Exception {
+        FileReader f = new FileReader("data.txt");
+    }
+}
+```
+
+If `throws` is removed, the program will not compile because the compiler forces handling.
+
+
+
+## 6. Example Showing `throw` and `throws` Together
+
+Often both keywords are used in the same program.
+
+Example:
+
+```java
+public class Demo {
+
+    static void validate(int age) throws Exception {
+
+        if (age < 18) {
+            throw new Exception("Age must be 18 or above");
+        }
+
+        System.out.println("Access granted");
+    }
+
+    public static void main(String[] args) {
+
+        try {
+            validate(15);
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
+    }
+}
+```
+
+Explanation:
+
+* `throws` declares the method might throw an exception
+* `throw` actually throws the exception
+
+
+
+## 7. Key Differences Between `throw` and `throws`
+
+| Feature  | throw                                  | throws                                 |
+| -------- | -------------------------------------- | -------------------------------------- |
+| Purpose  | Used to throw an exception object      | Used to declare exceptions             |
+| Location | Inside method body                     | Method declaration                     |
+| Usage    | Throws a single exception object       | Can declare multiple exceptions        |
+| Syntax   | `throw new Exception()`                | `method() throws Exception`            |
+| Function | Transfers control to exception handler | Warns caller about possible exceptions |
+
+
+
+## 8. Multiple Exceptions with `throws`
+
+A method can declare multiple exceptions.
+
+Example:
+
+```java
+public void processFile() throws IOException, SQLException {
+    // code
+}
+```
+
+This means the method may throw:
+
+* `IOException`
+* `SQLException`
+
+The caller must handle or propagate them.
+
+
+
+## 9. Throwing Custom Exceptions
+
+The `throw` keyword is also used when throwing **custom exceptions**.
+
+Example:
+
+```java
+class InvalidAgeException extends Exception {
+
+    InvalidAgeException(String message) {
+        super(message);
+    }
+}
+
+public class Demo {
+
+    static void checkAge(int age) throws InvalidAgeException {
+
+        if (age < 18) {
+            throw new InvalidAgeException("Age must be 18 or above");
+        }
+    }
+}
+```
+
+This is commonly used in enterprise applications.
+
+
+
+## 10. Important Rules
+
+Important points about `throw` and `throws`:
+
+* `throw` always throws **one exception object at a time**
+* `throws` can declare **multiple exceptions**
+* `throw` is used inside methods
+* `throws` is used in method signatures
+* checked exceptions must be handled or declared
+* unchecked exceptions do not require declaration
+
+
+
+## 11. Best Practices
+
+Good practices when using exceptions:
+
+* Use `throw` when enforcing business rules
+* Use `throws` to propagate checked exceptions
+* Avoid throwing generic `Exception`
+* Prefer specific exception classes
+* Always include meaningful error messages
+
+Example:
+
+```java
+throw new IllegalArgumentException("Age cannot be negative");
+```
+
+
+
+## 12. Summary
+
+* `throw` is used to explicitly throw an exception object.
+* `throws` is used to declare exceptions that a method may produce.
+* `throw` appears inside method bodies.
+* `throws` appears in method signatures.
+* Both keywords are important for managing exception flow in Java programs.
+* Proper usage improves program reliability and error handling.
+
+Written By: <a href="https://www.linkedin.com/in/shivasrivastava1/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer">Shiva Srivastava</a>

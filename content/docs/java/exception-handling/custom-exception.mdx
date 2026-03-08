@@ -1,0 +1,367 @@
+---
+title: Custom Exception
+---
+
+## 1. Introduction
+
+A **custom exception** in Java is a **user-defined exception class** created by developers to represent specific application errors.
+
+Java already provides many built-in exceptions such as:
+
+- `ArithmeticException`
+- `NullPointerException`
+- `IOException`
+
+However, in real applications we often need exceptions that represent **business rules or domain-specific problems**.
+
+Examples:
+
+- `InvalidAgeException`
+- `InsufficientBalanceException`
+- `InvalidOrderException`
+- `UserNotFoundException`
+
+Creating custom exceptions makes error handling **more meaningful, readable, and structured**.
+
+
+
+## 2. Why Custom Exceptions Are Needed
+
+Built-in exceptions describe general technical problems, but real applications often need **domain-specific error messages**.
+
+Example scenario:
+
+Bank system rule:
+
+- Withdrawal cannot exceed account balance.
+
+Using a built-in exception:
+
+```java
+throw new Exception("Error");
+````
+
+This is unclear.
+
+Better approach:
+
+```java
+throw new InsufficientBalanceException("Balance too low");
+```
+
+Now the exception clearly describes the problem.
+
+Advantages:
+
+* better readability
+* domain-specific error handling
+* cleaner architecture
+* easier debugging
+
+
+
+## 3. Creating a Custom Exception
+
+To create a custom exception, you need to create a class that **extends an existing exception class**.
+
+Usually we extend:
+
+```
+Exception
+```
+
+or
+
+```
+RuntimeException
+```
+
+Basic structure:
+
+```java
+class CustomExceptionName extends Exception {
+
+    CustomExceptionName(String message) {
+        super(message);
+    }
+}
+```
+
+Here:
+
+* `Exception` is the parent class
+* `super(message)` passes the message to the base exception class
+
+
+
+## 4. Simple Custom Exception Example
+
+Create a custom exception:
+
+```java
+class InvalidAgeException extends Exception {
+
+    InvalidAgeException(String message) {
+        super(message);
+    }
+}
+```
+
+Use it:
+
+```java
+public class Demo {
+
+    static void checkAge(int age) throws InvalidAgeException {
+
+        if (age < 18) {
+            throw new InvalidAgeException("Age must be 18 or above");
+        }
+
+        System.out.println("Access granted");
+    }
+
+    public static void main(String[] args) {
+
+        try {
+            checkAge(16);
+        } catch (InvalidAgeException e) {
+            System.out.println(e.getMessage());
+        }
+    }
+}
+```
+
+Output:
+
+```
+Age must be 18 or above
+```
+
+
+
+## 5. Custom Checked Exception
+
+If a custom exception extends:
+
+```
+Exception
+```
+
+it becomes a **checked exception**.
+
+This means:
+
+* the compiler forces handling
+* it must be handled using `try-catch` or declared with `throws`
+
+Example:
+
+```java
+class InvalidAgeException extends Exception {
+    InvalidAgeException(String message) {
+        super(message);
+    }
+}
+```
+
+This requires:
+
+```java
+throws InvalidAgeException
+```
+
+in the method signature.
+
+
+
+## 6. Custom Unchecked Exception
+
+If the custom exception extends:
+
+```
+RuntimeException
+```
+
+it becomes an **unchecked exception**.
+
+Example:
+
+```java
+class InvalidAgeException extends RuntimeException {
+
+    InvalidAgeException(String message) {
+        super(message);
+    }
+}
+```
+
+Now the compiler does **not force handling**.
+
+Example usage:
+
+```java
+if (age < 18) {
+    throw new InvalidAgeException("Age must be 18+");
+}
+```
+
+Unchecked exceptions are commonly used for **programming errors or invalid inputs**.
+
+
+
+## 7. Adding Multiple Constructors
+
+A custom exception class can have multiple constructors.
+
+Example:
+
+```java
+class InvalidAgeException extends Exception {
+
+    InvalidAgeException() {
+        super();
+    }
+
+    InvalidAgeException(String message) {
+        super(message);
+    }
+
+    InvalidAgeException(String message, Throwable cause) {
+        super(message, cause);
+    }
+}
+```
+
+This allows flexible exception creation.
+
+
+
+## 8. Real World Example: Bank Withdrawal
+
+Custom exception for insufficient balance.
+
+```java
+class InsufficientBalanceException extends Exception {
+
+    InsufficientBalanceException(String message) {
+        super(message);
+    }
+}
+```
+
+Usage:
+
+```java
+class BankAccount {
+
+    int balance = 5000;
+
+    void withdraw(int amount) throws InsufficientBalanceException {
+
+        if (amount > balance) {
+            throw new InsufficientBalanceException("Insufficient balance");
+        }
+
+        balance -= amount;
+        System.out.println("Withdrawal successful");
+    }
+}
+
+public class Demo {
+
+    public static void main(String[] args) {
+
+        BankAccount acc = new BankAccount();
+
+        try {
+            acc.withdraw(7000);
+        } catch (InsufficientBalanceException e) {
+            System.out.println(e.getMessage());
+        }
+    }
+}
+```
+
+Output:
+
+```
+Insufficient balance
+```
+
+
+
+## 9. Best Practices for Custom Exceptions
+
+When creating custom exceptions:
+
+* Use meaningful names
+* Follow naming convention ending with `Exception`
+* Provide clear error messages
+* Extend the correct parent class
+* Avoid unnecessary custom exceptions
+
+Example naming style:
+
+* `UserNotFoundException`
+* `PaymentFailedException`
+* `InvalidOrderException`
+
+
+
+## 10. Checked vs Unchecked Custom Exceptions
+
+| Type      | Base Class         | When to Use                         |
+| --------- | ------------------ | ----------------------------------- |
+| Checked   | `Exception`        | Recoverable situations              |
+| Unchecked | `RuntimeException` | Programming errors or invalid input |
+
+Example rule:
+
+* Business rule violations → checked
+* Developer mistakes → unchecked
+
+
+
+## 11. Advantages of Custom Exceptions
+
+Using custom exceptions improves code quality.
+
+Benefits:
+
+* clearer error meaning
+* domain-specific handling
+* better maintainability
+* improved debugging
+* cleaner architecture
+
+Example:
+
+Instead of:
+
+```
+Exception occurred
+```
+
+You get:
+
+```
+InsufficientBalanceException
+```
+
+This immediately explains the problem.
+
+
+
+## 12. Summary
+
+* Custom exceptions are user-defined exception classes.
+* They extend `Exception` or `RuntimeException`.
+* They represent application-specific problems.
+* Checked custom exceptions must be handled or declared.
+* Unchecked custom exceptions do not require explicit handling.
+* They improve readability, maintainability, and debugging of applications.
+
+Written By: <a href="https://www.linkedin.com/in/shivasrivastava1/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer">Shiva Srivastava</a>
+
+ 

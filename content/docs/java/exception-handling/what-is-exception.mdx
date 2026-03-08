@@ -1,0 +1,239 @@
+---
+title: What is Exception
+---
+
+## 1. Introduction
+
+An **exception** in Java is an **unexpected event that occurs during the execution of a program and disrupts the normal flow of instructions**.
+
+During normal execution, a program runs line by line. However, sometimes an abnormal situation occurs such as dividing by zero, accessing an invalid memory location, or attempting to read a non-existing file. When such situations arise, Java creates an **exception object** and stops the normal execution of the program.
+
+Instead of allowing the program to crash abruptly, Java provides a mechanism called **exception handling**, which allows developers to detect and handle these runtime problems gracefully.
+
+
+
+## 2. Example of an Exception
+
+Consider the following program:
+
+```java
+public class Demo {
+    public static void main(String[] args) {
+        int a = 10;
+        int b = 0;
+
+        int result = a / b;
+        System.out.println(result);
+    }
+}
+````
+
+Output:
+
+```
+Exception in thread "main" java.lang.ArithmeticException: / by zero
+```
+
+Explanation:
+
+* The program attempts to divide a number by zero.
+* The Java Virtual Machine detects this illegal operation.
+* An `ArithmeticException` object is created and thrown.
+* Since no handler exists, the program terminates.
+
+
+
+## 3. What Happens When an Exception Occurs
+
+When an exception occurs during execution, the following steps take place internally:
+
+1. The JVM detects an abnormal situation.
+2. It creates an object of the appropriate exception class.
+3. That exception object is **thrown**.
+4. The JVM searches for a matching **exception handler**.
+5. If a handler is found, the program continues.
+6. If no handler exists, the program terminates.
+
+This mechanism ensures that errors are not silently ignored and can be properly managed.
+
+
+
+## 4. Exception Object
+
+Every exception in Java is represented by an **object**.
+
+This object contains important information about the error, such as:
+
+* the type of exception
+* the error message
+* the stack trace showing where the error occurred
+
+For example, internally the JVM may create an object like this:
+
+```java
+new ArithmeticException("/ by zero");
+```
+
+This object is then thrown and propagated through the program until it is handled.
+
+
+
+## 5. Exception vs Error
+
+Java categorizes runtime problems into two main groups: **Exceptions** and **Errors**.
+
+| Feature  | Exception                               | Error                                |
+| -------- | --------------------------------------- | ------------------------------------ |
+| Meaning  | Problems that programs can recover from | Serious system problems              |
+| Handling | Can usually be handled by code          | Typically not handled                |
+| Source   | Program logic or external conditions    | JVM or system failure                |
+| Examples | ArithmeticException, IOException        | OutOfMemoryError, StackOverflowError |
+
+Errors usually indicate critical problems in the environment or JVM itself, whereas exceptions represent issues that application code can handle.
+
+
+
+## 6. Exception Hierarchy
+
+All exceptions in Java follow a structured inheritance hierarchy.
+
+At the top of the hierarchy is the class:
+
+```
+Throwable
+```
+
+This class has two major subclasses:
+
+* `Error`
+* `Exception`
+
+The `Exception` class is further divided into two major categories:
+
+* **Checked Exceptions**
+* **Unchecked Exceptions (Runtime Exceptions)**
+
+This hierarchy allows Java to organize different types of problems and manage them effectively.
+
+
+
+## 7. Checked Exceptions
+
+Checked exceptions are exceptions that are **checked at compile time**.
+
+The Java compiler forces the programmer to either:
+
+* handle the exception using `try-catch`, or
+* declare it using `throws`.
+
+Examples include:
+
+* `IOException`
+* `SQLException`
+* `FileNotFoundException`
+
+Example:
+
+```java
+FileReader reader = new FileReader("data.txt");
+```
+
+Since the file might not exist, the compiler requires the exception to be handled.
+
+
+
+## 8. Unchecked Exceptions
+
+Unchecked exceptions occur during **runtime**, and the compiler does not force the programmer to handle them.
+
+These exceptions usually occur because of logical errors in the program.
+
+Examples include:
+
+* `ArithmeticException`
+* `NullPointerException`
+* `ArrayIndexOutOfBoundsException`
+* `NumberFormatException`
+
+Example:
+
+```java
+int x = 10 / 0;
+```
+
+The compiler does not stop this code, but it fails during execution.
+
+
+
+## 9. Common Exceptions in Java
+
+Some of the most frequently encountered exceptions are:
+
+| Exception                      | Cause                               |
+| ------------------------------ | ----------------------------------- |
+| ArithmeticException            | division by zero                    |
+| NullPointerException           | accessing a null reference          |
+| ArrayIndexOutOfBoundsException | invalid array index                 |
+| NumberFormatException          | invalid string-to-number conversion |
+| IOException                    | input/output failure                |
+
+Example:
+
+```java
+int[] arr = new int[3];
+System.out.println(arr[5]);
+```
+
+This produces an `ArrayIndexOutOfBoundsException`.
+
+
+
+## 10. Importance of Exception Handling
+
+Exception handling is essential for building reliable software systems.
+
+Without proper handling:
+
+* programs crash unexpectedly
+* users may lose data
+* systems become unstable
+
+By handling exceptions properly, developers can:
+
+* provide meaningful error messages
+* recover from failures
+* maintain application stability
+* prevent abrupt termination of programs
+
+
+
+## 11. Real World Analogy
+
+Exception handling can be compared to dealing with unexpected situations in real life.
+
+For example, when driving a car:
+
+* If everything goes normally, the journey continues smoothly.
+* If a tire punctures, you stop the car, fix the issue, and continue the journey.
+
+Similarly in programming:
+
+* A program runs normally.
+* If an error occurs, exception handling manages the issue.
+* The program can continue running safely.
+
+
+
+## 12. Summary
+
+An **exception** is an abnormal condition that occurs during program execution and interrupts the normal flow of instructions.
+
+Key points:
+
+* Exceptions are represented as objects.
+* The JVM creates and throws exception objects.
+* If an exception is not handled, the program terminates.
+* Exceptions are categorized into checked and unchecked types.
+* Proper exception handling helps create stable and reliable applications.
+
+Written By: <a href="https://www.linkedin.com/in/shivasrivastava1/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer">Shiva Srivastava</a>

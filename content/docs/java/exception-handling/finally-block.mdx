@@ -1,0 +1,312 @@
+---
+title: Finally Block
+---
+
+## 1. Introduction
+
+In Java exception handling, the **`finally` block** is used to execute code that must run **regardless of whether an exception occurs or not**.
+
+The `finally` block is typically used for **cleanup operations**, such as:
+
+- closing files
+- closing database connections
+- releasing resources
+- closing network sockets
+
+Because the `finally` block always executes (with very few exceptions), it ensures that important resources are properly released.
+
+
+
+## 2. Basic Syntax
+
+The `finally` block is written after a `try` block and optional `catch` block.
+
+```java
+try {
+    // risky code
+} catch (Exception e) {
+    // exception handling
+} finally {
+    // cleanup code
+}
+````
+
+Key points:
+
+* `finally` is optional.
+* It always executes after `try` and `catch`.
+* It executes even if an exception occurs.
+
+
+
+## 3. Execution Flow
+
+There are three possible scenarios when using `try`, `catch`, and `finally`.
+
+### Case 1: No Exception Occurs
+
+```java
+try {
+    System.out.println("Inside try");
+} catch (Exception e) {
+    System.out.println("Inside catch");
+} finally {
+    System.out.println("Inside finally");
+}
+```
+
+Output:
+
+```text
+Inside try
+Inside finally
+```
+
+Explanation:
+
+* No exception occurs
+* `catch` block is skipped
+* `finally` still runs
+
+
+
+### Case 2: Exception Occurs and Is Handled
+
+```java
+try {
+    int x = 10 / 0;
+} catch (ArithmeticException e) {
+    System.out.println("Exception handled");
+} finally {
+    System.out.println("Finally block executed");
+}
+```
+
+Output:
+
+```text
+Exception handled
+Finally block executed
+```
+
+Explanation:
+
+* Exception occurs
+* `catch` block handles it
+* `finally` executes afterward
+
+
+
+### Case 3: Exception Occurs but Not Handled
+
+```java
+try {
+    int[] arr = {1, 2, 3};
+    System.out.println(arr[5]);
+} finally {
+    System.out.println("Finally block executed");
+}
+```
+
+Output:
+
+```text
+Finally block executed
+Exception in thread "main" java.lang.ArrayIndexOutOfBoundsException
+```
+
+Explanation:
+
+* Exception occurs
+* No `catch` block exists
+* `finally` still executes
+* Program terminates afterward
+
+
+
+## 4. Using Try-Finally Without Catch
+
+Java allows `try` with `finally` even without `catch`.
+
+Example:
+
+```java
+try {
+    System.out.println("Inside try block");
+} finally {
+    System.out.println("Cleanup code executed");
+}
+```
+
+Output:
+
+```text
+Inside try block
+Cleanup code executed
+```
+
+This structure is commonly used when we want to ensure cleanup but do not need to handle the exception here.
+
+
+
+## 5. Real Example: Closing Resources
+
+Before Java introduced `try-with-resources`, the `finally` block was commonly used to close resources.
+
+Example:
+
+```java
+import java.io.FileReader;
+
+public class Demo {
+    public static void main(String[] args) throws Exception {
+        FileReader reader = null;
+
+        try {
+            reader = new FileReader("data.txt");
+            System.out.println("File opened");
+        } finally {
+            if (reader != null) {
+                reader.close();
+                System.out.println("File closed");
+            }
+        }
+    }
+}
+```
+
+The `finally` block guarantees that the file is closed.
+
+
+
+## 6. Finally with Return Statements
+
+Even if a `return` statement is used inside `try` or `catch`, the `finally` block still executes.
+
+Example:
+
+```java
+public class Demo {
+
+    static int test() {
+        try {
+            return 10;
+        } finally {
+            System.out.println("Finally executed");
+        }
+    }
+
+    public static void main(String[] args) {
+        System.out.println(test());
+    }
+}
+```
+
+Output:
+
+```text
+Finally executed
+10
+```
+
+Explanation:
+
+* `try` returns value
+* before returning, `finally` executes
+
+
+
+## 7. Finally with Exception
+
+Even when an exception occurs, `finally` executes.
+
+Example:
+
+```java
+public class Demo {
+
+    public static void main(String[] args) {
+        try {
+            int x = 10 / 0;
+        } finally {
+            System.out.println("Finally always runs");
+        }
+    }
+}
+```
+
+Output:
+
+```text
+Finally always runs
+Exception in thread "main" java.lang.ArithmeticException
+```
+
+
+
+## 8. When Finally May Not Execute
+
+There are rare situations where the `finally` block may not run:
+
+1. JVM crashes
+2. System shutdown
+3. `System.exit()` is called
+
+Example:
+
+```java
+try {
+    System.exit(0);
+} finally {
+    System.out.println("This will not run");
+}
+```
+
+Here the JVM stops immediately.
+
+
+
+## 9. Modern Alternative: Try-With-Resources
+
+Java 7 introduced **try-with-resources**, which automatically closes resources.
+
+Example:
+
+```java
+import java.io.FileReader;
+
+public class Demo {
+    public static void main(String[] args) throws Exception {
+
+        try (FileReader reader = new FileReader("data.txt")) {
+            System.out.println("File opened");
+        }
+    }
+}
+```
+
+The resource is automatically closed.
+
+This reduces the need for `finally` blocks for resource cleanup.
+
+
+
+## 10. Best Practices
+
+* Use `finally` for cleanup tasks.
+* Avoid complex logic inside `finally`.
+* Prefer `try-with-resources` for managing resources.
+* Do not modify return values inside `finally`.
+* Keep `finally` block simple and focused.
+
+
+
+## 11. Summary
+
+* The `finally` block executes after `try` and `catch`.
+* It runs whether an exception occurs or not.
+* It is mainly used for resource cleanup.
+* Even if `return` is used in `try`, `finally` still executes.
+* Modern Java prefers `try-with-resources` for automatic resource handling.
+
+Written By: <a href="https://www.linkedin.com/in/shivasrivastava1/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer">Shiva Srivastava</a>

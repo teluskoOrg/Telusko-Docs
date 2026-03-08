@@ -1,0 +1,308 @@
+---
+title: Exception Hierarchy
+---
+
+## 1. Introduction
+
+Java uses a well-structured **exception hierarchy** to organize all types of errors and exceptions that can occur during program execution.
+
+Every exception in Java is a class, and all these classes follow an inheritance structure.  
+At the top of this structure is the class:
+
+```text
+Throwable
+````
+
+All exceptions and errors in Java are derived from this class. This hierarchy helps Java categorize problems and manage them properly during runtime.
+
+
+
+## 2. Root Class: Throwable
+
+`Throwable` is the **superclass of all errors and exceptions** in Java.
+
+It represents any condition that can occur during the execution of a program that may disrupt the normal flow.
+
+Two main categories extend from `Throwable`:
+
+* `Error`
+* `Exception`
+
+These two categories represent **different types of problems**.
+
+
+
+## 3. Structure of the Exception Hierarchy
+
+The simplified hierarchy looks like this:
+
+```
+                 Throwable
+                    |
+        ----------------------------
+        |                          |
+       Error                   Exception
+                                   |
+                     -----------------------------
+                     |                           |
+            Checked Exceptions        RuntimeException
+                                             |
+                             -----------------------------
+                             |        |        |         |
+                     NullPointer   Arithmetic  IndexOutOfBounds
+                     Exception     Exception   Exception
+```
+
+Explanation:
+
+* `Error` → Serious system-level issues.
+* `Exception` → Problems that programs can handle.
+* `RuntimeException` → Unchecked exceptions.
+
+
+
+## 4. Error Class
+
+The `Error` class represents **serious problems related to the JVM or system environment**.
+
+These errors are not meant to be handled by application code because they usually indicate critical failures.
+
+Examples:
+
+* `OutOfMemoryError`
+* `StackOverflowError`
+* `VirtualMachineError`
+* `LinkageError`
+
+Example:
+
+```java
+int[] arr = new int[Integer.MAX_VALUE];
+```
+
+This may cause:
+
+```
+OutOfMemoryError
+```
+
+Handling such errors is generally not recommended because the system may not be in a stable state.
+
+
+
+## 5. Exception Class
+
+The `Exception` class represents **conditions that applications might want to catch and handle**.
+
+Exceptions typically occur due to:
+
+* invalid input
+* file issues
+* network problems
+* programming mistakes
+
+Examples:
+
+* `IOException`
+* `SQLException`
+* `ClassNotFoundException`
+
+Programs usually handle these exceptions using:
+
+```java
+try-catch
+```
+
+
+
+## 6. Checked Exceptions
+
+Checked exceptions are **exceptions checked at compile time**.
+
+The compiler forces the programmer to either:
+
+* handle the exception using `try-catch`
+* declare it using `throws`
+
+Examples:
+
+* `IOException`
+* `FileNotFoundException`
+* `SQLException`
+* `ClassNotFoundException`
+
+Example:
+
+```java
+import java.io.FileReader;
+
+public class Demo {
+    public static void main(String[] args) throws Exception {
+        FileReader f = new FileReader("data.txt");
+    }
+}
+```
+
+Here the compiler requires handling or declaration.
+
+
+
+## 7. Runtime Exceptions (Unchecked Exceptions)
+
+`RuntimeException` is a subclass of `Exception`.
+
+These exceptions occur **during runtime** and are usually caused by programming mistakes.
+
+The compiler does not force developers to handle them.
+
+Examples:
+
+* `NullPointerException`
+* `ArithmeticException`
+* `ArrayIndexOutOfBoundsException`
+* `IllegalArgumentException`
+* `NumberFormatException`
+
+Example:
+
+```java
+int a = 10;
+int b = 0;
+
+int result = a / b;
+```
+
+This causes:
+
+```
+ArithmeticException
+```
+
+
+
+## 8. Common Runtime Exceptions
+
+Some frequently encountered runtime exceptions include:
+
+| Exception                      | Cause                     |
+| ------------------------------ | ------------------------- |
+| NullPointerException           | accessing null reference  |
+| ArithmeticException            | dividing by zero          |
+| ArrayIndexOutOfBoundsException | invalid array index       |
+| NumberFormatException          | invalid number conversion |
+| IllegalArgumentException       | illegal method argument   |
+
+These usually indicate logic errors in the program.
+
+
+
+## 9. Relationship Between Checked and Unchecked Exceptions
+
+Both checked and unchecked exceptions come under the `Exception` class.
+
+The difference lies in how the compiler treats them.
+
+| Type              | Compile-Time Check | Handling Required |
+| ----------------- | ------------------ | ----------------- |
+| Checked Exception | Yes                | Mandatory         |
+| Runtime Exception | No                 | Optional          |
+
+Example:
+
+Checked exception:
+
+```java
+FileReader reader = new FileReader("file.txt");
+```
+
+Runtime exception:
+
+```java
+int x = 10 / 0;
+```
+
+
+
+## 10. Why Exception Hierarchy Exists
+
+The hierarchy helps Java:
+
+* categorize different types of errors
+* allow specific exception handling
+* support polymorphism
+* provide reusable exception classes
+* simplify exception propagation
+
+For example:
+
+```java
+catch (Exception e)
+```
+
+This catch block can handle any subclass of `Exception`.
+
+
+
+## 11. Example Showing Exception Hierarchy in Practice
+
+```java
+public class Demo {
+
+    public static void main(String[] args) {
+
+        try {
+            int[] arr = {1,2,3};
+            System.out.println(arr[5]);
+        } catch (RuntimeException e) {
+            System.out.println("Runtime exception occurred");
+        } catch (Exception e) {
+            System.out.println("General exception occurred");
+        }
+    }
+}
+```
+
+Explanation:
+
+* `ArrayIndexOutOfBoundsException` is a subclass of `RuntimeException`
+* Therefore the first catch block handles it.
+
+
+
+## 12. Best Practices
+
+When handling exceptions:
+
+* Catch **specific exceptions first**
+* Avoid catching generic `Exception` unless necessary
+* Do not catch `Error`
+* Use meaningful exception messages
+* Maintain proper exception hierarchy in custom exceptions
+
+Example:
+
+```java
+catch (IOException e)
+```
+
+is better than:
+
+```java
+catch (Exception e)
+```
+
+
+
+## 13. Summary
+
+* All exceptions and errors in Java derive from `Throwable`.
+* `Throwable` has two main subclasses: `Error` and `Exception`.
+* `Error` represents serious system problems.
+* `Exception` represents problems that applications can handle.
+* Exceptions are divided into:
+
+  * Checked exceptions
+  * Unchecked exceptions (RuntimeException).
+* The hierarchy helps organize and manage error handling effectively.
+
+Written By: <a href="https://www.linkedin.com/in/shivasrivastava1/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer">Shiva Srivastava</a>

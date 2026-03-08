@@ -1,0 +1,387 @@
+---
+title: Multiple Catch
+---
+
+## 1. Introduction
+
+In Java, a single `try` block can throw different types of exceptions.  
+To handle such situations properly, Java allows **multiple catch blocks** after one `try` block.
+
+This is called **multiple catch**.
+
+It helps when:
+
+- different exceptions may occur in the same block
+- each exception needs different handling
+- you want more specific and meaningful error messages
+
+Instead of writing one generic catch block for everything, multiple catch allows cleaner and more precise exception handling.
+
+
+
+## 2. Why Multiple Catch Is Needed
+
+Consider a block of code that performs more than one risky operation:
+
+- division
+- array access
+- type conversion
+- file handling
+
+Different exceptions may happen depending on the situation.
+
+Example:
+
+```java
+public class Demo {
+    public static void main(String[] args) {
+        try {
+            int a = 10 / 0;
+            int[] arr = {1, 2, 3};
+            System.out.println(arr[5]);
+        } catch (ArithmeticException e) {
+            System.out.println("Arithmetic error occurred");
+        } catch (ArrayIndexOutOfBoundsException e) {
+            System.out.println("Array index error occurred");
+        }
+    }
+}
+````
+
+Here, the program is ready to handle more than one possible exception.
+
+
+
+## 3. Syntax of Multiple Catch
+
+```java
+try {
+    // risky code
+} catch (ExceptionType1 e) {
+    // handle first type
+} catch (ExceptionType2 e) {
+    // handle second type
+} catch (ExceptionType3 e) {
+    // handle third type
+}
+```
+
+Important points:
+
+* One `try` block
+* Multiple `catch` blocks
+* Only one matching catch block executes
+* After handling, control moves outside the try-catch structure
+
+
+
+## 4. First Example
+
+```java
+public class Demo {
+    public static void main(String[] args) {
+        try {
+            int[] arr = {10, 20, 30};
+            System.out.println(arr[5]);
+        } catch (ArithmeticException e) {
+            System.out.println("Cannot divide by zero");
+        } catch (ArrayIndexOutOfBoundsException e) {
+            System.out.println("Invalid array index");
+        }
+
+        System.out.println("Program continues");
+    }
+}
+```
+
+Output:
+
+```text
+Invalid array index
+Program continues
+```
+
+Explanation:
+
+* `ArithmeticException` did not occur
+* `ArrayIndexOutOfBoundsException` occurred
+* matching catch block executed
+* program continued normally
+
+
+
+## 5. Only One Catch Block Runs
+
+Even if many catch blocks are written, only the **first matching catch block** executes.
+
+Example:
+
+```java
+public class Demo {
+    public static void main(String[] args) {
+        try {
+            int x = 10 / 0;
+        } catch (ArithmeticException e) {
+            System.out.println("Arithmetic problem");
+        } catch (Exception e) {
+            System.out.println("General exception");
+        }
+    }
+}
+```
+
+Output:
+
+```text
+Arithmetic problem
+```
+
+Why?
+
+Because:
+
+* `ArithmeticException` is matched first
+* once handled, Java does not check remaining catch blocks
+
+
+
+## 6. Order of Catch Blocks Is Very Important
+
+Catch blocks must be written from:
+
+* **specific exception**
+* to **general exception**
+
+Correct:
+
+```java
+try {
+    int x = 10 / 0;
+} catch (ArithmeticException e) {
+    System.out.println("Arithmetic issue");
+} catch (Exception e) {
+    System.out.println("General issue");
+}
+```
+
+Incorrect:
+
+```java
+try {
+    int x = 10 / 0;
+} catch (Exception e) {
+    System.out.println("General issue");
+} catch (ArithmeticException e) {
+    System.out.println("Arithmetic issue");
+}
+```
+
+This gives compile-time error because:
+
+* `Exception` already covers `ArithmeticException`
+* so lower catch becomes unreachable
+
+Java does not allow unreachable catch blocks.
+
+
+
+## 7. Handling Different Exceptions Differently
+
+One major advantage of multiple catch is that each exception can have different recovery logic.
+
+Example:
+
+```java
+public class Demo {
+    public static void main(String[] args) {
+        try {
+            String s = null;
+            System.out.println(s.length());
+        } catch (ArithmeticException e) {
+            System.out.println("Math problem");
+        } catch (NullPointerException e) {
+            System.out.println("Object reference is null");
+        } catch (Exception e) {
+            System.out.println("Some other error occurred");
+        }
+    }
+}
+```
+
+Output:
+
+```text
+Object reference is null
+```
+
+This makes the program more readable and accurate.
+
+
+
+## 8. Example with Multiple Risky Statements
+
+```java
+public class Demo {
+    public static void main(String[] args) {
+        try {
+            int[] arr = {1, 2, 3};
+            int x = Integer.parseInt("abc");
+            System.out.println(arr[4]);
+        } catch (NumberFormatException e) {
+            System.out.println("Invalid number format");
+        } catch (ArrayIndexOutOfBoundsException e) {
+            System.out.println("Wrong array index");
+        } catch (Exception e) {
+            System.out.println("General exception");
+        }
+    }
+}
+```
+
+Output:
+
+```text
+Invalid number format
+```
+
+Explanation:
+
+* `Integer.parseInt("abc")` throws `NumberFormatException`
+* execution stops there
+* next line is not executed
+* matching catch block handles it
+
+
+
+## 9. Multi-Catch with Pipe Symbol (Java 7+)
+
+Java also allows handling multiple exception types in **one catch block** using `|`.
+
+Example:
+
+```java
+public class Demo {
+    public static void main(String[] args) {
+        try {
+            int[] arr = {1, 2, 3};
+            System.out.println(arr[5]);
+        } catch (ArithmeticException | ArrayIndexOutOfBoundsException e) {
+            System.out.println("Either arithmetic or array error occurred");
+        }
+    }
+}
+```
+
+This is useful when:
+
+* handling logic is same
+* exception types are different
+* you want shorter code
+
+Important:
+The exception variable in multi-catch is implicitly final, so you cannot reassign it.
+
+
+
+## 10. Difference Between Multiple Catch and Multi-Catch
+
+These two are related but slightly different.
+
+### Multiple Catch
+
+Separate catch blocks:
+
+```java
+try {
+    // code
+} catch (ArithmeticException e) {
+    // handle
+} catch (ArrayIndexOutOfBoundsException e) {
+    // handle
+}
+```
+
+### Multi-Catch
+
+Single catch with multiple exception types:
+
+```java
+try {
+    // code
+} catch (ArithmeticException | ArrayIndexOutOfBoundsException e) {
+    // same handling
+}
+```
+
+Use:
+
+* multiple catch when logic is different
+* multi-catch when logic is same
+
+
+
+## 11. Common Mistakes
+
+### 11.1 Writing parent catch before child catch
+
+Wrong:
+
+```java
+try {
+    int x = 10 / 0;
+} catch (Exception e) {
+    System.out.println("General");
+} catch (ArithmeticException e) {
+    System.out.println("Specific");
+}
+```
+
+This gives compile-time error.
+
+
+
+### 11.2 Assuming all catch blocks will run
+
+Only one matching catch executes.
+
+
+
+### 11.3 Keeping unrelated large code in one try block
+
+This makes it harder to know which statement caused the exception.
+Keep the `try` block reasonably focused.
+
+
+
+## 12. Best Practices
+
+* Write catch blocks from specific to general
+* Use specific exception types when possible
+* Use general `Exception` only as last option
+* Use multi-catch when handling logic is identical
+* Keep handling messages meaningful
+
+Good example:
+
+```java
+try {
+    int num = Integer.parseInt(input);
+} catch (NumberFormatException e) {
+    System.out.println("Please enter a valid integer");
+}
+```
+
+This is much better than catching all exceptions with one generic message.
+
+
+
+## 13. Summary
+
+* Multiple catch means using several catch blocks with one try block.
+* It helps handle different exception types separately.
+* Only one matching catch block executes.
+* Catch blocks must be ordered from specific to general.
+* Java 7 introduced multi-catch using `|` for same handling logic.
+* Proper multiple catch usage makes programs clearer, safer, and easier to debug.
+
+Written By: <a href="https://www.linkedin.com/in/shivasrivastava1/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer">Shiva Srivastava</a>
