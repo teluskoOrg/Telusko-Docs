@@ -1,0 +1,321 @@
+---
+title: Try With Resources
+---
+
+## 1. Introduction
+
+`try-with-resources` is a feature introduced in **Java 7** that simplifies resource management in Java programs.
+
+Many programs use external resources such as:
+
+- files
+- database connections
+- network sockets
+- input/output streams
+
+These resources must be **closed properly** after use.  
+If they are not closed, they can cause **memory leaks, file locks, or system resource exhaustion**.
+
+`try-with-resources` ensures that such resources are **automatically closed** when the block finishes execution.
+
+
+
+## 2. Problem Before Java 7
+
+Before Java 7, developers had to manually close resources using the `finally` block.
+
+Example:
+
+```java
+import java.io.FileReader;
+
+public class Demo {
+    public static void main(String[] args) throws Exception {
+
+        FileReader reader = null;
+
+        try {
+            reader = new FileReader("data.txt");
+            System.out.println("File opened");
+        } finally {
+            if (reader != null) {
+                reader.close();
+                System.out.println("File closed");
+            }
+        }
+    }
+}
+````
+
+Problems with this approach:
+
+* More boilerplate code
+* Error-prone
+* Nested try blocks sometimes required
+* Harder to maintain
+
+To solve this, Java introduced **try-with-resources**.
+
+
+
+## 3. Basic Syntax
+
+The resource is declared inside the `try` statement.
+
+```java
+try (ResourceType resource = new ResourceType()) {
+    // use resource
+}
+```
+
+When execution leaves the `try` block:
+
+* the resource is **automatically closed**
+* no need for `finally`
+
+
+
+## 4. Simple Example
+
+```java
+import java.io.FileReader;
+
+public class Demo {
+    public static void main(String[] args) throws Exception {
+
+        try (FileReader reader = new FileReader("data.txt")) {
+            System.out.println("File opened");
+        }
+
+        System.out.println("Program finished");
+    }
+}
+```
+
+Output:
+
+```text
+File opened
+Program finished
+```
+
+The `FileReader` is automatically closed after the `try` block.
+
+
+
+## 5. How Try-With-Resources Works Internally
+
+Internally, the Java compiler converts `try-with-resources` into code similar to:
+
+```java
+FileReader reader = new FileReader("data.txt");
+
+try {
+    // use resource
+} finally {
+    reader.close();
+}
+```
+
+This means the compiler automatically generates cleanup code.
+
+
+
+## 6. Requirement: AutoCloseable Interface
+
+For a resource to be used inside `try-with-resources`, the class must implement:
+
+```
+java.lang.AutoCloseable
+```
+
+or
+
+```
+java.io.Closeable
+```
+
+These interfaces define the method:
+
+```java
+close()
+```
+
+Example:
+
+```java
+public interface AutoCloseable {
+    void close() throws Exception;
+}
+```
+
+When the `try` block finishes, the JVM automatically calls `close()`.
+
+
+
+## 7. Multiple Resources in Try-With-Resources
+
+You can declare multiple resources inside the `try` statement.
+
+Example:
+
+```java
+import java.io.*;
+
+public class Demo {
+
+    public static void main(String[] args) throws Exception {
+
+        try (
+            FileReader reader = new FileReader("data.txt");
+            BufferedReader br = new BufferedReader(reader)
+        ) {
+            System.out.println(br.readLine());
+        }
+    }
+}
+```
+
+Important points:
+
+* resources are separated by semicolons
+* resources are closed **in reverse order**
+
+So in this example:
+
+1. `BufferedReader` closes first
+2. `FileReader` closes second
+
+
+
+## 8. Using Catch with Try-With-Resources
+
+You can combine `try-with-resources` with `catch`.
+
+Example:
+
+```java
+import java.io.FileReader;
+
+public class Demo {
+
+    public static void main(String[] args) {
+
+        try (FileReader reader = new FileReader("data.txt")) {
+            System.out.println("File opened");
+        } catch (Exception e) {
+            System.out.println("File not found");
+        }
+    }
+}
+```
+
+If the file does not exist, the exception is handled.
+
+
+
+## 9. Using Finally with Try-With-Resources
+
+Although resources close automatically, you can still use a `finally` block.
+
+Example:
+
+```java
+try (FileReader reader = new FileReader("data.txt")) {
+    System.out.println("Reading file");
+} catch (Exception e) {
+    System.out.println("Error occurred");
+} finally {
+    System.out.println("Operation finished");
+}
+```
+
+The execution order is:
+
+1. try block
+2. resource closes
+3. catch block (if needed)
+4. finally block
+
+
+
+## 10. Custom Resource with AutoCloseable
+
+You can create your own resource class.
+
+Example:
+
+```java
+class MyResource implements AutoCloseable {
+
+    public void use() {
+        System.out.println("Using resource");
+    }
+
+    public void close() {
+        System.out.println("Resource closed");
+    }
+}
+
+public class Demo {
+
+    public static void main(String[] args) {
+
+        try (MyResource r = new MyResource()) {
+            r.use();
+        }
+    }
+}
+```
+
+Output:
+
+```text
+Using resource
+Resource closed
+```
+
+
+
+## 11. Advantages of Try-With-Resources
+
+Major benefits:
+
+* Automatic resource management
+* Less boilerplate code
+* Cleaner and readable programs
+* Reduces memory leaks
+* Ensures resources are always closed
+
+It is now the **recommended approach** for working with I/O resources.
+
+
+
+## 12. Best Practices
+
+* Always prefer `try-with-resources` when working with streams, files, or connections.
+* Avoid manually closing resources when this feature is available.
+* Keep resource declarations simple and readable.
+* Use it whenever a class implements `AutoCloseable`.
+
+Examples of common resources used with try-with-resources:
+
+* `FileReader`
+* `BufferedReader`
+* `FileInputStream`
+* `BufferedWriter`
+* `Scanner`
+* `Connection` (JDBC)
+
+
+
+## 13. Summary
+
+* `try-with-resources` was introduced in Java 7.
+* It automatically closes resources when the block finishes.
+* Resources must implement `AutoCloseable` or `Closeable`.
+* Multiple resources can be declared in the same `try`.
+* Resources are closed in reverse order.
+* It replaces manual cleanup using `finally`.
+
+Written By: <a href="https://www.linkedin.com/in/shivasrivastava1/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer">Shiva Srivastava</a>

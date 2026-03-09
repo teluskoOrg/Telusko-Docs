@@ -1,0 +1,286 @@
+---
+title: Checked vs Unchecked Exception
+---
+
+## 1. Introduction
+
+In Java, exceptions are broadly classified into two categories:
+
+- **Checked Exceptions**
+- **Unchecked Exceptions**
+
+This classification is based on **when the exception is checked by the compiler**.
+
+The difference between these two types affects how developers write code, handle errors, and design APIs. Understanding this distinction is important for writing reliable Java applications.
+
+
+
+## 2. What Are Checked Exceptions
+
+A **checked exception** is an exception that is **checked at compile time**.
+
+The Java compiler ensures that these exceptions are either:
+
+- handled using `try-catch`, or
+- declared using the `throws` keyword
+
+If neither is done, the program will not compile.
+
+Checked exceptions typically represent **recoverable situations** such as file errors, database errors, or network failures.
+
+Example:
+
+```java
+import java.io.FileReader;
+
+public class Demo {
+
+    public static void main(String[] args) throws Exception {
+
+        FileReader reader = new FileReader("data.txt");
+
+        System.out.println("File opened");
+    }
+}
+````
+
+Here, `FileReader` may throw `FileNotFoundException`, so the compiler forces the developer to handle or declare it.
+
+
+
+## 3. Common Checked Exceptions
+
+Some commonly used checked exceptions include:
+
+| Exception              | Description                          |
+| ---------------------- | ------------------------------------ |
+| IOException            | Error during input/output operations |
+| FileNotFoundException  | File cannot be located               |
+| SQLException           | Database operation error             |
+| ClassNotFoundException | Class loading failure                |
+| InterruptedException   | Thread interruption                  |
+
+These exceptions usually occur due to **external factors** outside the program's control.
+
+
+
+## 4. What Are Unchecked Exceptions
+
+An **unchecked exception** is an exception that occurs **during runtime** and is **not checked by the compiler**.
+
+The compiler does not require the developer to handle these exceptions explicitly.
+
+Unchecked exceptions usually represent **programming errors** or **invalid logic**.
+
+Example:
+
+```java
+public class Demo {
+
+    public static void main(String[] args) {
+
+        int a = 10;
+        int b = 0;
+
+        int result = a / b;
+        System.out.println(result);
+    }
+}
+```
+
+Output:
+
+```text
+Exception in thread "main" java.lang.ArithmeticException: / by zero
+```
+
+The compiler allows the code, but the exception occurs during execution.
+
+
+
+## 5. Common Unchecked Exceptions
+
+Some commonly encountered unchecked exceptions include:
+
+| Exception                      | Description                    |
+| ------------------------------ | ------------------------------ |
+| NullPointerException           | Accessing a null object        |
+| ArithmeticException            | Illegal mathematical operation |
+| ArrayIndexOutOfBoundsException | Invalid array index            |
+| IllegalArgumentException       | Invalid method argument        |
+| NumberFormatException          | Invalid numeric conversion     |
+
+These exceptions usually occur because of **programmer mistakes**.
+
+
+
+## 6. Exception Hierarchy Context
+
+Checked and unchecked exceptions both come from the `Exception` class.
+
+However, unchecked exceptions are subclasses of `RuntimeException`.
+
+Hierarchy overview:
+
+```text
+Throwable
+   |
+   |---- Error
+   |
+   |---- Exception
+            |
+            |---- RuntimeException  (Unchecked)
+            |
+            |---- Other Exceptions  (Checked)
+```
+
+Examples:
+
+* `IOException` → checked
+* `NullPointerException` → unchecked
+
+
+
+## 7. Compiler Behavior
+
+The main difference between checked and unchecked exceptions lies in how the compiler treats them.
+
+Checked exceptions:
+
+* must be handled or declared
+* compilation fails if ignored
+
+Unchecked exceptions:
+
+* optional handling
+* compiler does not enforce handling
+
+Example of compile-time error:
+
+```java
+import java.io.FileReader;
+
+public class Demo {
+
+    public static void main(String[] args) {
+
+        FileReader reader = new FileReader("file.txt");
+    }
+}
+```
+
+This fails to compile because `FileNotFoundException` is not handled.
+
+
+
+## 8. Handling Checked Exceptions
+
+Checked exceptions must be handled using either of these approaches.
+
+### Using try-catch
+
+```java
+import java.io.FileReader;
+
+public class Demo {
+
+    public static void main(String[] args) {
+
+        try {
+            FileReader reader = new FileReader("file.txt");
+        } catch (Exception e) {
+            System.out.println("File not found");
+        }
+    }
+}
+```
+
+### Using throws
+
+```java
+import java.io.FileReader;
+
+public class Demo {
+
+    public static void main(String[] args) throws Exception {
+
+        FileReader reader = new FileReader("file.txt");
+    }
+}
+```
+
+
+
+## 9. When to Use Checked Exceptions
+
+Checked exceptions are useful when the caller **can reasonably recover from the error**.
+
+Examples:
+
+* file missing
+* database unavailable
+* network timeout
+* invalid external data
+
+In such cases, the caller can retry or provide alternative behavior.
+
+
+
+## 10. When to Use Unchecked Exceptions
+
+Unchecked exceptions are appropriate when the error is caused by **programming mistakes**.
+
+Examples:
+
+* invalid method arguments
+* null references
+* incorrect array indexing
+* logical errors in code
+
+These errors should typically be fixed in the code rather than handled at runtime.
+
+
+
+## 11. Key Differences Between Checked and Unchecked Exceptions
+
+| Feature             | Checked Exception         | Unchecked Exception                       |
+| ------------------- | ------------------------- | ----------------------------------------- |
+| Checked by compiler | Yes                       | No                                        |
+| Handling required   | Mandatory                 | Optional                                  |
+| Base class          | Exception                 | RuntimeException                          |
+| Cause               | External factors          | Programming errors                        |
+| Examples            | IOException, SQLException | NullPointerException, ArithmeticException |
+
+
+
+## 12. Best Practices
+
+When designing applications:
+
+* Use **checked exceptions** for recoverable situations.
+* Use **unchecked exceptions** for programming mistakes.
+* Avoid catching very generic exceptions unnecessarily.
+* Provide meaningful exception messages.
+* Do not ignore exceptions silently.
+
+Example of good practice:
+
+```java
+if (age < 0) {
+    throw new IllegalArgumentException("Age cannot be negative");
+}
+```
+
+
+
+## 13. Summary
+
+Java exceptions are divided into two main categories: checked and unchecked exceptions.
+
+Checked exceptions are verified by the compiler and must be handled or declared. They typically represent recoverable problems caused by external factors.
+
+Unchecked exceptions occur during runtime and are usually caused by programming mistakes. The compiler does not enforce their handling.
+
+Understanding the difference between these two types helps developers design better error handling strategies and create more reliable Java applications.
+
+Written By: <a href="https://www.linkedin.com/in/shivasrivastava1/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer">Shiva Srivastava</a>

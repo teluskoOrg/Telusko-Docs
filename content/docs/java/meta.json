@@ -22,7 +22,7 @@
 
         "strings",
         "lang-and-util-apis",
-        "DISABLED-exception-handling",
+        "exception-handling",
 
         "DISABLED-collections",
         "collection-internals",
