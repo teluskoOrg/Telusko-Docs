@@ -1,0 +1,384 @@
+---
+title: LinkedHashMap
+---
+
+<Steps>
+
+
+## Introduction
+
+`LinkedHashMap` is a **hash table and linked list implementation** of the `Map` interface in Java. It extends `HashMap` and maintains a **predictable iteration order** of elements.
+
+Unlike `HashMap`, which does not guarantee any order of keys, `LinkedHashMap` maintains the order of elements using a **doubly-linked list** that runs through all entries in the map.
+
+This allows it to combine:
+
+* **Fast lookup** using a hash table
+* **Ordered iteration** using a linked list
+
+Because of this design, `LinkedHashMap` is commonly used when **both fast access and predictable iteration order are required**.
+
+
+---
+
+
+## Why LinkedHashMap is Needed?
+
+`HashMap` does not guarantee any iteration order. When iterating through a `HashMap`, the order of keys may appear random and can change between executions.
+
+Example:
+
+```java
+Map<String, Integer> map = new HashMap<>();
+
+map.put("C", 3);
+map.put("A", 1);
+map.put("B", 2);
+
+for(String key : map.keySet()){
+    System.out.println(key);
+}
+```
+
+Possible output:
+
+```
+B
+A
+C
+```
+
+The order is **not predictable**.
+
+In applications where the **insertion sequence must be preserved**, this behavior becomes problematic.
+`LinkedHashMap` solves this issue by maintaining the order of elements.
+
+
+---
+
+
+## How LinkedHashMap Works?
+
+`LinkedHashMap` internally combines two data structures:
+
+1. **Hash Table (from HashMap)** – Provides fast access using hashing.
+2. **Doubly Linked List** – Maintains the order of elements.
+
+The hash table ensures **O(1) average time complexity** for operations such as `get()` and `put()`, while the linked list ensures **ordered iteration**.
+
+### Conceptual Structure
+
+```
+Hash Table Buckets
+
+[0] → Entry(A,1)
+[1] → Entry(C,3)
+[2] → Entry(B,2)
+```
+
+Doubly Linked List:
+
+```
+head → A ⇄ B ⇄ C ← tail
+```
+
+The linked list maintains the order in which entries were inserted or accessed.
+
+
+---
+
+
+## Internal Entry Structure
+
+`LinkedHashMap` uses a special entry class that extends `HashMap.Node`.
+
+```java
+static class Entry<K,V> extends HashMap.Node<K,V> {
+
+    Entry<K,V> before;
+    Entry<K,V> after;
+
+}
+```
+
+Each entry contains:
+
+* Key
+* Value
+* Hash
+* Reference to next node (for bucket collisions)
+* Reference to **previous entry**
+* Reference to **next entry**
+
+These additional pointers allow the map to maintain **a doubly-linked list of entries**.
+
+
+---
+
+
+## Head and Tail References
+
+`LinkedHashMap` keeps references to the first and last elements of the linked list.
+
+```java
+transient LinkedHashMap.Entry<K,V> head;
+transient LinkedHashMap.Entry<K,V> tail;
+
+final boolean accessOrder;
+```
+
+* `head` → first element in the list
+* `tail` → last element in the list
+* `accessOrder` → determines ordering type
+
+
+---
+
+
+## Ordering Modes
+
+`LinkedHashMap` supports **two ordering strategies**.
+
+### 1. Insertion Order (Default)
+
+Entries are maintained in the **order they were inserted**.
+
+Example:
+
+```java
+LinkedHashMap<String,Integer> map = new LinkedHashMap<>();
+
+map.put("First",1);
+map.put("Second",2);
+map.put("Third",3);
+
+for(String key : map.keySet()){
+    System.out.println(key);
+}
+```
+
+Output:
+
+```
+First
+Second
+Third
+```
+
+Updating a value does **not change the order**.
+
+```
+map.put("First",100)
+```
+
+The order remains unchanged.
+
+
+### 2. Access Order
+
+When `accessOrder` is set to `true`, entries are ordered based on **the most recent access**.
+
+Example:
+
+```java
+LinkedHashMap<String,Integer> map =
+        new LinkedHashMap<>(16,0.75f,true);
+
+map.put("A",1);
+map.put("B",2);
+map.put("C",3);
+
+map.get("A");
+```
+
+Now the order becomes:
+
+```
+B → C → A
+```
+
+The accessed element moves to the **end of the list**.
+
+Operations that affect access order include:
+
+* `get()`
+* `put()` (when key exists)
+* `putIfAbsent()`
+* `compute()`
+* `merge()`
+
+Operations such as `containsKey()` do **not affect order**.
+
+
+---
+
+
+## Core Operations
+
+### 1. put()
+
+The `put()` operation performs two tasks:
+
+1. Inserts the element into the hash table.
+2. Links the new entry to the **end of the doubly-linked list**.
+
+Example:
+
+```java
+LinkedHashMap<String,Integer> map = new LinkedHashMap<>();
+
+map.put("A",1);
+map.put("B",2);
+map.put("C",3);
+```
+
+Linked list structure:
+
+```
+head → A ⇄ B ⇄ C ← tail
+```
+
+### 2. get()
+
+The `get()` method retrieves the value using hash lookup.
+
+```java
+map.get("A");
+```
+
+Behavior depends on ordering mode:
+
+Insertion order → No change in position
+Access order → Entry moves to the end of the list
+
+
+## 3. remove()
+
+When an element is removed:
+
+1. It is removed from the hash table.
+2. It is also unlinked from the doubly-linked list.
+
+Example:
+
+```
+Before:
+A ⇄ B ⇄ C ⇄ D
+
+remove(B)
+
+After:
+A ⇄ C ⇄ D
+```
+
+
+---
+
+
+## Iteration
+
+Iteration in `LinkedHashMap` follows the **linked list order**, which ensures predictable traversal.
+
+Example:
+
+```java
+for(Map.Entry<String,Integer> entry : map.entrySet()){
+    System.out.println(entry.getKey()+" "+entry.getValue());
+}
+```
+
+Output follows **insertion order or access order** depending on configuration.
+
+
+---
+
+
+## Implementing an LRU Cache
+
+`LinkedHashMap` is commonly used to implement **Least Recently Used (LRU) caches**.
+
+This is done by:
+
+1. Enabling **access order**
+2. Overriding `removeEldestEntry()`
+
+Example:
+
+```java
+class LRUCache<K,V> extends LinkedHashMap<K,V>{
+
+    private int capacity;
+
+    public LRUCache(int capacity){
+        super(capacity,0.75f,true);
+        this.capacity = capacity;
+    }
+
+    protected boolean removeEldestEntry(Map.Entry<K,V> eldest){
+        return size() > capacity;
+    }
+}
+```
+
+Usage:
+
+```java
+LRUCache<Integer,String> cache = new LRUCache<>(3);
+
+cache.put(1,"A");
+cache.put(2,"B");
+cache.put(3,"C");
+
+cache.get(1);
+
+cache.put(4,"D");
+```
+
+The least recently used element is removed automatically.
+
+
+---
+
+
+## Performance Characteristics
+
+![LinkedHashMap_Complexity](https://dyz1pdcuffwr5.cloudfront.net/Java/collection-internals/linkedHashmap_complexity.png)
+
+Space complexity is **O(n)** with additional memory overhead for linked list pointers.
+
+
+---
+
+
+![LinkedHashMap_Comparison](https://dyz1pdcuffwr5.cloudfront.net/Java/collection-internals/linkedHashmap_comparison.png)
+
+
+---
+
+
+## Best Practices
+
+* Use insertion order when maintaining **data sequence**.
+
+* Use access order when implementing **LRU cache behavior**.
+
+* Pre-size the map if the expected number of entries is known to reduce resizing overhead.
+
+* Synchronize the map when used in **multi-threaded environments**.
+
+
+---
+
+
+## Summary
+
+* `LinkedHashMap` is a map implementation that extends `HashMap` and maintains a predictable iteration order using an internal doubly-linked list of entries.
+* It provides two ordering modes: **insertion order**, which preserves the sequence in which elements are added, and **access order**, which rearranges elements based on their most recent access.
+* The data structure combines the **fast lookup performance of a hash table** with the **ordered traversal capability of a linked list**, allowing `get()` and `put()` operations to run in **O(1)** average time.
+* `LinkedHashMap` is commonly used in applications that require **ordered data processing**, such as LRU cache implementations, command history tracking, and ordered configuration management.
+* Although it offers predictable iteration and efficient lookups, it introduces **slightly higher memory overhead** compared to `HashMap` because of the additional linked list references.
+
+
+</Steps>
+
+Written By: <a href="https://www.linkedin.com/in/muskangarg03/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer"> Muskan Garg <ExternalLink className="w-4 h-4" /></a>

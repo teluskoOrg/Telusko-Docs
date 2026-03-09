@@ -1,0 +1,280 @@
+---
+title: CopyOnWriteArrayList
+---
+
+<Steps>
+
+
+## Introduction
+
+`CopyOnWriteArrayList` is a **thread-safe implementation of the List interface** available in the `java.util.concurrent` package.
+
+It follows the **copy-on-write principle**, where every modification operation creates a new copy of the underlying array instead of modifying the existing one. This design enables **safe concurrent access without requiring synchronization for read operations**.
+
+Because of this behavior, `CopyOnWriteArrayList` is most suitable for applications where **read operations are much more frequent than write operations**.
+
+Use cases include:
+
+* Event listener lists
+* Observer pattern implementations
+* Configuration lists
+* Plugin systems
+
+
+### Problem with ArrayList in Concurrent Environments
+
+`ArrayList` is **not thread-safe**. When multiple threads modify it simultaneously, several issues can occur:
+
+* Data corruption due to race conditions
+* `ConcurrentModificationException` during iteration
+* Need for manual synchronization
+
+Example:
+
+```java
+List<String> list = new ArrayList<>();
+
+// Thread 1
+list.add("A");
+
+// Thread 2
+list.add("B");
+```
+
+Because modifications are not synchronized, the list may enter an **inconsistent state**.
+
+
+### Limitations of Synchronized Collections
+
+A common solution is:
+
+```java
+List<String> list = Collections.synchronizedList(new ArrayList<>());
+```
+
+Although this ensures thread safety, it introduces limitations:
+
+* Iteration must be manually synchronized
+* Readers block when writers modify the list
+* High contention in multi-threaded environments
+
+This results in **reduced concurrency and performance bottlenecks**.
+
+
+---
+
+
+## Copy-On-Write Strategy
+
+`CopyOnWriteArrayList` solves these problems by **creating a new copy of the array during write operations**.
+
+### Concept
+
+```
+Original array: [A, B, C]
+
+add("D")
+
+New array created: [A, B, C, D]
+```
+
+The reference to the array is then **atomically replaced**, and the old array is eventually garbage collected.
+
+### Key Idea
+
+* **Reads** → Access existing array (no locking)
+* **Writes** → Create new array copy
+* **Iterators** → Work on snapshot of array
+
+
+---
+
+
+## Internal Structure
+
+Internally, `CopyOnWriteArrayList` contains:
+
+* A **volatile array reference**
+* A **ReentrantLock** used during write operations
+
+Simplified structure:
+
+```java
+public class CopyOnWriteArrayList<E> {
+
+    private transient volatile Object[] array;
+    final transient ReentrantLock lock = new ReentrantLock();
+
+}
+```
+
+Key components:
+
+| Component          | Purpose                           |
+| ------------------ | --------------------------------- |
+| volatile array     | Ensures visibility across threads |
+| ReentrantLock      | Protects write operations         |
+| immutable snapshot | Enables safe iteration            |
+
+
+---
+
+
+## Core Operations
+
+### 1. add()
+
+Write operations create a **new array copy**.
+
+```java
+CopyOnWriteArrayList<String> list = new CopyOnWriteArrayList<>();
+list.add("A");
+list.add("B");
+```
+
+Process:
+
+1. Acquire lock
+2. Copy existing array
+3. Add new element
+4. Replace array reference
+5. Release lock
+
+Time Complexity: **O(n)**
+
+
+## 2. get()
+
+Read operations are **lock-free**.
+
+```java
+String value = list.get(0);
+```
+
+Time Complexity: **O(1)**
+
+Reason:
+
+* Array reference is `volatile`
+* Arrays are immutable after creation
+
+
+## 3. remove()
+
+Removing an element also creates a **new array copy without that element**.
+
+```java
+list.remove("A");
+```
+
+Time Complexity: **O(n)**
+
+
+## 4. set()
+
+Updating an element also creates a **new array copy with modified value**.
+
+```java
+list.set(0, "Updated");
+```
+
+Time Complexity: **O(n)**
+
+
+---
+
+
+## Iterator Behavior (Snapshot Iteration)
+
+Iterators operate on a **snapshot of the array taken when the iterator is created**.
+
+Example:
+
+```java
+CopyOnWriteArrayList<String> list = new CopyOnWriteArrayList<>();
+
+list.add("A");
+list.add("B");
+
+Iterator<String> it = list.iterator();
+
+list.add("C");
+
+while(it.hasNext()){
+    System.out.println(it.next());
+}
+```
+
+Output:
+
+```
+A
+B
+```
+
+The iterator does **not see element "C"**, because it works on the snapshot.
+
+### Benefits
+
+* No `ConcurrentModificationException`
+* No synchronization needed
+* Multiple iterators can run concurrently
+
+### Limitation
+
+Iterators may **see stale data**.
+
+---
+
+# 8. Performance Characteristics
+
+![CopyOnWrite_Comparison](https://dyz1pdcuffwr5.cloudfront.net/Java/collection-internals/copyOnWrite_comparison.png)
+
+### Performance Summary
+
+Reads → very fast
+Writes → expensive
+Memory → higher usage due to array copying
+
+---
+
+# 9. When to Use CopyOnWriteArrayList
+
+`CopyOnWriteArrayList` is most effective when:
+
+* Reads greatly outnumber writes
+* Thread-safe iteration is required
+* List size is relatively small
+
+### Common Use Cases
+
+* Event Listener Systems
+
+* Observer Pattern
+
+* Configuration Lists
+
+* Plugin Systems
+
+
+---
+
+
+![CopyOnWrite_ArrayList](https://dyz1pdcuffwr5.cloudfront.net/Java/collection-internals/copyOnWrite_arraylist.png)
+
+---
+
+
+## Summary
+
+* `CopyOnWriteArrayList` is a thread-safe list implementation that follows the copy-on-write strategy, where every modification creates a new copy of the underlying array while read operations access the existing array without locking.
+* It provides lock-free read operations and snapshot-based iterators, allowing safe concurrent iteration without throwing `ConcurrentModificationException`.
+* The collection is best suited for read-heavy workloads where read operations significantly outnumber write operations, such as event listener lists, observer patterns, and configuration data.
+* Write operations like `add`, `remove`, and `set` are relatively expensive because they require copying the entire array, resulting in **O(n)** time complexity.
+* Due to frequent array copying, this collection can introduce higher memory overhead and is not suitable for large lists or write-intensive applications.
+* `CopyOnWriteArrayList` offers excellent concurrency for reads and safe iteration but must be used carefully, considering the trade-off between fast reads and costly write operations.
+
+
+</Steps>
+
+Written By: <a href="https://www.linkedin.com/in/muskangarg03/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer"> Muskan Garg <ExternalLink className="w-4 h-4" /></a>

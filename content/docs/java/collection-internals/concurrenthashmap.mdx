@@ -1,0 +1,499 @@
+---
+title: ConcurrentHashMap
+---
+
+<Steps>
+
+
+**ConcurrentHashMap** is a thread-safe implementation of the `Map` interface designed for high concurrency. Unlike `HashMap` (not thread-safe) and `Hashtable` (fully synchronized), ConcurrentHashMap provides:
+- **Thread safety** without locking the entire map
+- **High performance** under concurrent access
+- **Scalability** for multi-threaded applications
+- **Fail-safe iterators** that don't throw `ConcurrentModificationException`
+
+
+---
+
+
+## The Problem with HashMap and Hashtable
+
+### HashMap: Not Thread-Safe
+
+```java
+Map<String, Integer> map = new HashMap<>();
+
+// Thread 1
+map.put("key1", 1);
+
+// Thread 2
+map.put("key2", 2);
+
+// Problem: Race conditions, data corruption, infinite loops during resize!
+```
+
+**Issues:**
+- Race conditions during put/resize
+- Data corruption
+- Infinite loops (Java 7 resize bug)
+- ConcurrentModificationException during iteration
+
+### Hashtable: Fully Synchronized (Slow)
+
+```java
+Map<String, Integer> map = new Hashtable<>();
+
+// Every method is synchronized
+public synchronized V get(Object key) { ... }
+public synchronized V put(K key, V value) { ... }
+```
+
+**Issues:**
+- **Coarse-grained locking**: Entire map locked for every operation
+- **Poor scalability**: Only one thread can access at a time
+- **Performance bottleneck**: All threads wait for lock
+
+```
+Thread 1: get()  ────────┐
+Thread 2: put()          │ All wait for global lock
+Thread 3: remove()       │
+Thread 4: get()  ────────┘
+```
+
+
+---
+
+
+## ConcurrentHashMap Solution
+
+ConcurrentHashMap uses **fine-grained locking** (lock striping) and **lock-free algorithms** to allow multiple threads to read and write concurrently.
+
+**Key Features:**
+- Multiple threads can read without blocking
+- Multiple threads can write to different segments/buckets without blocking
+- Atomic operations without external synchronization
+- Fail-safe iterators
+
+
+---
+
+
+## Internal Structure (Java 8+)
+
+### Node
+
+```java
+static class Node<K,V> implements Map.Entry<K,V> {
+    final int hash;
+    final K key;
+    volatile V val;           // volatile for visibility
+    volatile Node<K,V> next;  // volatile for visibility
+
+    Node(int hash, K key, V val, Node<K,V> next) {
+        this.hash = hash;
+        this.key = key;
+        this.val = val;
+        this.next = next;
+    }
+}
+```
+
+**Key Point:** `val` and `next` are `volatile` for thread-safe reads without locking.
+
+### Array of Buckets
+
+```java
+transient volatile Node<K,V>[] table;  // volatile array reference
+```
+
+
+---
+
+
+## Core Operations
+
+### 1. `put()` 
+
+Adds a key–value pair to the map.
+
+```java
+import java.util.concurrent.ConcurrentHashMap;
+
+public class PutExample {
+    public static void main(String[] args) {
+
+        ConcurrentHashMap<String, Integer> map = new ConcurrentHashMap<>();
+
+        map.put("Alice", 25);
+        map.put("Bob", 30);
+
+        System.out.println(map);
+    }
+}
+```
+
+**Output**
+
+```
+{Alice=25, Bob=30}
+```
+
+
+### 2. `get()` 
+
+Retrieves the value associated with a key.
+
+```java
+import java.util.concurrent.ConcurrentHashMap;
+
+public class GetExample {
+    public static void main(String[] args) {
+
+        ConcurrentHashMap<String, Integer> map = new ConcurrentHashMap<>();
+
+        map.put("Alice", 25);
+        map.put("Bob", 30);
+
+        int age = map.get("Alice");
+
+        System.out.println(age);
+    }
+}
+```
+
+**Output**
+
+```
+25
+```
+
+
+### 3. `remove()` 
+
+Removes a key–value pair from the map.
+
+```java
+import java.util.concurrent.ConcurrentHashMap;
+
+public class RemoveExample {
+    public static void main(String[] args) {
+
+        ConcurrentHashMap<String, Integer> map = new ConcurrentHashMap<>();
+
+        map.put("Alice", 25);
+        map.put("Bob", 30);
+
+        map.remove("Alice");
+
+        System.out.println(map);
+    }
+}
+```
+
+**Output**
+
+```
+{Bob=30}
+```
+
+
+---
+
+
+## Atomic Operations
+
+ConcurrentHashMap provides atomic compound operations:
+
+### 1. putIfAbsent()
+
+```java
+// Atomic: put only if key doesn't exist
+V oldValue = map.putIfAbsent("key", "value");
+
+// Equivalent to (but atomic):
+if (!map.containsKey("key")) {
+    map.put("key", "value");
+}
+```
+
+### 2. remove(key, value)
+
+```java
+// Atomic: remove only if key maps to specific value
+boolean removed = map.remove("key", "expectedValue");
+
+// Equivalent to (but atomic):
+if (map.get("key").equals("expectedValue")) {
+    map.remove("key");
+    return true;
+}
+```
+
+### 3. replace(key, oldValue, newValue)
+
+```java
+// Atomic: replace only if current value matches oldValue
+boolean replaced = map.replace("key", "oldValue", "newValue");
+
+// Equivalent to (but atomic):
+if (map.get("key").equals("oldValue")) {
+    map.put("key", "newValue");
+    return true;
+}
+```
+
+### 4. compute() Family
+
+```java
+// Atomic compute operations
+map.compute("key", (k, v) -> v == null ? 1 : v + 1);
+
+map.computeIfAbsent("key", k -> expensiveComputation(k));
+
+map.computeIfPresent("key", (k, v) -> v + 1);
+
+map.merge("key", 1, Integer::sum);  // Increment counter atomically
+```
+
+**Example: Thread-Safe Counter**
+```java
+ConcurrentHashMap<String, Integer> counters = new ConcurrentHashMap<>();
+
+// Multiple threads can safely increment
+counters.compute("visits", (k, v) -> v == null ? 1 : v + 1);
+
+// Or using merge
+counters.merge("visits", 1, Integer::sum);
+```
+
+
+---
+
+
+## Iterators: Fail-Safe
+
+ConcurrentHashMap iterators are **fail-safe** (also called **weakly consistent**):
+
+```java
+ConcurrentHashMap<String, Integer> map = new ConcurrentHashMap<>();
+map.put("A", 1);
+map.put("B", 2);
+map.put("C", 3);
+
+// Start iteration
+for (String key : map.keySet()) {
+    System.out.println(key);
+
+    // Modify during iteration - NO EXCEPTION!
+    map.put("D", 4);
+    map.remove("B");
+}
+```
+
+**Behavior:**
+- No `ConcurrentModificationException` thrown
+- May or may not reflect concurrent modifications
+- Guaranteed to see all elements present at iteration start
+
+**Weakly Consistent:**
+- Reflects state at some point during iteration
+- No guarantee of seeing all concurrent changes
+
+
+---
+
+
+## Bulk Operations (Java 8+)
+
+ConcurrentHashMap provides parallel bulk operations:
+
+### 1. forEach()
+
+```java
+map.forEach(1, (key, value) -> {
+    System.out.println(key + ": " + value);
+});
+// Parallelism threshold: 1 (parallelize if map has > 1 element)
+```
+
+### 2. search()
+
+```java
+String result = map.search(1, (key, value) -> {
+    return value > 10 ? key : null;
+});
+```
+
+### 3. reduce()
+
+```java
+int sum = map.reduce(1,
+    (key, value) -> value,        // Transformer
+    0,                             // Basis
+    Integer::sum);                 // Reducer
+```
+
+### 4. forEach with Transformation
+
+```java
+map.forEach(1,
+    (key, value) -> value > 10,   // Filter
+    (key, value) -> System.out.println(key));  // Action
+```
+
+
+---
+
+
+## Performance Characteristics
+
+### Time Complexity
+
+![Performace_Comparision](https://dyz1pdcuffwr5.cloudfront.net/Java/collection-internals/concurrent_map_comparison.png)
+
+### Concurrency
+
+**Reads:**
+- Unlimited concurrent reads
+- No blocking
+
+**Writes:**
+- Multiple concurrent writes (different buckets)
+- Only blocks threads writing to same bucket
+
+**Example:**
+```
+Thread 1: put("A", 1)  ──┐
+Thread 2: put("B", 2)    ├─ Concurrent (different buckets)
+Thread 3: put("C", 3)  ──┘
+
+Thread 4: put("A", 4)  ──┐
+Thread 5: put("A", 5)    ├─ Sequential (same bucket)
+                       ──┘
+```
+
+
+---
+
+
+## Practical Examples
+
+### Example 1: Thread-Safe Cache
+
+```java
+public class UserCache {
+    private final ConcurrentHashMap<String, User> cache = new ConcurrentHashMap<>();
+
+    public User getUser(String id) {
+        return cache.computeIfAbsent(id, this::loadUserFromDB);
+    }
+
+    private User loadUserFromDB(String id) {
+        // Expensive database call
+        return database.findUserById(id);
+    }
+
+    public void invalidate(String id) {
+        cache.remove(id);
+    }
+
+    public void clear() {
+        cache.clear();
+    }
+}
+```
+
+### Example 2: Concurrent Word Counter
+
+```java
+public class WordCounter {
+    private final ConcurrentHashMap<String, Integer> wordCounts = new ConcurrentHashMap<>();
+
+    public void countWords(String text) {
+        String[] words = text.split("\\s+");
+
+        for (String word : words) {
+            // Atomic increment
+            wordCounts.merge(word, 1, Integer::sum);
+        }
+    }
+
+    public Map<String, Integer> getMostFrequent(int n) {
+        return wordCounts.entrySet().stream()
+            .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
+            .limit(n)
+            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+    }
+}
+
+// Usage with multiple threads
+WordCounter counter = new WordCounter();
+ExecutorService executor = Executors.newFixedThreadPool(10);
+
+for (String document : documents) {
+    executor.submit(() -> counter.countWords(document));
+}
+```
+
+
+---
+
+
+## Common Pitfalls
+
+### 1. Compound Operations Without Atomicity
+
+```java
+// Wrong: Two separate operations = race condition
+if (map.containsKey(key)) {
+    map.put(key, newValue);
+}
+
+// Correct: Single atomic operation
+map.replace(key, oldValue, newValue);
+```
+
+### 2. Iterating and Modifying
+
+```java
+// Careful: Modifications during iteration may not be visible
+for (String key : map.keySet()) {
+    map.put(newKey, newValue);  // May or may not be seen in this iteration
+}
+```
+
+### 3. Assuming Exact Size
+
+```java
+// Wrong: Assuming exact size
+if (map.size() == 0) {
+    // Another thread might have added elements!
+}
+
+// Better: Use isEmpty()
+if (map.isEmpty()) {
+    // Still not guaranteed, but more appropriate
+}
+```
+
+
+---
+
+
+![Best_Practices](https://dyz1pdcuffwr5.cloudfront.net/Java/collection-internals/concurrent_map_practices.png)
+
+
+---
+
+
+## Summary
+
+* **ConcurrentHashMap** is a highly scalable, thread-safe implementation of the `Map` interface designed for **efficient concurrent access** without locking the entire map.
+* It achieves high performance through **lock-free reads using volatile variables** and **fine-grained synchronization (CAS and bucket-level locking)** for write operations.
+* The map supports **atomic compound operations** such as `putIfAbsent`, `compute`, and `merge`, enabling safe updates in multi-threaded environments.
+* Iterators are **weakly consistent**, meaning they reflect the state of the map at some point during iteration without throwing `ConcurrentModificationException`.
+* Due to its **high concurrency, scalability, and thread safety**, ConcurrentHashMap is commonly used in **caches, shared data structures, counters, and other multi-threaded applications**.
+
+
+</Steps>
+
+Written By: <a href="https://www.linkedin.com/in/muskangarg03/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer"> Muskan Garg <ExternalLink className="w-4 h-4" /></a>
