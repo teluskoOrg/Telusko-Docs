@@ -1,0 +1,339 @@
+---
+title: FailFast vs FailSafe
+---
+
+<Steps>
+
+
+When iterating over collections in Java, it is important to understand how iterators behave when the underlying collection is modified during iteration. Modifying a collection while iterating over it can lead to inconsistent states and unpredictable behavior.
+
+To handle this scenario, Java provides two types of iterator behaviors:
+
+* **Fail-Fast Iterators**
+* **Fail-Safe Iterators**
+
+These mechanisms ensure that collection iteration remains safe and predictable, especially in concurrent or multi-threaded environments.
+
+
+---
+
+
+## The Concurrent Modification Problem
+
+A common problem occurs when a collection is modified while it is being iterated.
+
+Example:
+
+```java
+List<String> list = new ArrayList<>(Arrays.asList("A", "B", "C", "D"));
+
+for (String item : list) {
+    if (item.equals("B")) {
+        list.remove(item);   // modifying during iteration
+    }
+}
+```
+
+This results in:
+
+```
+ConcurrentModificationException
+```
+
+This happens because:
+
+* The iterator maintains an internal position.
+* Structural changes modify the collection’s state.
+* The iterator can no longer reliably continue iteration.
+
+To detect or prevent such problems, Java collections implement **fail-fast or fail-safe iteration strategies**.
+
+
+---
+
+
+## Fail-Fast Iterators
+
+A **fail-fast iterator** immediately throws a `ConcurrentModificationException` if the collection is structurally modified after the iterator is created, except when the modification occurs through the iterator itself.
+
+Fail-fast iterators operate directly on the **original collection**.
+
+
+### Structural Modification
+
+Structural modifications are operations that change the size or structure of the collection.
+
+Examples:
+
+* `add()`
+* `remove()`
+* `clear()`
+
+Non-structural operations such as `set()` or element access do not trigger fail-fast behavior.
+
+
+### Internal Working Mechanism
+
+Fail-fast iterators use an internal modification counter called **`modCount`**.
+
+Simplified concept:
+
+```java
+class ArrayList<E> {
+
+    int modCount = 0;
+
+    public boolean add(E e){
+        modCount++;
+    }
+
+    private class Itr implements Iterator<E>{
+
+        int expectedModCount = modCount;
+
+        public E next(){
+            if(modCount != expectedModCount){
+                throw new ConcurrentModificationException();
+            }
+        }
+    }
+}
+```
+
+**Working Process**
+
+1. When an iterator is created, it stores the current `modCount`.
+2. Each iteration compares the stored value with the current `modCount`.
+3. If the values differ, a `ConcurrentModificationException` is thrown.
+
+This mechanism ensures **early detection of incorrect modifications**.
+
+
+---
+
+
+## Collections with Fail-Fast Iterators
+
+Most collections in the `java.util` package use fail-fast iterators.
+
+Examples include:
+
+* `ArrayList`
+* `LinkedList`
+* `HashMap`
+* `HashSet`
+* `TreeMap`
+* `TreeSet`
+* `LinkedHashMap`
+* `LinkedHashSet`
+* `PriorityQueue`
+
+### Example
+
+```java
+List<String> list = new ArrayList<>(Arrays.asList("A","B","C"));
+
+Iterator<String> it = list.iterator();
+
+list.add("D");   // modification after iterator creation
+
+it.next();       // throws ConcurrentModificationException
+```
+
+
+### Safe Removal Using Iterator
+
+Fail-fast collections allow modification through the iterator itself.
+
+```java
+Iterator<String> it = list.iterator();
+
+while(it.hasNext()){
+    String item = it.next();
+
+    if(item.equals("B")){
+        it.remove();   // safe removal
+    }
+}
+```
+
+This works because the iterator updates its internal modification state.
+
+
+---
+
+
+## Fail-Safe Iterators
+
+A **fail-safe iterator** does not throw `ConcurrentModificationException` when the collection is modified during iteration.
+
+Instead, it operates on a **separate copy or snapshot of the collection**.
+
+Because the iterator reads from the snapshot, modifications to the original collection do not affect the iteration process.
+
+
+### Key Characteristics
+
+Fail-safe iterators:
+
+* Work on a **copy or snapshot**
+* Do **not throw exceptions**
+* Allow concurrent modification
+* May show **stale or outdated data**
+
+
+---
+
+
+## Collections with Fail-Safe Iterators
+
+Fail-safe behavior is mainly found in collections from the `java.util.concurrent` package.
+
+Examples include:
+
+* `CopyOnWriteArrayList`
+* `CopyOnWriteArraySet`
+* `ConcurrentHashMap`
+* `ConcurrentSkipListMap`
+* `ConcurrentLinkedQueue`
+
+### Example with CopyOnWriteArrayList
+
+```java
+List<String> list = new CopyOnWriteArrayList<>(Arrays.asList("A","B","C"));
+
+Iterator<String> it = list.iterator();
+
+list.add("D");   // modification allowed
+
+while(it.hasNext()){
+    System.out.println(it.next());
+}
+```
+
+Output:
+
+```
+A
+B
+C
+```
+
+The iterator does not see `"D"` because it iterates over the **snapshot taken at creation time**.
+
+
+---
+
+
+## Weakly Consistent Iterators
+
+Some concurrent collections use **weakly consistent iterators**.
+
+Examples include:
+
+* `ConcurrentHashMap`
+
+These iterators:
+
+* Do not throw exceptions
+* May reflect some concurrent modifications
+* Do not guarantee to reflect all updates
+
+Example:
+
+```java
+Map<String,Integer> map = new ConcurrentHashMap<>();
+
+map.put("A",1);
+map.put("B",2);
+
+for(String key : map.keySet()){
+    map.put("C",3);   // allowed
+}
+```
+
+The iteration continues safely.
+
+
+---
+
+
+![Failfast_Failsafe_Comparison](https://dyz1pdcuffwr5.cloudfront.net/Java/collection-internals/failfast_failsafe_comparison.png)
+
+
+---
+
+
+## Handling Concurrent Modifications
+
+Several approaches can be used to safely modify collections during iteration.
+
+### 1. Using Iterator Remove
+
+```java
+Iterator<Integer> it = list.iterator();
+
+while(it.hasNext()){
+    Integer num = it.next();
+
+    if(num % 2 == 0){
+        it.remove();
+    }
+}
+```
+
+### 2. Using removeIf (Java 8)
+
+```java
+list.removeIf(num -> num % 2 == 0);
+```
+
+This is the simplest modern approach.
+
+### 3. Collect and Modify Later
+
+```java
+List<String> toRemove = new ArrayList<>();
+
+for(String item : list){
+    if(condition){
+        toRemove.add(item);
+    }
+}
+
+list.removeAll(toRemove);
+```
+
+### 4. Using Concurrent Collections
+
+```java
+List<String> list = new CopyOnWriteArrayList<>();
+
+for(String item : list){
+    list.remove(item);   // safe
+}
+```
+
+---
+
+
+![Collections_Best_Practices](https://dyz1pdcuffwr5.cloudfront.net/Java/collection-internals/collection_practices.png)
+
+
+---
+
+
+## Summary
+
+* Fail-fast and fail-safe iterators represent two different strategies for handling concurrent modifications in Java collections.
+
+* Fail-fast iterators operate directly on the original collection and detect structural modifications using a modification counter, throwing a `ConcurrentModificationException` when inconsistencies occur.
+
+* Fail-safe iterators operate on a copy or snapshot of the collection, allowing concurrent modifications without throwing exceptions, but potentially returning stale data.
+
+* Understanding the differences between these two mechanisms helps developers choose the appropriate collection type and ensures safe, efficient iteration in both single-threaded and multi-threaded applications.
+
+
+</Steps>
+
+Written By: <a href="https://www.linkedin.com/in/muskangarg03/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer"> Muskan Garg <ExternalLink className="w-4 h-4" /></a>

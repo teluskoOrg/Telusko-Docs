@@ -25,7 +25,7 @@
         "exception-handling",
 
         "DISABLED-collections",
-        "DISABLED-collection-internals",
+        "collection-internals",
         "DISABLED-stream-api",
 
         "multithreading",
