@@ -1,0 +1,348 @@
+---
+title: Thread Lifecycle and Interrupts
+---
+
+## 1. Introduction
+
+In Java, every thread goes through a **series of states during its lifetime**.  
+These states together form the **thread lifecycle**.
+
+A thread does not immediately start executing when it is created. Instead, it moves through different phases such as:
+
+- creation
+- scheduling
+- waiting
+- execution
+- termination
+
+Understanding the lifecycle of a thread is essential because it helps developers:
+
+- debug thread behavior
+- control execution
+- design concurrent applications correctly
+- avoid issues like deadlocks and starvation
+
+Java represents thread states using the enum:
+
+```java
+Thread.State
+````
+
+These states help the JVM manage thread scheduling and execution efficiently.
+
+
+
+## 2. Thread Lifecycle Overview
+
+A Java thread typically passes through the following states:
+
+1. **NEW**
+2. **RUNNABLE**
+3. **BLOCKED**
+4. **WAITING**
+5. **TIMED_WAITING**
+6. **TERMINATED**
+
+Each state represents a different phase of thread execution.
+
+
+
+## 3. NEW State
+
+A thread enters the **NEW state** when it is created but has **not yet started execution**.
+
+Example:
+
+```java
+Thread t = new Thread();
+```
+
+At this point:
+
+* The thread object exists
+* The JVM has allocated memory
+* But the thread has **not begun execution**
+
+The thread moves to the **RUNNABLE state** when:
+
+```java
+t.start();
+```
+
+is called.
+
+Important rule:
+
+Calling `start()` more than once will throw:
+
+```text
+IllegalThreadStateException
+```
+
+
+
+## 4. RUNNABLE State
+
+When `start()` is called, the thread moves to the **RUNNABLE state**.
+
+In this state:
+
+* The thread is ready to run
+* The JVM scheduler decides when it actually executes
+
+Note:
+
+RUNNABLE does not mean the thread is actively running. It simply means the thread is **eligible to run**.
+
+Example:
+
+```java
+Thread t = new Thread(() -> {
+    System.out.println("Thread running");
+});
+
+t.start();
+```
+
+The JVM schedules the thread based on CPU availability.
+
+
+
+## 5. BLOCKED State
+
+A thread enters the **BLOCKED state** when it tries to access a resource that is currently locked by another thread.
+
+This often happens when using `synchronized` blocks.
+
+Example:
+
+```java
+synchronized(lockObject) {
+    // critical section
+}
+```
+
+If another thread already holds the lock, the current thread becomes **BLOCKED** until the lock is released.
+
+This mechanism ensures **thread safety** when accessing shared resources.
+
+
+
+## 6. WAITING State
+
+A thread enters the **WAITING state** when it waits indefinitely for another thread to perform a specific action.
+
+Common methods that cause this state include:
+
+* `wait()`
+* `join()`
+* `LockSupport.park()`
+
+Example:
+
+```java
+t.join();
+```
+
+The current thread will wait until thread `t` completes execution.
+
+Unlike `sleep()`, waiting threads require **explicit notification** to continue.
+
+
+
+## 7. TIMED_WAITING State
+
+A thread enters **TIMED_WAITING** when it waits for a **specified amount of time**.
+
+Examples:
+
+```java
+Thread.sleep(1000);
+```
+
+Other methods that cause timed waiting:
+
+* `sleep()`
+* `wait(timeout)`
+* `join(timeout)`
+* `LockSupport.parkNanos()`
+
+After the specified time expires, the thread moves back to **RUNNABLE**.
+
+Example:
+
+```java
+Thread.sleep(2000);
+```
+
+This pauses the thread for **2 seconds**.
+
+
+
+## 8. TERMINATED State
+
+A thread enters the **TERMINATED state** when its execution is finished.
+
+This occurs when:
+
+* the `run()` method completes
+* an uncaught exception occurs
+
+Example:
+
+```java
+class Worker extends Thread {
+
+    public void run() {
+        System.out.println("Task finished");
+    }
+
+}
+```
+
+Once the `run()` method ends, the thread cannot be restarted.
+
+Attempting to restart it results in an exception.
+
+
+
+## 9. Thread Interrupts
+
+Java provides a mechanism to **signal a thread that it should stop what it is doing**.
+
+This mechanism is called **thread interruption**.
+
+Interrupting a thread does not forcefully stop it. Instead, it sends a **signal** indicating that the thread should stop.
+
+Example:
+
+```java
+t.interrupt();
+```
+
+The target thread must check this signal and decide how to respond.
+
+
+
+## 10. Interrupt Example
+
+Example demonstrating thread interruption:
+
+```java
+class Worker extends Thread {
+
+    public void run() {
+
+        try {
+
+            while(true) {
+                System.out.println("Working...");
+                Thread.sleep(1000);
+            }
+
+        } catch (InterruptedException e) {
+            System.out.println("Thread interrupted");
+        }
+
+    }
+
+}
+
+public class Main {
+
+    public static void main(String[] args) throws Exception {
+
+        Worker t = new Worker();
+        t.start();
+
+        Thread.sleep(3000);
+
+        t.interrupt();
+
+    }
+
+}
+```
+
+Output:
+
+```
+Working...
+Working...
+Working...
+Thread interrupted
+```
+
+The `interrupt()` method causes `sleep()` to throw `InterruptedException`.
+
+
+
+## 11. Checking Interrupt Status
+
+A thread can check if it has been interrupted.
+
+Methods used:
+
+```java
+Thread.interrupted()
+```
+
+or
+
+```java
+isInterrupted()
+```
+
+Example:
+
+```java
+if(Thread.currentThread().isInterrupted()) {
+    System.out.println("Interrupt detected");
+}
+```
+
+This allows threads to **stop gracefully** instead of abruptly terminating.
+
+
+
+## 12. Best Practices for Interrupts
+
+When working with interrupts:
+
+* Always handle `InterruptedException`
+* Restore interrupt status if necessary
+* Avoid ignoring interrupt signals
+* Design threads to stop gracefully
+
+Example:
+
+```java
+catch (InterruptedException e) {
+    Thread.currentThread().interrupt();
+}
+```
+
+This preserves the interrupt status.
+
+
+
+## 13. Summary
+
+The thread lifecycle describes the different states a thread passes through during execution.
+
+The main states are:
+
+* NEW
+* RUNNABLE
+* BLOCKED
+* WAITING
+* TIMED_WAITING
+* TERMINATED
+
+Java threads move between these states depending on scheduling, synchronization, and waiting conditions.
+
+Thread interruption provides a safe way to signal threads to stop execution without forcefully terminating them.
+
+Understanding thread states and interruption mechanisms is crucial for writing reliable concurrent applications.
+
+Written By: <a href="https://www.linkedin.com/in/shivasrivastava1/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer">Shiva Srivastava</a>

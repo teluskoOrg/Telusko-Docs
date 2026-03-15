@@ -1,0 +1,21 @@
+{
+    "root": false,
+    "pages": [
+        "thread-basics.mdx",
+        "thread-lifecycle-and-interrupt.mdx",
+        "sharing-data-and-race-conditions.mdx",
+        "synchronization-synchronized.mdx",
+        "visibility-volatile-and-atomics.mdx",
+        "wait-notify-and-guarded-blocks.mdx",
+        "blocking-queues-producer-consumer.mdx",
+        "locks-and-conditions.mdx",
+        "high-level-synchronizers.mdx",
+        "executors-and-thread-pools.mdx",
+        "callable-future-completionservice.mdx",
+        "completablefuture.mdx",
+        "concurrent-collections.mdx",
+        "deadlock-livelock-starvation.mdx",
+        "peformance-and-best-practices.mdx",
+        "virtual-threads.mdx"
+    ]
+}

@@ -1,0 +1,377 @@
+---
+title: Wait, Notify and Guarded Blocks
+---
+
+## 1. Introduction
+
+In multithreaded programming, threads sometimes need to **coordinate with each other**.
+
+For example:
+
+- A producer thread produces data.
+- A consumer thread consumes that data.
+
+If the consumer tries to consume data before it is produced, it must **wait** until the data becomes available.
+
+Java provides a mechanism for such thread coordination using the methods:
+
+```java
+wait()
+notify()
+notifyAll()
+````
+
+These methods belong to the **Object class** and are used with synchronization to allow threads to communicate and coordinate safely.
+
+This pattern is often called a **guarded block**, where a thread waits until a specific condition becomes true.
+
+
+
+## 2. The Need for Thread Coordination
+
+Consider two threads:
+
+* Producer thread adds items to a queue.
+* Consumer thread removes items from the queue.
+
+If the consumer runs first, the queue may be empty. The consumer should **wait until an item is available**.
+
+Without coordination, the consumer might:
+
+* repeatedly check the queue
+* waste CPU cycles
+* behave incorrectly
+
+This is where **wait() and notify()** become useful.
+
+
+
+## 3. The wait() Method
+
+The `wait()` method causes the current thread to **pause execution and release the lock** it holds on an object.
+
+The thread enters the **WAITING state** until another thread notifies it.
+
+Syntax:
+
+```java
+wait();
+```
+
+Key properties:
+
+* Must be called inside a **synchronized block or method**
+* Releases the object's monitor lock
+* Thread waits until `notify()` or `notifyAll()` is called
+
+Example:
+
+```java
+synchronized(lock) {
+    lock.wait();
+}
+```
+
+
+
+## 4. The notify() Method
+
+The `notify()` method wakes up **one thread** that is waiting on the object's monitor.
+
+Example:
+
+```java
+synchronized(lock) {
+    lock.notify();
+}
+```
+
+Important points:
+
+* It does not immediately give control to the waiting thread
+* The awakened thread must **reacquire the lock** before continuing
+
+Only one waiting thread is selected.
+
+
+
+## 5. The notifyAll() Method
+
+The `notifyAll()` method wakes up **all threads waiting on the object's monitor**.
+
+Example:
+
+```java
+synchronized(lock) {
+    lock.notifyAll();
+}
+```
+
+Each awakened thread competes to acquire the lock.
+
+This method is often safer in complex programs because it avoids situations where the wrong thread is awakened.
+
+
+
+## 6. Why wait(), notify(), and notifyAll() Belong to Object
+
+These methods are part of the **Object class**, not the Thread class.
+
+Reason:
+
+Synchronization works using **object monitors (locks)**.
+
+Each object in Java has:
+
+* a monitor lock
+* a wait set
+
+Threads wait and notify on the **same object monitor**, ensuring proper coordination.
+
+
+
+## 7. Guarded Blocks
+
+A **guarded block** is a block of code that waits until a particular condition becomes true.
+
+Example:
+
+```java
+while(conditionNotTrue) {
+    wait();
+}
+```
+
+The thread checks a condition and waits if the condition is not satisfied.
+
+Once another thread changes the condition and calls `notify()`, the waiting thread wakes up and rechecks the condition.
+
+Guarded blocks are commonly used in:
+
+* producer-consumer systems
+* thread coordination
+* shared resource management
+
+
+
+## 8. Example: Producer-Consumer Using wait() and notify()
+
+```java
+class SharedResource {
+
+    private int data;
+    private boolean available = false;
+
+    synchronized void produce(int value) throws InterruptedException {
+
+        while(available) {
+            wait();
+        }
+
+        data = value;
+        available = true;
+
+        System.out.println("Produced: " + value);
+
+        notify();
+
+    }
+
+    synchronized void consume() throws InterruptedException {
+
+        while(!available) {
+            wait();
+        }
+
+        System.out.println("Consumed: " + data);
+
+        available = false;
+
+        notify();
+
+    }
+
+}
+
+public class Main {
+
+    public static void main(String[] args) {
+
+        SharedResource resource = new SharedResource();
+
+        Thread producer = new Thread(() -> {
+            try {
+                for(int i = 1; i <= 5; i++) {
+                    resource.produce(i);
+                }
+            } catch(Exception e) { }
+        });
+
+        Thread consumer = new Thread(() -> {
+            try {
+                for(int i = 1; i <= 5; i++) {
+                    resource.consume();
+                }
+            } catch(Exception e) { }
+        });
+
+        producer.start();
+        consumer.start();
+
+    }
+
+}
+```
+
+Output:
+
+```text
+Produced: 1
+Consumed: 1
+Produced: 2
+Consumed: 2
+...
+```
+
+The producer waits if data is not consumed, and the consumer waits if data is not produced.
+
+
+
+## 9. Why wait() Must Be Used Inside a Loop
+
+It is recommended to use `wait()` inside a **while loop**, not an if statement.
+
+Correct pattern:
+
+```java
+while(conditionNotMet) {
+    wait();
+}
+```
+
+Reason:
+
+* spurious wakeups may occur
+* multiple threads may be awakened
+
+Using a loop ensures the condition is rechecked before proceeding.
+
+
+
+## 10. Difference Between sleep() and wait()
+
+| Feature                  | sleep() | wait()              |
+| ------------------------ | ------- | ------------------- |
+| Class                    | Thread  | Object              |
+| Lock released            | No      | Yes                 |
+| Requires synchronization | No      | Yes                 |
+| Used for                 | Delays  | Thread coordination |
+
+Example:
+
+```java
+Thread.sleep(1000);
+```
+
+This pauses a thread but **does not release locks**.
+
+Whereas:
+
+```java
+wait();
+```
+
+Releases the lock and allows other threads to proceed.
+
+
+
+## 11. Thread States with wait()
+
+When a thread calls `wait()`:
+
+1. It releases the object's lock.
+2. It enters the **WAITING state**.
+3. It remains inactive until notified.
+
+After `notify()`:
+
+* the thread moves to **BLOCKED state**
+* it waits to reacquire the lock
+* then resumes execution
+
+This mechanism allows threads to cooperate efficiently.
+
+
+
+## 12. Common Problems
+
+### Missed Notifications
+
+If `notify()` occurs before `wait()`, the waiting thread may miss the signal.
+
+Guarded blocks help avoid this issue.
+
+
+
+### Deadlocks
+
+Incorrect synchronization can cause threads to wait forever.
+
+Example:
+
+Two threads waiting on each other.
+
+
+
+### Spurious Wakeups
+
+Sometimes a thread wakes up without a notify signal.
+
+Using a loop avoids problems caused by such wakeups.
+
+
+
+## 13. Best Practices
+
+When using wait/notify:
+
+* Always call them inside synchronized blocks.
+* Use a **while loop** instead of if.
+* Prefer `notifyAll()` when multiple threads may be waiting.
+* Keep shared data protected with synchronization.
+
+These practices make thread coordination safe and predictable.
+
+
+
+## 14. Modern Alternatives
+
+Although `wait()` and `notify()` are powerful, modern Java provides higher-level utilities in:
+
+```text
+java.util.concurrent
+```
+
+Examples include:
+
+* BlockingQueue
+* CountDownLatch
+* Semaphore
+* Condition objects
+
+These utilities are easier and safer to use in complex applications.
+
+
+
+## 15. Summary
+
+The `wait()`, `notify()`, and `notifyAll()` methods allow threads to **communicate and coordinate execution**.
+
+They are used with synchronized blocks and rely on object monitors to manage thread waiting and notification.
+
+Guarded blocks provide a structured pattern where a thread waits until a specific condition becomes true before proceeding.
+
+Understanding this coordination mechanism is essential for implementing classic concurrency problems like **producer-consumer** and for building reliable multithreaded systems.
+
+
+Written By: <a href="https://www.linkedin.com/in/shivasrivastava1/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer">Shiva Srivastava</a>

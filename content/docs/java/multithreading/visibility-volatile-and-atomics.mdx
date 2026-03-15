@@ -1,0 +1,359 @@
+---
+title: Visibility, Volatile, and Atomics
+---
+
+## 1. Introduction
+
+In multithreaded programs, threads often share variables stored in **heap memory**. However, even if two threads access the same variable, they may not always see the **latest updated value**.
+
+This happens because modern CPUs use **caches and registers**, and each thread may read a cached copy of a variable instead of the most recent value written by another thread.
+
+This issue is called a **visibility problem**.
+
+Java provides mechanisms to solve these issues:
+
+- **volatile keyword** – ensures visibility of changes across threads
+- **Atomic classes** – provide thread-safe operations without traditional locks
+
+Understanding these mechanisms is essential for writing **correct and efficient concurrent programs**.
+
+
+
+## 2. The Visibility Problem
+
+In a multithreaded system, each thread may maintain a **local copy of variables** in CPU cache.
+
+Consider this example:
+
+```java
+class FlagExample {
+
+    boolean running = true;
+
+}
+````
+
+Two threads use this variable:
+
+Thread A:
+
+```java
+while(running) {
+    // do work
+}
+```
+
+Thread B:
+
+```java
+running = false;
+```
+
+Ideally, Thread A should stop when `running` becomes false.
+But sometimes it continues forever.
+
+Reason: Thread A may keep reading a **cached value of running** instead of the updated value written by Thread B.
+
+This is the **visibility problem**.
+
+
+
+## 3. Java Memory Model Overview
+
+The **Java Memory Model (JMM)** defines how threads interact with memory.
+
+Key ideas:
+
+* Variables are stored in **main memory**
+* Threads may work with **local cached copies**
+* Changes by one thread are not automatically visible to others
+
+Memory flow:
+
+1. Thread reads variable from main memory into its working memory
+2. Thread performs operations on the local copy
+3. Thread writes changes back to main memory
+
+Without proper synchronization, updates may not be visible to other threads.
+
+
+
+## 4. What is volatile
+
+The `volatile` keyword ensures that a variable is always read from **main memory** instead of thread-local caches.
+
+When a variable is declared volatile:
+
+* writes by one thread are immediately visible to others
+* reads always fetch the latest value from main memory
+
+Example:
+
+```java
+volatile boolean running = true;
+```
+
+Now when one thread changes `running`, all other threads immediately see the updated value.
+
+
+
+## 5. Example Using volatile
+
+```java
+class Worker extends Thread {
+
+    volatile boolean running = true;
+
+    public void run() {
+
+        while(running) {
+            System.out.println("Working...");
+        }
+
+        System.out.println("Stopped");
+
+    }
+
+}
+
+public class Main {
+
+    public static void main(String[] args) throws Exception {
+
+        Worker worker = new Worker();
+        worker.start();
+
+        Thread.sleep(2000);
+
+        worker.running = false;
+
+    }
+
+}
+```
+
+Here, when `running` becomes false, the worker thread exits the loop correctly.
+
+Without `volatile`, the worker thread might never stop.
+
+
+
+## 6. What volatile Guarantees
+
+The volatile keyword provides **two guarantees**:
+
+### Visibility
+
+Changes made by one thread become visible to other threads immediately.
+
+### Happens-Before Relationship
+
+Writes to a volatile variable **happen-before** subsequent reads of that variable by other threads.
+
+This ensures that threads observe the most recent values.
+
+
+
+## 7. What volatile Does NOT Guarantee
+
+Volatile only ensures **visibility**, not **atomicity**.
+
+Consider:
+
+```java
+volatile int count = 0;
+```
+
+Increment operation:
+
+```java
+count++;
+```
+
+This operation still involves three steps:
+
+1. read value
+2. increment
+3. write value
+
+Multiple threads executing this may still cause **race conditions**.
+
+So volatile does not replace synchronization when multiple-step operations are involved.
+
+
+
+## 8. Atomic Variables
+
+To solve both **visibility and atomicity problems**, Java provides **atomic classes** in the package:
+
+```java
+java.util.concurrent.atomic
+```
+
+These classes perform operations **atomically**, meaning the operation completes as a single indivisible step.
+
+Common atomic classes:
+
+* `AtomicInteger`
+* `AtomicLong`
+* `AtomicBoolean`
+* `AtomicReference`
+
+Atomic variables internally use **compare-and-swap (CAS)** algorithms for safe concurrent updates.
+
+
+
+## 9. Example Using AtomicInteger
+
+```java
+import java.util.concurrent.atomic.AtomicInteger;
+
+class Counter {
+
+    AtomicInteger count = new AtomicInteger(0);
+
+    void increment() {
+        count.incrementAndGet();
+    }
+
+}
+
+public class Main {
+
+    public static void main(String[] args) throws Exception {
+
+        Counter counter = new Counter();
+
+        Thread t1 = new Thread(() -> {
+            for(int i = 0; i < 1000; i++)
+                counter.increment();
+        });
+
+        Thread t2 = new Thread(() -> {
+            for(int i = 0; i < 1000; i++)
+                counter.increment();
+        });
+
+        t1.start();
+        t2.start();
+
+        t1.join();
+        t2.join();
+
+        System.out.println(counter.count);
+
+    }
+
+}
+```
+
+Output:
+
+```
+2000
+```
+
+Here, the increment operation is performed safely without explicit locks.
+
+
+
+## 10. Compare-And-Swap (CAS)
+
+Atomic variables rely on a technique called **Compare-And-Swap**.
+
+The algorithm works as follows:
+
+1. Read the current value
+2. Compare it with the expected value
+3. If equal, update the value
+4. If not equal, retry
+
+This allows safe updates without locking.
+
+CAS operations are implemented using **hardware CPU instructions**, making them very efficient.
+
+
+
+## 11. volatile vs synchronized vs Atomic
+
+These mechanisms solve different problems.
+
+| Feature     | volatile | synchronized         | Atomic Classes |
+| ----------- | -------- | -------------------- | -------------- |
+| Visibility  | Yes      | Yes                  | Yes            |
+| Atomicity   | No       | Yes                  | Yes            |
+| Locking     | No       | Yes                  | No             |
+| Performance | High     | Lower due to locking | High           |
+
+Use cases:
+
+* `volatile` → simple flags or state indicators
+* `synchronized` → complex shared operations
+* `Atomic` classes → lock-free thread-safe operations
+
+
+
+## 12. When to Use volatile
+
+Use volatile when:
+
+* variable is shared between threads
+* operations are simple reads/writes
+* no compound operations are involved
+* variable acts as a **status flag**
+
+Example:
+
+```java
+volatile boolean shutdownRequested;
+```
+
+
+
+## 13. When to Use Atomic Classes
+
+Use atomic classes when:
+
+* performing counters or numeric updates
+* multiple threads update a variable frequently
+* you want lock-free concurrency
+
+Example:
+
+```java
+AtomicInteger requestCount = new AtomicInteger();
+```
+
+Atomic classes are widely used in **high-performance concurrent systems**.
+
+
+
+## 14. Performance Considerations
+
+Atomic variables often perform better than synchronized blocks because:
+
+* they avoid blocking threads
+* they use low-level CPU instructions
+* they reduce thread contention
+
+However, atomic variables are best suited for **simple operations**.
+
+For complex critical sections, traditional locking may still be required.
+
+
+
+## 15. Summary
+
+In multithreaded programs, visibility problems occur when threads do not see updates made by other threads.
+
+The `volatile` keyword ensures that changes to a variable become immediately visible across threads.
+
+However, volatile does not guarantee atomicity for compound operations.
+
+For atomic operations without locks, Java provides atomic classes such as `AtomicInteger`, which rely on efficient compare-and-swap algorithms.
+
+Choosing between `volatile`, `synchronized`, and atomic classes depends on the complexity of the operation and the concurrency requirements of the application.
+
+
+
+Written By: <a href="https://www.linkedin.com/in/shivasrivastava1/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer">Shiva Srivastava</a>
