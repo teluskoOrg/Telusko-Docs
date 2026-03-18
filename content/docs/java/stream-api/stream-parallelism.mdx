@@ -1,0 +1,380 @@
+---
+title: Stream Parallelism
+---
+
+<Steps>
+
+
+**Parallel streams** enable automatic parallel processing of data across multiple CPU cores. Instead of manually creating threads, the Java Stream API transparently splits the workload, processes parts concurrently, and combines the results.
+
+Under the hood, parallel streams use the **Fork/Join Framework** and the **common ForkJoinPool**, providing high-level data parallelism with minimal code changes.
+
+
+---
+
+
+## Sequential vs Parallel Streams
+
+### Sequential Stream (Default)
+
+A sequential stream processes elements one by one using a single thread.
+
+```java
+List<Integer> numbers = Arrays.asList(1,2,3,4,5,6,7,8);
+
+long sum = numbers.stream()
+    .mapToLong(n -> n * 2)
+    .sum();
+```
+
+**Characteristics**
+
+- Single-threaded execution
+- Predictable encounter order
+- Low overhead
+- Suitable for small or simple tasks
+
+
+### Parallel Stream
+
+A parallel stream processes elements concurrently using multiple threads.
+
+```java
+long sum = numbers.parallelStream()
+    .mapToLong(n -> n * 2)
+    .sum();
+```
+
+Or convert an existing stream:
+
+```java
+long sum = numbers.stream()
+    .parallel()
+    .mapToLong(n -> n * 2)
+    .sum();
+```
+
+**Characteristics**
+
+- Multi-threaded execution
+- Utilizes multiple CPU cores
+- Potential performance improvement
+- Higher overhead
+- Order may not be preserved
+
+
+---
+
+
+## Creating Parallel Streams
+
+### 1. Using `parallelStream()`
+
+Creates a parallel stream directly from a collection.
+
+```java
+list.parallelStream()
+    .forEach(System.out::println);
+```
+
+
+### 2. Using `parallel()`
+
+Converts a sequential stream to parallel.
+
+```java
+list.stream()
+    .parallel()
+    .forEach(System.out::println);
+```
+
+Convert back to sequential if needed:
+
+```java
+list.parallelStream()
+    .sequential()
+    .forEach(System.out::println);
+```
+
+
+### 3. Parallel Primitive Streams
+
+Primitive streams also support parallelism.
+
+```java
+IntStream.range(1, 100)
+    .parallel()
+    .sum();
+
+LongStream.rangeClosed(1, 1_000)
+    .parallel()
+    .sum();
+```
+
+
+---
+
+
+## How Parallel Streams Work
+
+### Fork/Join Framework
+
+Parallel streams use divide-and-conquer processing:
+
+1. Split the data into smaller chunks (fork)
+2. Process chunks concurrently
+3. Combine results (join)
+
+```
+Original Task
+     │
+   Split
+ ┌───┴────┬─────┬───-─--─┐
+ │        │     │        │
+Subtasks processed in parallel
+ │        │     │        |
+ └─── Combine Results ───┘
+```
+
+
+### Common ForkJoinPool
+
+By default, all parallel streams use the **shared common pool**:
+
+* Pool size ≈ number of available CPU cores
+* Shared across the entire application
+* Suitable for CPU-bound tasks
+
+```java
+int cores = Runtime.getRuntime().availableProcessors();
+```
+
+
+### Observing Parallel Execution
+
+```java
+numbers.parallelStream()
+    .forEach(n ->
+        System.out.println(
+            Thread.currentThread().getName() + ": " + n
+        )
+    );
+```
+
+Output shows multiple worker threads (e.g., `ForkJoinPool.commonPool-worker-*`).
+
+
+---
+
+
+## When to Use Parallel Streams
+
+Parallel streams are beneficial only for certain types of problems.
+
+#### 1. Large Datasets
+
+Processing many elements reduces parallel overhead impact.
+
+```java
+List<Integer> largeList =
+    IntStream.range(0, 1_000_000)
+             .boxed()
+             .toList();
+
+long sum = largeList.parallelStream()
+    .mapToLong(this::expensiveComputation)
+    .sum();
+```
+
+
+#### 2. CPU-Intensive Operations
+
+Complex calculations benefit from parallel execution.
+
+```java
+List<Double> results = data.parallelStream()
+    .map(Math::sqrt)
+    .map(n -> Math.pow(n, 3))
+    .map(Math::log)
+    .toList();
+```
+
+
+#### 3. Independent Operations
+
+Each element must be processed without relying on others.
+
+```java
+files.parallelStream()
+    .map(this::processFile)
+    .toList();
+```
+
+
+#### 4. Embarrassingly Parallel Problems
+
+Tasks requiring no coordination between elements.
+
+Examples:
+
+* Image processing
+* Scientific simulations
+* Cryptographic computations
+* Data transformations
+
+
+---
+
+
+## When NOT to Use Parallel Streams
+
+### 1. Small Datasets
+
+Parallel overhead may exceed benefits.
+
+```java
+smallList.stream().mapToLong(n -> n * 2).sum();
+```
+
+### 2. I/O-Bound Operations
+
+Parallel streams are designed for CPU-bound work.
+
+```java
+files.parallelStream()
+    .forEach(this::readFile); // Inefficient
+```
+
+Use asynchronous I/O or thread pools instead.
+
+### 3. Shared Mutable State
+
+Leads to race conditions and incorrect results.
+
+```java
+List<Integer> results = new ArrayList<>();
+
+numbers.parallelStream()
+    .forEach(n -> results.add(n * 2)); // Not thread-safe
+```
+
+✔ Correct approach:
+
+```java
+List<Integer> results =
+    numbers.parallelStream()
+           .map(n -> n * 2)
+           .toList();
+```
+
+### 4. Order-Dependent Operations
+
+Parallel execution may reorder elements.
+
+```java
+list.parallelStream()
+    .forEach(System.out::println); // Order not guaranteed
+```
+
+### 5. Very Fast Operations
+
+Simple transformations do not benefit from parallelism.
+
+
+---
+
+
+## Performance Considerations
+
+Parallel performance depends on several factors.
+
+**Dataset Size**
+
+Large datasets improve parallel efficiency.
+
+
+**Operation Cost**
+
+Expensive computations benefit more.
+
+
+**Available CPU Cores**
+
+More cores → greater potential speedup.
+
+
+**Overhead of Splitting & Merging**
+
+Parallelization introduces coordination costs.
+
+
+---
+
+
+## Ordering in Parallel Streams
+
+### Unordered Processing
+
+You can remove ordering constraints for better performance.
+
+```java
+numbers.parallelStream()
+    .unordered()
+    .map(n -> n * 2)
+    .toList();
+```
+
+
+---
+
+
+## Common Pitfalls
+
+### Race Conditions
+
+```java
+int[] sum = {0};
+
+numbers.parallelStream()
+    .forEach(n -> sum[0] += n); // Incorrect
+```
+
+- Use reduction:
+
+```java
+int sum = numbers.parallelStream()
+    .mapToInt(Integer::intValue)
+    .sum();
+```
+
+### Non-Thread-Safe Collections
+
+```java
+List<Integer> results = new ArrayList<>();
+
+numbers.parallelStream()
+    .forEach(n -> results.add(n * 2)); // Unsafe
+```
+
+- Use collectors instead.
+
+### Blocking Operations
+
+Synchronization defeats parallelism benefits.
+
+
+---
+
+
+## Summary
+
+* Parallel streams enable automatic multi-core processing by splitting data into subtasks using the Fork/Join framework, improving performance for suitable workloads.
+* Best suited for large datasets with CPU-intensive, independent operations, where parallel execution can outweigh coordination overhead.
+* Parallel execution does not guarantee encounter order and may introduce non-deterministic behavior unless ordered operations (e.g., `forEachOrdered`) are used.
+* Avoid shared mutable state, side effects, and blocking or I/O-bound tasks, as they can cause race conditions, contention, or performance degradation.
+* Performance gains are workload-dependent, so parallel streams should be used selectively and validated through benchmarking before production use.
+
+
+</Steps>
+
+Written By: <a href="https://www.linkedin.com/in/muskangarg03/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer"> Muskan Garg <ExternalLink className="w-4 h-4" /></a>

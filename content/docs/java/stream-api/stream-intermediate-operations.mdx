@@ -1,0 +1,253 @@
+---
+title: Stream intermediate Operations
+---
+
+<Steps>
+
+
+Intermediate operations are stream operations that transform a stream into another stream. They form the core of the Stream API’s processing pipeline and enable complex data transformations through chaining. These operations are lazy, meaning they are not executed until a terminal operation is invoked.
+
+
+## Key Characteristics
+
+Intermediate operations have the following important properties:
+
+* They return a new Stream, allowing operation chaining
+* They are lazily evaluated and executed only when needed
+* They do not modify the original data source
+* They may be stateless or stateful
+* Some operations support short-circuiting to improve efficiency
+
+Example:
+
+```java id="svk37t"
+List<String> result = list.stream()
+    .filter(s -> s.length() > 3)
+    .map(String::toUpperCase)
+    .distinct()
+    .toList();
+```
+
+
+---
+
+
+## Filtering Operations
+
+### filter()
+
+Filters elements based on a condition (predicate).
+
+```java id="m5qlot"
+List<Integer> even = numbers.stream()
+    .filter(n -> n % 2 == 0)
+    .toList();
+```
+
+Multiple filters can be chained for complex conditions.
+
+
+### distinct()
+
+Removes duplicate elements using the `equals()` method.
+
+```java id="t9tks3"
+List<Integer> unique = numbers.stream()
+    .distinct()
+    .toList();
+```
+
+This is a stateful operation because it must track previously seen elements.
+
+
+---
+
+
+## Mapping Operations
+
+### map()
+
+Transforms each element into another form (one-to-one transformation).
+
+```java id="6w5vy0"
+List<String> upper = names.stream()
+    .map(String::toUpperCase)
+    .toList();
+```
+
+It can also transform objects into different types.
+
+
+### mapToInt(), mapToLong(), mapToDouble()
+
+Convert elements to primitive streams for better performance by avoiding boxing overhead.
+
+```java id="skw3pg"
+int sum = strings.stream()
+    .mapToInt(Integer::parseInt)
+    .sum();
+```
+
+Primitive streams provide additional numeric operations such as `sum()`, `average()`, and `max()`.
+
+
+### flatMap()
+
+Transforms each element into a stream and then flattens all resulting streams into a single stream. It is used for one-to-many transformations or nested data structures.
+
+```java id="99sq8m"
+List<Integer> flattened = listOfLists.stream()
+    .flatMap(List::stream)
+    .toList();
+```
+
+Typical use cases include processing nested collections or splitting text into words.
+
+
+---
+
+
+## Sorting Operation
+
+### sorted()
+
+Sorts stream elements either in natural order or using a custom comparator.
+
+```java id="oamf5o"
+List<Integer> sorted = numbers.stream()
+    .sorted()
+    .toList();
+```
+
+Custom sorting example:
+
+```java id="rx6ztg"
+List<String> byLength = names.stream()
+    .sorted(Comparator.comparing(String::length))
+    .toList();
+```
+
+Sorting is stateful because all elements must be examined before producing results.
+
+
+---
+
+
+## Limiting and Skipping Operations
+
+### limit()
+
+Restricts the stream to the first *n* elements and supports short-circuiting.
+
+```java id="ysofy2"
+List<Integer> firstFive = numbers.stream()
+    .limit(5)
+    .toList();
+```
+
+Often used with infinite streams.
+
+
+### skip()
+
+Skips the first *n* elements of the stream.
+
+```java id="my3p2s"
+List<Integer> remaining = numbers.stream()
+    .skip(3)
+    .toList();
+```
+
+Useful for pagination when combined with `limit()`.
+
+
+### takeWhile() and dropWhile() (Java 9+)
+
+Operate based on a predicate applied to the encounter order.
+
+* `takeWhile()` processes elements while the condition is true
+* `dropWhile()` skips elements while the condition is true
+
+```java id="5r36sz"
+List<Integer> taken = numbers.stream()
+    .takeWhile(n -> n < 6)
+    .toList();
+```
+
+These differ from `filter()` because they stop processing once the condition fails.
+
+
+---
+
+
+## Peeking Operation
+
+### peek()
+
+Performs an action on each element without consuming the stream. It is primarily intended for debugging or logging.
+
+```java id="qdyqog"
+List<Integer> result = numbers.stream()
+    .peek(n -> System.out.println("Original: " + n))
+    .map(n -> n * 2)
+    .toList();
+```
+
+It should not be used for essential business logic.
+
+
+---
+
+
+## Stateless vs Stateful Operations
+
+* Stateless operations (e.g., `filter`, `map`) process elements independently
+* Stateful operations (e.g., `sorted`, `distinct`) require information about other elements
+
+Stateful operations may require buffering and can affect performance.
+
+
+---
+
+
+## Best Practices
+
+* Chain operations to create clear and readable pipelines
+* Prefer method references where appropriate
+* Place inexpensive operations earlier to reduce processing cost
+* Use primitive streams for numeric computations
+* Always limit infinite streams
+* Avoid side effects within intermediate operations
+* Do not rely on `peek()` for core logic
+
+
+---
+
+
+## When to Use Intermediate Operations
+
+Use intermediate operations when:
+
+* Transforming or filtering data step by step
+* Processing collections declaratively
+* Working with nested or complex data structures
+* Building reusable data processing pipelines
+* Optimizing performance using lazy evaluation
+
+
+---
+
+
+## Summary
+
+* Intermediate operations transform a stream into another stream and are **lazy**, executing only when a terminal operation is invoked.
+* They are **chainable**, enabling the construction of readable and declarative data-processing pipelines.
+* Operations can be **stateless** (e.g., `filter`, `map`) or **stateful** (e.g., `sorted`, `distinct`) depending on whether they maintain internal state.
+* Some operations support **short-circuiting** (e.g., `limit`, `takeWhile`), allowing early termination for improved performance.
+* Intermediate operations do not modify the original data source and primarily focus on transformation, filtering, ordering, or restructuring of stream elements.
+
+
+
+</Steps>
+
+Written By: <a href="https://www.linkedin.com/in/muskangarg03/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer"> Muskan Garg <ExternalLink className="w-4 h-4" /></a>
