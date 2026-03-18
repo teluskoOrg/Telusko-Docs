@@ -1,0 +1,350 @@
+---
+title: Sharing Data and Race Conditions
+---
+
+## 1. Introduction
+
+In a multithreaded program, multiple threads often need to work with the **same data or resources**. This is called **data sharing between threads**.
+
+For example:
+
+- Multiple threads updating a bank account balance
+- Threads writing to a shared log file
+- Threads incrementing a shared counter
+- Threads updating a shared cache
+
+While sharing data enables collaboration between threads, it also introduces one of the most common problems in concurrent programming:
+
+**Race Conditions:**
+
+A race condition occurs when multiple threads access and modify shared data simultaneously and the **final result depends on the order of execution of the threads**.
+Because thread scheduling is unpredictable, race conditions can lead to **incorrect results and unpredictable behavior**.
+Understanding how shared data works and why race conditions occur is essential for writing **correct multithreaded programs**.
+
+
+
+## 2. What is Shared Data
+
+Shared data refers to **variables or objects that multiple threads can access and modify**.
+
+Since threads inside a process share the **same heap memory**, objects stored in the heap are accessible to all threads.
+
+Example:
+
+```java
+class Counter {
+    int count = 0;
+}
+````
+
+If multiple threads access this `Counter` object, the variable `count` becomes **shared data**.
+
+Example usage:
+
+```java
+Counter counter = new Counter();
+
+Thread t1 = new Thread(() -> counter.count++);
+Thread t2 = new Thread(() -> counter.count++);
+```
+
+Both threads modify the same variable.
+
+
+
+## 3. How Threads Share Memory
+
+Java threads share memory in the **heap**, but each thread has its own **stack**.
+
+Memory structure:
+
+| Memory Area | Shared | Description                |
+| ----------- | ------ | -------------------------- |
+| Heap        | Yes    | Objects shared by threads  |
+| Stack       | No     | Local variables per thread |
+| Method Area | Yes    | Class metadata             |
+
+Example:
+
+```java
+Counter counter = new Counter();
+```
+
+The `counter` object resides in **heap memory**, making it accessible to multiple threads.
+Local variables inside methods are **not shared** because they exist in thread-specific stacks.
+
+
+
+## 4. What is a Race Condition
+
+A **race condition** occurs when multiple threads modify shared data **without proper synchronization**.
+Because thread execution order is unpredictable, the result may change each time the program runs.
+
+Example scenario:
+
+Two threads increment the same variable.
+
+Expected result:
+
+```
+count = 2
+```
+
+But actual result might be:
+
+```
+count = 1
+```
+
+This happens because both threads attempt to update the value at the same time.
+
+
+
+## 5. Race Condition Example
+
+Example demonstrating a race condition:
+
+```java
+class Counter {
+
+    int count = 0;
+
+    void increment() {
+        count++;
+    }
+
+}
+
+public class Main {
+
+    public static void main(String[] args) throws Exception {
+
+        Counter counter = new Counter();
+
+        Thread t1 = new Thread(() -> {
+            for(int i=0;i<1000;i++)
+                counter.increment();
+        });
+
+        Thread t2 = new Thread(() -> {
+            for(int i=0;i<1000;i++)
+                counter.increment();
+        });
+
+        t1.start();
+        t2.start();
+
+        t1.join();
+        t2.join();
+
+        System.out.println(counter.count);
+
+    }
+
+}
+```
+
+Expected output:
+
+```
+2000
+```
+
+Actual output might be:
+
+```
+1857
+1932
+1764
+```
+
+The output changes each time due to **race conditions**.
+
+
+
+## 6. Why Race Conditions Occur
+
+The expression:
+
+```java
+count++
+```
+
+is not a single operation.
+
+It actually consists of three steps:
+
+1. Read value of `count`
+2. Increment value
+3. Write new value back
+
+Example breakdown:
+
+```
+Thread A reads count = 5
+Thread B reads count = 5
+Thread A writes count = 6
+Thread B writes count = 6
+```
+
+Expected result should be:
+
+```
+7
+```
+
+But because operations overlap, the final value becomes:
+
+```
+6
+```
+
+This situation is called **lost update**.
+
+
+
+## 7. Timeline of a Race Condition
+
+Example execution timeline:
+
+```
+Initial value: count = 0
+
+Thread A reads count = 0
+Thread B reads count = 0
+
+Thread A increments to 1
+Thread B increments to 1
+
+Thread A writes 1
+Thread B writes 1
+
+Final value = 1
+```
+
+Even though two increments occurred, the result is **1 instead of 2**.
+
+
+
+## 8. Identifying Race Conditions
+
+Race conditions typically occur when:
+
+* Multiple threads modify the same variable
+* Shared resources are accessed without protection
+* Non-atomic operations occur
+* Threads interleave execution unpredictably
+
+Common symptoms:
+
+* inconsistent results
+* random output changes
+* intermittent bugs
+* data corruption
+
+These issues are often difficult to reproduce.
+
+
+
+## 9. Solutions to Race Conditions
+
+Race conditions can be prevented using **thread synchronization mechanisms**.
+
+Common approaches include:
+
+### Synchronization
+
+Using the `synchronized` keyword:
+
+```java
+synchronized void increment() {
+    count++;
+}
+```
+
+This ensures only **one thread modifies the data at a time**.
+
+### Locks
+
+Using `ReentrantLock` for explicit locking.
+
+### Atomic Variables
+
+Using classes from `java.util.concurrent.atomic`.
+
+Example:
+
+```java
+AtomicInteger counter = new AtomicInteger(0);
+counter.incrementAndGet();
+```
+
+These mechanisms ensure **thread-safe operations**.
+
+
+
+## 10. Real-World Race Condition Example
+
+Example: Bank account withdrawal.
+
+Two threads attempt to withdraw money simultaneously.
+
+Initial balance:
+
+```
+100
+```
+
+Thread A withdraws:
+
+```
+100 - 50
+```
+
+Thread B withdraws:
+
+```
+100 - 50
+```
+
+Final result might become:
+
+```
+50
+```
+
+Instead of the correct result:
+
+```
+0
+```
+
+This happens due to a race condition in updating the shared balance.
+
+
+
+## 11. Best Practices for Shared Data
+
+When writing multithreaded programs:
+
+* Minimize shared data whenever possible
+* Use immutable objects
+* Use synchronization mechanisms
+* Prefer atomic classes
+* Avoid complex shared states
+
+Designing programs with fewer shared resources reduces concurrency issues.
+
+
+
+## 12. Summary
+
+Sharing data between threads enables collaboration but introduces potential concurrency issues.
+When multiple threads modify shared data without proper synchronization, **race conditions occur**, leading to unpredictable results.
+Race conditions typically arise because operations like incrementing a variable involve multiple steps that can overlap between threads.
+To prevent race conditions, developers must use synchronization techniques such as locks, synchronized blocks, or atomic variables.
+Understanding race conditions is essential before learning advanced concurrency mechanisms such as **synchronized blocks, locks, and concurrent collections**.
+
+
+Written By: <a href="https://www.linkedin.com/in/shivasrivastava1/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer">Shiva Srivastava</a>
+

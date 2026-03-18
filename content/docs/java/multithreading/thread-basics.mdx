@@ -1,0 +1,363 @@
+---
+title: Thread Basics
+---
+
+## 1. Introduction
+
+A **thread** is the smallest unit of execution inside a program. In Java, a thread allows a program to perform **multiple tasks simultaneously**.
+Normally, when a program runs, it executes instructions **sequentially** from top to bottom using a single thread called the **main thread**. However, modern applications often need to perform several operations at the same time such as:
+
+- downloading data
+- processing user input
+- rendering UI
+- performing background calculations
+
+To support such behavior, Java provides **multithreading**, where multiple threads run concurrently within the same program.
+Example real-world applications of threads:
+
+- Web servers handling multiple users
+- Games updating physics and rendering simultaneously
+- Background file downloads
+- Database operations running while UI remains responsive
+
+Threads allow applications to become **faster, responsive, and efficient**.
+
+## 2. Process vs Thread
+
+Understanding threads becomes easier when compared with **processes**.
+A **process** is an independent program running in memory.
+
+Examples:
+- Chrome browser
+- VS Code
+- Spotify
+
+Each process has its own memory space.
+
+A **thread**, however, is a **lightweight unit inside a process**.
+Multiple threads inside a process share:
+- memory
+- resources
+- files
+- heap space
+
+But they have their own:
+- program counter
+- stack
+- execution path
+
+Comparison:
+
+| Feature | Process | Thread |
+|------|------|------|
+| Memory | Separate | Shared |
+| Creation cost | Expensive | Lightweight |
+| Communication | Hard | Easy |
+| Speed | Slower | Faster |
+
+Example:
+
+A web server process may run **hundreds of threads**, each handling a user request.
+
+## 3. Why Multithreading is Important
+
+Multithreading improves software in several ways.
+
+### 1. Better Performance
+Programs can execute multiple operations simultaneously.
+
+Example:
+- one thread downloads data
+- another processes it
+
+### 2. Improved Responsiveness
+
+User interfaces remain responsive while background work runs.
+
+Example:
+- UI thread
+- background computation thread
+
+### 3. Efficient Resource Utilization
+
+Modern CPUs contain multiple cores. Threads allow applications to use multiple cores efficiently.
+
+Example:
+A CPU with 8 cores can run **8 threads in parallel**.
+
+### 4. Background Tasks
+
+Applications often perform tasks silently in the background.
+
+Example:
+- logging
+- autosaving files
+- data synchronization
+
+
+
+## 4. Java Thread Model
+
+Java supports multithreading through the **Java Thread API**.
+
+The main class involved is:
+
+```java
+java.lang.Thread
+````
+
+Java programs start with a **main thread**, created automatically by the JVM.
+
+Example:
+
+```java
+public class Main {
+    public static void main(String[] args) {
+        System.out.println("Main thread running");
+    }
+}
+```
+
+Here the JVM runs the `main()` method using the **main thread**.
+Additional threads can be created to perform parallel work.
+
+## 5. Creating Threads in Java
+
+Java provides two main ways to create threads.
+
+### Method 1: Extending the Thread Class
+
+Example:
+
+```java
+class MyThread extends Thread {
+
+    public void run() {
+        System.out.println("Thread is running");
+    }
+
+}
+
+public class Main {
+
+    public static void main(String[] args) {
+
+        MyThread t = new MyThread();
+        t.start();
+
+    }
+
+}
+```
+
+Important:
+
+* `run()` defines thread work
+* `start()` begins thread execution
+
+Never call `run()` directly because it will run like a normal method.
+
+
+
+### Method 2: Implementing Runnable Interface
+
+Example:
+
+```java
+class MyTask implements Runnable {
+
+    public void run() {
+        System.out.println("Runnable thread executing");
+    }
+
+}
+
+public class Main {
+
+    public static void main(String[] args) {
+
+        Thread t = new Thread(new MyTask());
+        t.start();
+
+    }
+
+}
+```
+
+This approach is **more flexible** because Java does not support multiple inheritance.
+
+## 6. Thread Execution Example
+
+Example showing multiple threads running:
+
+```java
+class Worker extends Thread {
+
+    public void run() {
+
+        for(int i=1;i<=5;i++) {
+            System.out.println(Thread.currentThread().getName()+" : "+i);
+        }
+
+    }
+
+}
+
+public class Main {
+
+    public static void main(String[] args) {
+
+        Worker t1 = new Worker();
+        Worker t2 = new Worker();
+
+        t1.start();
+        t2.start();
+
+    }
+
+}
+```
+
+Output may appear in different order:
+
+```
+Thread-0 : 1
+Thread-1 : 1
+Thread-0 : 2
+Thread-1 : 2
+Thread-0 : 3
+```
+
+This happens because threads run **concurrently**.
+
+
+
+## 7. Thread Methods
+
+Some commonly used thread methods include:
+
+| Method          | Description                 |
+| --------------- | --------------------------- |
+| start()         | Starts a thread             |
+| run()           | Defines thread work         |
+| sleep()         | Pauses execution            |
+| join()          | Waits for thread completion |
+| currentThread() | Gets current thread         |
+
+Example:
+
+```java
+Thread.currentThread().getName();
+```
+
+This returns the name of the current thread.
+
+
+
+## 8. Main Thread in Java
+
+Every Java program begins execution with the **main thread**.
+
+Example:
+
+```java
+public class Main {
+
+    public static void main(String[] args) {
+
+        System.out.println(Thread.currentThread().getName());
+
+    }
+
+}
+```
+
+Output:
+
+```
+main
+```
+
+The main thread can create additional worker threads.
+
+
+## 9. Multithreading in Real Applications
+
+Threads are heavily used in modern software.
+
+Examples:
+
+### Web Servers
+
+Each HTTP request runs in a separate thread.
+
+### Android Apps
+
+UI thread handles user interaction while background threads perform network calls.
+
+### Game Engines
+
+Threads handle:
+
+* rendering
+* physics
+* AI
+* audio
+
+### Data Processing Systems
+
+Parallel threads process large datasets.
+
+
+
+## 10. Basic Thread Scheduling
+
+Thread scheduling determines **which thread runs at a given time**.
+
+Java uses the operating system scheduler.
+
+Possible behaviors:
+
+* threads may run simultaneously
+* execution order may vary
+* thread switching may occur anytime
+
+Therefore multithreaded programs must be written carefully.
+
+
+
+## 11. Common Beginner Mistakes
+
+### Calling run() instead of start()
+
+Wrong:
+
+```java
+t.run();
+```
+
+Correct:
+
+```java
+t.start();
+```
+
+### Assuming thread order
+
+Thread execution order is **not guaranteed**.
+
+### Ignoring thread safety
+
+Shared data must be protected when accessed by multiple threads.
+This will be covered in later topics.
+
+
+
+## 12. Summary
+
+A thread is the smallest unit of execution inside a Java program. Multithreading allows applications to perform multiple tasks concurrently, improving responsiveness and performance.
+Java provides built-in support for threads through the `Thread` class and `Runnable` interface. Threads share resources inside the same process but maintain separate execution paths.
+Understanding thread basics is the foundation for advanced topics such as synchronization, thread pools, concurrent collections, and virtual threads.
+
+
+Written By: <a href="https://www.linkedin.com/in/shivasrivastava1/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer">Shiva Srivastava</a>

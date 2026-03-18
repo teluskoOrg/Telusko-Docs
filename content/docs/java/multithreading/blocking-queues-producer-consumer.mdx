@@ -1,0 +1,476 @@
+---
+title: Blocking Queues and Producer Consumer
+---
+
+## 1. Introduction
+
+One of the most common coordination problems in multithreading is the **Producer-Consumer problem**.
+
+In this pattern:
+
+- one or more **producer threads** create data
+- one or more **consumer threads** use that data
+
+The challenge is to ensure that:
+
+- producers do not overwrite data incorrectly
+- consumers do not consume data before it exists
+- threads coordinate safely without wasting CPU
+
+In older Java code, this problem was often solved using:
+
+- `wait()`
+- `notify()`
+- synchronized blocks
+
+Although that works, it is easy to make mistakes.
+
+To simplify this, Java provides **BlockingQueue**, a high-level concurrency utility from:
+
+```java
+java.util.concurrent
+````
+
+A `BlockingQueue` automatically handles waiting and coordination between producer and consumer threads.
+
+
+
+## 2. What is a BlockingQueue
+
+A **BlockingQueue** is a special type of queue designed for concurrent programming.
+
+It supports thread-safe operations and automatically blocks threads when necessary.
+
+Typical behavior:
+
+* If a producer tries to insert into a full queue, it waits.
+* If a consumer tries to remove from an empty queue, it waits.
+
+This makes it ideal for producer-consumer systems.
+
+`BlockingQueue` is an **interface**.
+
+Common implementations include:
+
+* `ArrayBlockingQueue`
+* `LinkedBlockingQueue`
+* `PriorityBlockingQueue`
+* `DelayQueue`
+* `SynchronousQueue`
+
+For producer-consumer problems, the most common choices are:
+
+* `ArrayBlockingQueue`
+* `LinkedBlockingQueue`
+
+
+
+## 3. Why BlockingQueue is Better Than wait()/notify()
+
+Using `wait()` and `notify()` manually requires careful handling of:
+
+* synchronization
+* condition checks
+* missed notifications
+* spurious wakeups
+* shared state logic
+
+This increases complexity.
+
+`BlockingQueue` solves these problems internally and gives cleaner code.
+
+Advantages:
+
+* thread-safe by design
+* no manual lock handling
+* easier to read
+* less bug-prone
+* scalable for multiple producers and consumers
+
+So instead of manually coordinating threads, we can let the queue do the coordination.
+
+
+
+## 4. Core BlockingQueue Operations
+
+The most important methods are:
+
+### put(E e)
+
+Adds an element to the queue.
+
+* waits if the queue is full
+
+### take()
+
+Removes and returns an element from the queue.
+
+* waits if the queue is empty
+
+These two methods are the foundation of producer-consumer systems.
+
+Example idea:
+
+```java
+queue.put(item);   // producer adds item
+queue.take();      // consumer removes item
+```
+
+The waiting behavior happens automatically.
+
+
+
+## 5. Basic Producer-Consumer Example
+
+```java
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ArrayBlockingQueue;
+
+class Producer implements Runnable {
+
+    private BlockingQueue<Integer> queue;
+
+    Producer(BlockingQueue<Integer> queue) {
+        this.queue = queue;
+    }
+
+    public void run() {
+        try {
+            for (int i = 1; i <= 5; i++) {
+                queue.put(i);
+                System.out.println("Produced: " + i);
+                Thread.sleep(500);
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+    }
+
+}
+
+class Consumer implements Runnable {
+
+    private BlockingQueue<Integer> queue;
+
+    Consumer(BlockingQueue<Integer> queue) {
+        this.queue = queue;
+    }
+
+    public void run() {
+        try {
+            for (int i = 1; i <= 5; i++) {
+                int value = queue.take();
+                System.out.println("Consumed: " + value);
+                Thread.sleep(800);
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+    }
+
+}
+
+public class Main {
+
+    public static void main(String[] args) {
+
+        BlockingQueue<Integer> queue = new ArrayBlockingQueue<>(3);
+
+        Thread producer = new Thread(new Producer(queue));
+        Thread consumer = new Thread(new Consumer(queue));
+
+        producer.start();
+        consumer.start();
+
+    }
+
+}
+```
+
+Example output:
+
+```text
+Produced: 1
+Consumed: 1
+Produced: 2
+Produced: 3
+Consumed: 2
+Produced: 4
+Consumed: 3
+...
+```
+
+The queue safely coordinates the producer and consumer.
+
+
+
+## 6. Understanding Capacity in BlockingQueue
+
+Some blocking queues are **bounded**, meaning they have a fixed capacity.
+
+Example:
+
+```java
+BlockingQueue<Integer> queue = new ArrayBlockingQueue<>(3);
+```
+
+This queue can hold only 3 elements at a time.
+
+If the producer tries to insert a fourth item before the consumer removes one, the producer blocks.
+
+This is useful because:
+
+* it prevents unlimited memory usage
+* it provides **backpressure**
+* it balances producer and consumer speed
+
+If you want an optionally unbounded queue, you can use `LinkedBlockingQueue`.
+
+
+
+## 7. ArrayBlockingQueue vs LinkedBlockingQueue
+
+### ArrayBlockingQueue
+
+* fixed size
+* backed by array
+* bounded queue
+* good when capacity limit is important
+
+Example:
+
+```java
+BlockingQueue<Integer> q = new ArrayBlockingQueue<>(10);
+```
+
+### LinkedBlockingQueue
+
+* backed by linked nodes
+* can be bounded or effectively unbounded
+* flexible capacity
+* often used when workload size varies
+
+Example:
+
+```java
+BlockingQueue<Integer> q = new LinkedBlockingQueue<>();
+```
+
+Comparison:
+
+| Feature            | ArrayBlockingQueue         | LinkedBlockingQueue |
+| ------------------ | -------------------------- | ------------------- |
+| Capacity           | Fixed                      | Optional / flexible |
+| Internal structure | Array                      | Linked nodes        |
+| Memory usage       | Predictable                | More dynamic        |
+| Best use           | Controlled bounded systems | Flexible pipelines  |
+
+
+
+## 8. Producer-Consumer Without Busy Waiting
+
+One major advantage of `BlockingQueue` is that it avoids **busy waiting**.
+
+Busy waiting means repeatedly checking a condition in a loop like this:
+
+```java
+while(queueIsEmpty) {
+    // keep checking
+}
+```
+
+This wastes CPU.
+
+With `BlockingQueue`, if the queue is empty, the consumer simply sleeps internally until data is available.
+
+Similarly, if the queue is full, the producer sleeps internally until space becomes available.
+
+So `BlockingQueue` provides efficient coordination without manual polling.
+
+
+
+## 9. Multiple Producers and Multiple Consumers
+
+A `BlockingQueue` is safe for use by multiple producers and consumers at the same time.
+
+Example concept:
+
+* Producer 1 adds tasks
+* Producer 2 adds more tasks
+* Consumer 1 processes tasks
+* Consumer 2 also processes tasks
+
+The queue handles thread safety internally.
+
+Example:
+
+```java
+BlockingQueue<String> queue = new ArrayBlockingQueue<>(5);
+
+Thread p1 = new Thread(() -> {
+    try {
+        queue.put("Task-A");
+    } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+    }
+});
+
+Thread p2 = new Thread(() -> {
+    try {
+        queue.put("Task-B");
+    } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+    }
+});
+
+Thread c1 = new Thread(() -> {
+    try {
+        System.out.println("Consumed: " + queue.take());
+    } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+    }
+});
+
+Thread c2 = new Thread(() -> {
+    try {
+        System.out.println("Consumed: " + queue.take());
+    } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+    }
+});
+```
+
+This is very common in server-side task processing systems.
+
+
+
+## 10. Other Useful BlockingQueue Methods
+
+Besides `put()` and `take()`, there are more methods.
+
+### offer(E e)
+
+Attempts to insert without blocking forever.
+
+```java
+queue.offer(10);
+```
+
+Returns:
+
+* `true` if inserted
+* `false` if queue is full
+
+### poll()
+
+Attempts to remove without waiting forever.
+
+```java
+Integer value = queue.poll();
+```
+
+Returns:
+
+* element if available
+* `null` if queue is empty
+
+### offer(E e, timeout, unit)
+
+Waits for limited time before failing.
+
+### poll(timeout, unit)
+
+Waits for limited time before giving up.
+
+These methods are useful when you want more control than indefinite blocking.
+
+
+
+## 11. Real-World Use Cases
+
+Blocking queues are used heavily in practical systems.
+
+### Task Processing Systems
+
+Worker threads take jobs from a shared queue.
+
+### Logging Pipelines
+
+Application threads produce log messages, background thread writes them to file.
+
+### Messaging Systems
+
+Messages are queued and consumed asynchronously.
+
+### Request Handling
+
+Incoming requests are queued and processed by worker pools.
+
+### Batch Processing
+
+Producer loads data, consumer processes and stores it.
+
+This makes `BlockingQueue` one of the most important concurrency utilities in Java.
+
+
+
+## 12. Common Mistakes
+
+### Forgetting InterruptedException handling
+
+Methods like `put()` and `take()` can throw `InterruptedException`.
+
+Always handle interruption properly.
+
+Bad:
+
+```java
+catch (InterruptedException e) {
+}
+```
+
+Better:
+
+```java
+catch (InterruptedException e) {
+    Thread.currentThread().interrupt();
+}
+```
+
+### Using unbounded queue carelessly
+
+If producers are much faster than consumers, an unbounded queue may grow too much in memory.
+
+### Mixing manual synchronization unnecessarily
+
+If you already use `BlockingQueue`, you usually do not need extra synchronized logic around normal queue operations.
+
+
+
+## 13. Best Practices
+
+* Prefer `BlockingQueue` over manual `wait()/notify()` for producer-consumer patterns
+* Use bounded queues when memory control matters
+* Restore interrupt status when catching `InterruptedException`
+* Keep producer and consumer logic simple and focused
+* Use thread pools with blocking queues for scalable worker systems
+
+
+
+## 14. Summary
+
+The producer-consumer problem is a classic coordination problem in multithreading.
+
+Java solves this elegantly using `BlockingQueue`, which provides built-in thread safety and automatic waiting behavior.
+
+Producers use `put()` to add items.
+Consumers use `take()` to remove items.
+
+If the queue is full, producers wait.
+If the queue is empty, consumers wait.
+
+This removes the complexity of manual synchronization and makes concurrent programs cleaner, safer, and more scalable.
+
+
+
+Written By: <a href="https://www.linkedin.com/in/shivasrivastava1/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer">Shiva Srivastava</a>

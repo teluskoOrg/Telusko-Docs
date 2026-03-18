@@ -1,0 +1,387 @@
+---
+title: Locks and Conditions
+---
+
+## 1. Introduction
+
+In earlier topics, we learned how Java provides synchronization using the `synchronized` keyword. While `synchronized` works well for many situations, it has some limitations when building complex concurrent systems.
+
+To provide more flexibility and control over locking behavior, Java introduced the **Lock framework** in the package:
+
+```java
+java.util.concurrent.locks
+````
+
+The most commonly used class in this framework is:
+
+```java
+ReentrantLock
+```
+
+Locks allow developers to:
+
+* explicitly acquire and release locks
+* attempt locks with timeout
+* interrupt waiting threads
+* create multiple waiting conditions
+
+Along with locks, Java also provides **Condition objects**, which allow threads to coordinate in a way similar to `wait()` and `notify()` but with more flexibility.
+
+
+
+## 2. Why Locks Are Needed
+
+The `synchronized` keyword automatically manages locks. However, it has some limitations:
+
+* no ability to try acquiring a lock without blocking
+* no timeout when waiting for a lock
+* limited control over waiting conditions
+* no multiple condition queues
+
+The Lock API provides additional features such as:
+
+* `tryLock()`
+* `lockInterruptibly()`
+* fairness policies
+* multiple condition variables
+
+These features make locks useful in **highly concurrent and complex systems**.
+
+
+
+## 3. The Lock Interface
+
+The core interface of the lock framework is:
+
+```java
+Lock
+```
+
+It defines methods for acquiring and releasing locks.
+
+Important methods include:
+
+| Method              | Description                              |
+| ------------------- | ---------------------------------------- |
+| lock()              | Acquires the lock                        |
+| unlock()            | Releases the lock                        |
+| tryLock()           | Attempts to acquire lock without waiting |
+| lockInterruptibly() | Allows thread interruption while waiting |
+| newCondition()      | Creates a condition variable             |
+
+The most common implementation is:
+
+```java
+ReentrantLock
+```
+
+
+
+## 4. What is ReentrantLock
+
+`ReentrantLock` works similarly to `synchronized`, but provides additional flexibility.
+
+Example:
+
+```java
+import java.util.concurrent.locks.ReentrantLock;
+
+class Counter {
+
+    private int count = 0;
+    private ReentrantLock lock = new ReentrantLock();
+
+    void increment() {
+
+        lock.lock();
+
+        try {
+            count++;
+        } finally {
+            lock.unlock();
+        }
+
+    }
+
+}
+```
+
+Important rule:
+
+Whenever `lock()` is used, it must be followed by `unlock()` in a `finally` block.
+
+This ensures the lock is released even if an exception occurs.
+
+
+
+## 5. Reentrancy in ReentrantLock
+
+The word **reentrant** means that the same thread can acquire the same lock multiple times.
+
+Example:
+
+```java
+class Example {
+
+    ReentrantLock lock = new ReentrantLock();
+
+    void methodA() {
+
+        lock.lock();
+
+        try {
+            methodB();
+        } finally {
+            lock.unlock();
+        }
+
+    }
+
+    void methodB() {
+
+        lock.lock();
+
+        try {
+            System.out.println("Reentrant lock example");
+        } finally {
+            lock.unlock();
+        }
+
+    }
+
+}
+```
+
+If a thread already holds the lock, it can acquire it again without causing a deadlock.
+
+The lock keeps track of how many times it has been acquired.
+
+
+
+## 6. tryLock()
+
+One powerful feature of the Lock API is `tryLock()`.
+
+This method attempts to acquire a lock without blocking the thread indefinitely.
+
+Example:
+
+```java
+ReentrantLock lock = new ReentrantLock();
+
+if(lock.tryLock()) {
+
+    try {
+        System.out.println("Lock acquired");
+    } finally {
+        lock.unlock();
+    }
+
+} else {
+    System.out.println("Could not acquire lock");
+}
+```
+
+This is useful in situations where threads should not wait forever.
+
+
+
+## 7. tryLock with Timeout
+
+Locks can also attempt acquisition with a timeout.
+
+Example:
+
+```java
+if(lock.tryLock(2, TimeUnit.SECONDS)) {
+
+    try {
+        System.out.println("Lock acquired");
+    } finally {
+        lock.unlock();
+    }
+
+} else {
+    System.out.println("Timeout waiting for lock");
+}
+```
+
+This prevents threads from waiting indefinitely for a lock.
+
+
+
+## 8. Fair Locks
+
+`ReentrantLock` can optionally be created as a **fair lock**.
+
+Example:
+
+```java
+ReentrantLock lock = new ReentrantLock(true);
+```
+
+Fair lock behavior:
+
+* threads acquire the lock in the order they requested it
+* prevents thread starvation
+
+However, fair locks may reduce performance because the scheduler cannot optimize execution as aggressively.
+
+
+
+## 9. Condition Objects
+
+A **Condition** object works similarly to `wait()` and `notify()`, but is used with `Lock`.
+
+It allows threads to:
+
+* wait for a condition
+* signal other waiting threads
+
+A Condition object is created using:
+
+```java
+Condition condition = lock.newCondition();
+```
+
+Key methods:
+
+| Method      | Description               |
+| ----------- | ------------------------- |
+| await()     | Thread waits              |
+| signal()    | Wakes one waiting thread  |
+| signalAll() | Wakes all waiting threads |
+
+Conditions provide more control than traditional `wait()` and `notify()`.
+
+
+
+## 10. Example Using Condition
+
+```java
+import java.util.concurrent.locks.*;
+
+class SharedResource {
+
+    private int data;
+    private boolean available = false;
+
+    private ReentrantLock lock = new ReentrantLock();
+    private Condition condition = lock.newCondition();
+
+    void produce(int value) throws InterruptedException {
+
+        lock.lock();
+
+        try {
+
+            while(available) {
+                condition.await();
+            }
+
+            data = value;
+            available = true;
+
+            System.out.println("Produced: " + value);
+
+            condition.signal();
+
+        } finally {
+            lock.unlock();
+        }
+
+    }
+
+    void consume() throws InterruptedException {
+
+        lock.lock();
+
+        try {
+
+            while(!available) {
+                condition.await();
+            }
+
+            System.out.println("Consumed: " + data);
+
+            available = false;
+
+            condition.signal();
+
+        } finally {
+            lock.unlock();
+        }
+
+    }
+
+}
+```
+
+This example behaves similarly to the wait/notify producer-consumer model but uses the Lock API.
+
+
+
+## 11. Locks vs Synchronized
+
+Both locks and `synchronized` provide mutual exclusion, but they differ in flexibility.
+
+| Feature                      | synchronized | ReentrantLock |
+| ---------------------------- | ------------ | ------------- |
+| Lock acquisition             | Automatic    | Manual        |
+| Timeout support              | No           | Yes           |
+| Interruptible lock           | No           | Yes           |
+| Multiple condition variables | No           | Yes           |
+| Ease of use                  | Simpler      | More flexible |
+
+Use `synchronized` for simple cases and `ReentrantLock` for advanced concurrency scenarios.
+
+
+
+## 12. When to Use Locks
+
+Locks are useful when:
+
+* advanced thread coordination is needed
+* timeout-based locking is required
+* interruptible locks are necessary
+* multiple waiting conditions must be supported
+* building high-performance concurrent systems
+
+Examples include:
+
+* thread pools
+* resource pools
+* concurrent data structures
+* producer-consumer pipelines
+
+
+
+## 13. Best Practices
+
+When using locks:
+
+* always release locks in `finally`
+* avoid long critical sections
+* prefer higher-level concurrency utilities when possible
+* use fair locks only when necessary
+* document locking strategy clearly
+
+Improper use of locks can lead to **deadlocks and performance problems**.
+
+
+
+## 14. Summary
+
+The Lock framework provides a more flexible alternative to the `synchronized` keyword for controlling access to shared resources.
+
+`ReentrantLock` allows explicit lock management and supports advanced features such as:
+
+* timed lock acquisition
+* interruptible locking
+* fairness policies
+
+Condition objects allow threads to wait and signal events similar to `wait()` and `notify()` but with greater flexibility.
+
+These tools are essential when building advanced concurrent systems where precise control over locking and thread coordination is required.
+
+Written By: <a href="https://www.linkedin.com/in/shivasrivastava1/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer">Shiva Srivastava</a>

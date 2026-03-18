@@ -28,7 +28,7 @@
         "collection-internals",
         "stream-api",
 
-        "DISABLED-concurrency-advanced",
+        "multithreading",
         "jvm-internals",
         "nio",
         "modern-java",
