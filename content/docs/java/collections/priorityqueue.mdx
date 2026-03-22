@@ -1,0 +1,236 @@
+---
+title: PriorityQueue
+---
+
+
+## 1. Introduction
+
+`PriorityQueue` is a queue implementation in which elements are processed based on **priority**, not just insertion order.
+
+By default, Java's `PriorityQueue` gives the **smallest element first**.
+
+It is useful in:
+
+* Scheduling systems
+* Task prioritization
+* Dijkstra's algorithm
+* Heap-based problems
+
+## 2. How PriorityQueue Differs from Normal Queue
+
+A normal queue usually follows FIFO order.
+
+A `PriorityQueue` does not.
+Instead, the element with the highest priority is removed first.
+
+In Java's default behavior:
+
+* Smaller value means higher priority
+
+Example:
+
+```java
+import java.util.PriorityQueue;
+
+public class Demo {
+    public static void main(String[] args) {
+        PriorityQueue<Integer> pq = new PriorityQueue<>();
+
+        pq.offer(30);
+        pq.offer(10);
+        pq.offer(20);
+
+        System.out.println(pq.poll());
+        System.out.println(pq.poll());
+        System.out.println(pq.poll());
+    }
+}
+```
+
+Output:
+
+```java
+10
+20
+30
+```
+
+## 3. Internal Working
+
+`PriorityQueue` is internally based on a **heap**.
+In Java, it is implemented as a **min-heap** by default.
+
+Because of this:
+
+* Access to the highest priority element is efficient
+* Elements inside the queue are not fully sorted
+* Only the head element is guaranteed to be according to priority
+
+## 4. Common Methods
+
+| Method | Purpose |
+| ------ | ------- |
+| `offer()` | Insert element |
+| `add()` | Insert element |
+| `poll()` | Remove head element |
+| `peek()` | View head element |
+| `remove()` | Remove head or specific element |
+
+Example:
+
+```java
+PriorityQueue<String> pq = new PriorityQueue<>();
+
+pq.offer("Banana");
+pq.offer("Apple");
+pq.offer("Mango");
+
+System.out.println(pq.peek());
+System.out.println(pq.poll());
+System.out.println(pq);
+```
+
+## 5. Natural Ordering
+
+By default, `PriorityQueue` uses natural ordering.
+
+Examples:
+
+* Integers: ascending order
+* Strings: alphabetical order
+
+## 6. Max Heap with Comparator
+
+If you want the largest element first, provide a comparator.
+
+```java
+import java.util.Collections;
+import java.util.PriorityQueue;
+
+public class Demo {
+    public static void main(String[] args) {
+        PriorityQueue<Integer> maxHeap = new PriorityQueue<>(Collections.reverseOrder());
+
+        maxHeap.offer(30);
+        maxHeap.offer(10);
+        maxHeap.offer(20);
+
+        System.out.println(maxHeap.poll()); // 30
+        System.out.println(maxHeap.poll()); // 20
+        System.out.println(maxHeap.poll()); // 10
+    }
+}
+```
+
+## 7. PriorityQueue with Custom Objects
+
+You can use either `Comparable` or `Comparator`.
+
+Example with `Comparator`:
+
+```java
+import java.util.PriorityQueue;
+
+class Task {
+    String name;
+    int priority;
+
+    Task(String name, int priority) {
+        this.name = name;
+        this.priority = priority;
+    }
+
+    @Override
+    public String toString() {
+        return name + " - " + priority;
+    }
+}
+
+public class Demo {
+    public static void main(String[] args) {
+        PriorityQueue<Task> tasks = new PriorityQueue<>(
+            (t1, t2) -> t1.priority - t2.priority
+        );
+
+        tasks.offer(new Task("Bug Fix", 1));
+        tasks.offer(new Task("Meeting", 3));
+        tasks.offer(new Task("Code Review", 2));
+
+        while (!tasks.isEmpty()) {
+            System.out.println(tasks.poll());
+        }
+    }
+}
+```
+
+## 8. Important Notes
+
+### 8.1 Iteration is not sorted output
+
+If you print a `PriorityQueue` directly, it may not look fully sorted.
+
+```java
+PriorityQueue<Integer> pq = new PriorityQueue<>();
+pq.offer(30);
+pq.offer(10);
+pq.offer(20);
+
+System.out.println(pq);
+```
+
+The internal structure is heap-based, not a sorted list.
+
+### 8.2 `null` values are not allowed
+
+```java
+PriorityQueue<Integer> pq = new PriorityQueue<>();
+pq.offer(null); // exception
+```
+
+## 9. Time Complexity
+
+| Operation | Time Complexity |
+| --------- | --------------- |
+| `offer()` | O(log n)        |
+| `poll()`  | O(log n)        |
+| `peek()`  | O(1)            |
+
+## 10. Practical Example
+
+```java
+import java.util.PriorityQueue;
+
+public class HospitalQueue {
+    public static void main(String[] args) {
+        PriorityQueue<Integer> patients = new PriorityQueue<>();
+
+        patients.offer(5);
+        patients.offer(1);
+        patients.offer(3);
+
+        while (!patients.isEmpty()) {
+            System.out.println("Treat patient priority: " + patients.poll());
+        }
+    }
+}
+```
+
+Lower number here means higher treatment priority.
+
+## 11. PriorityQueue vs Queue
+
+| Feature | Normal Queue | PriorityQueue |
+| ------- | ------------ | ------------- |
+| Order | FIFO | Based on priority |
+| Internal logic | Sequential | Heap based |
+| Head element | Oldest inserted | Highest priority |
+
+## 12. Summary
+
+* `PriorityQueue` processes elements according to priority.
+* By default, Java uses a min-heap.
+* `offer()`, `poll()`, and `peek()` are the main methods.
+* For reverse or custom priority, use a `Comparator`.
+* Iterating over the queue does not guarantee fully sorted output.
+
+Written By: <a href="https://www.linkedin.com/in/shivasrivastava1/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer"> Shiva Srivastava <ExternalLink className="w-4 h-4" /></a>

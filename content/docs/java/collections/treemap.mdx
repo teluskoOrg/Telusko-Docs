@@ -1,0 +1,203 @@
+---
+title: TreeMap
+---
+
+
+## 1. Introduction
+
+`TreeMap` is a `Map` implementation that stores entries in **sorted order of keys**.
+If you need key-value storage along with automatic sorting by key, `TreeMap` is a strong choice.
+
+## 2. Key Features
+
+* Stores key-value pairs
+* Keys are sorted automatically
+* Duplicate keys are not allowed
+* Values can be duplicated
+* Usually does not allow `null` keys
+* Is not synchronized
+
+Example:
+
+```java
+import java.util.Map;
+import java.util.TreeMap;
+
+public class Demo {
+    public static void main(String[] args) {
+        Map<Integer, String> map = new TreeMap<>();
+
+        map.put(3, "Three");
+        map.put(1, "One");
+        map.put(2, "Two");
+
+        System.out.println(map);
+    }
+}
+```
+
+Output:
+
+```java
+{1=One, 2=Two, 3=Three}
+```
+
+## 3. How TreeMap Works
+
+`TreeMap` uses a **Red-Black Tree** internally.
+That is why keys stay sorted automatically.
+
+Because of this structure:
+
+* Insertions are `O(log n)`
+* Retrieval is `O(log n)`
+* Deletion is `O(log n)`
+
+## 4. Natural Ordering of Keys
+
+By default, keys are sorted using natural ordering.
+
+Examples:
+
+* `Integer` keys are sorted numerically
+* `String` keys are sorted alphabetically
+
+```java
+TreeMap<String, Integer> marks = new TreeMap<>();
+
+marks.put("Math", 95);
+marks.put("English", 88);
+marks.put("Science", 91);
+
+System.out.println(marks);
+```
+
+## 5. Common Methods
+
+### 5.1 `put()`, `get()`, `remove()`
+
+```java
+TreeMap<Integer, String> map = new TreeMap<>();
+
+map.put(101, "Navin");
+map.put(102, "Kiran");
+
+System.out.println(map.get(101));
+
+map.remove(102);
+```
+
+### 5.2 `firstKey()` and `lastKey()`
+
+```java
+System.out.println(map.firstKey());
+System.out.println(map.lastKey());
+```
+
+### 5.3 `higherKey()`, `lowerKey()`, `ceilingKey()`, `floorKey()`
+
+```java
+TreeMap<Integer, String> data = new TreeMap<>();
+data.put(10, "A");
+data.put(20, "B");
+data.put(30, "C");
+
+System.out.println(data.higherKey(20));   // 30
+System.out.println(data.lowerKey(20));    // 10
+System.out.println(data.ceilingKey(25));  // 30
+System.out.println(data.floorKey(25));    // 20
+```
+
+## 6. Iterating Over a TreeMap
+
+```java
+for (Map.Entry<Integer, String> entry : data.entrySet()) {
+    System.out.println(entry.getKey() + " -> " + entry.getValue());
+}
+```
+
+Since keys are sorted, iteration also happens in sorted order.
+
+## 7. Custom Sorting with Comparator
+
+You can provide a custom comparator while creating the `TreeMap`.
+
+```java
+import java.util.Collections;
+import java.util.TreeMap;
+
+public class Demo {
+    public static void main(String[] args) {
+        TreeMap<Integer, String> map = new TreeMap<>(Collections.reverseOrder());
+
+        map.put(1, "One");
+        map.put(2, "Two");
+        map.put(3, "Three");
+
+        System.out.println(map);
+    }
+}
+```
+
+Output:
+
+```java
+{3=Three, 2=Two, 1=One}
+```
+
+## 8. `null` Keys and Values
+
+`TreeMap` generally does not allow `null` keys when natural ordering is used.
+
+```java
+TreeMap<Integer, String> map = new TreeMap<>();
+map.put(null, "Value"); // exception
+```
+
+However, `null` values are allowed.
+
+```java
+map.put(1, null);
+```
+
+## 9. TreeMap vs HashMap
+
+| Feature | HashMap | TreeMap |
+| ------- | ------- | ------- |
+| Order | No guaranteed order | Sorted by keys |
+| Speed | Faster on average | Slower |
+| Internal structure | Hash table | Red-Black Tree |
+| `null` key | Allowed | Usually not allowed |
+
+Use `TreeMap` when sorted keys matter.
+
+## 10. Practical Example
+
+```java
+import java.util.Map;
+import java.util.TreeMap;
+
+public class StudentRank {
+    public static void main(String[] args) {
+        TreeMap<Integer, String> ranks = new TreeMap<>();
+
+        ranks.put(3, "Riya");
+        ranks.put(1, "Navin");
+        ranks.put(2, "Kiran");
+
+        for (Map.Entry<Integer, String> entry : ranks.entrySet()) {
+            System.out.println(entry.getKey() + " -> " + entry.getValue());
+        }
+    }
+}
+```
+
+## 11. Summary
+
+* `TreeMap` stores key-value pairs in sorted order of keys.
+* It uses a Red-Black Tree internally.
+* Operations usually take `O(log n)` time.
+* It is useful when you need sorted data or navigation methods on keys.
+* For custom sorting, provide a `Comparator`.
+
+Written By: <a href="https://www.linkedin.com/in/shivasrivastava1/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer"> Shiva Srivastava <ExternalLink className="w-4 h-4" /></a>

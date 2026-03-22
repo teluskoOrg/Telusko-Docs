@@ -1,0 +1,286 @@
+---
+title: HashSet
+---
+
+## 1. Introduction
+
+`HashSet` is one of the most commonly used implementations of the `Set` interface in Java.
+It stores **unique elements only** and does **not maintain insertion order**.
+
+Internally, `HashSet` uses a **hash table**, which gives very fast average performance for common operations like add, remove, and contains.
+
+Use `HashSet` when:
+
+* You want to avoid duplicate values
+* Element ordering does not matter
+* You need fast lookup performance
+
+## 2. Basic Characteristics
+
+Important features of `HashSet`:
+
+* Implements the `Set` interface
+* Stores only unique elements
+* Allows **one `null` element**
+* Does not maintain insertion order
+* Does not sort elements
+* Is not synchronized
+
+Example:
+
+```java
+import java.util.HashSet;
+import java.util.Set;
+
+public class Demo {
+    public static void main(String[] args) {
+        Set<String> names = new HashSet<>();
+
+        names.add("Alice");
+        names.add("Bob");
+        names.add("Alice");
+
+        System.out.println(names);
+    }
+}
+```
+
+Possible output:
+
+```java
+[Bob, Alice]
+```
+
+`Alice` appears only once because duplicates are not allowed.
+
+## 3. How HashSet Works
+
+`HashSet` internally uses a `HashMap`.
+
+When you add an element to a `HashSet`, Java stores it as a key inside an internal `HashMap`, with a dummy value.
+
+Conceptually:
+
+```java
+set.add("Java");
+```
+
+behaves internally somewhat like:
+
+```java
+map.put("Java", PRESENT);
+```
+
+Because of this design:
+
+* Element uniqueness depends on `hashCode()` and `equals()`
+* Performance is usually very fast
+
+## 4. Creating a HashSet
+
+```java
+HashSet<Integer> numbers = new HashSet<>();
+```
+
+You can also use the interface reference:
+
+```java
+Set<Integer> numbers = new HashSet<>();
+```
+
+This is preferred because it keeps your code flexible.
+
+## 5. Common Methods
+
+### 5.1 `add()`
+
+Adds an element if it is not already present.
+
+```java
+Set<Integer> values = new HashSet<>();
+
+values.add(10);
+values.add(20);
+values.add(10);
+
+System.out.println(values); // duplicate ignored
+```
+
+### 5.2 `remove()`
+
+Removes the given element if present.
+
+```java
+values.remove(20);
+```
+
+### 5.3 `contains()`
+
+Checks whether an element exists in the set.
+
+```java
+System.out.println(values.contains(10)); // true
+System.out.println(values.contains(50)); // false
+```
+
+### 5.4 `size()`
+
+Returns the number of unique elements.
+
+```java
+System.out.println(values.size());
+```
+
+### 5.5 `isEmpty()` and `clear()`
+
+```java
+System.out.println(values.isEmpty());
+values.clear();
+```
+
+## 6. Iterating Over a HashSet
+
+Since `HashSet` does not support indexing, we usually iterate using an enhanced for loop or iterator.
+
+```java
+Set<String> fruits = new HashSet<>();
+fruits.add("Apple");
+fruits.add("Mango");
+fruits.add("Banana");
+
+for (String fruit : fruits) {
+    System.out.println(fruit);
+}
+```
+
+## 7. Duplicate Detection
+
+One of the most practical uses of `HashSet` is checking duplicates.
+
+```java
+int[] nums = {10, 20, 30, 20, 40, 10};
+Set<Integer> set = new HashSet<>();
+
+for (int num : nums) {
+    if (!set.add(num)) {
+        System.out.println("Duplicate found: " + num);
+    }
+}
+```
+
+Output:
+
+```java
+Duplicate found: 20
+Duplicate found: 10
+```
+
+## 8. `null` in HashSet
+
+`HashSet` allows one `null` value.
+
+```java
+Set<String> set = new HashSet<>();
+set.add(null);
+set.add(null);
+
+System.out.println(set); // only one null stored
+```
+
+## 9. HashSet and Custom Objects
+
+If you store custom objects in a `HashSet`, you should properly override both `equals()` and `hashCode()`.
+
+```java
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.Set;
+
+class Student {
+    int id;
+    String name;
+
+    Student(int id, String name) {
+        this.id = id;
+        this.name = name;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
+        Student other = (Student) obj;
+        return id == other.id;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
+    }
+}
+
+public class Demo {
+    public static void main(String[] args) {
+        Set<Student> students = new HashSet<>();
+
+        students.add(new Student(1, "Navin"));
+        students.add(new Student(1, "Navin"));
+
+        System.out.println(students.size()); // 1
+    }
+}
+```
+
+Without `equals()` and `hashCode()`, duplicates may not be detected correctly.
+
+## 10. Performance
+
+Average time complexity:
+
+| Operation   | Time Complexity |
+| ----------- | --------------- |
+| `add()`     | O(1)            |
+| `remove()`  | O(1)            |
+| `contains()`| O(1)            |
+
+Worst-case performance can degrade when many collisions happen, but average performance is excellent.
+
+## 11. HashSet vs List
+
+| Feature | HashSet | ArrayList |
+| ------- | ------- | --------- |
+| Duplicates | Not allowed | Allowed |
+| Order | No guaranteed order | Maintains insertion order |
+| Index access | Not supported | Supported |
+| Lookup for element | Fast on average | Slower for contains |
+
+Use `HashSet` when uniqueness matters more than order.
+
+## 12. Common Mistakes
+
+### 12.1 Expecting insertion order
+
+```java
+Set<Integer> set = new HashSet<>();
+set.add(3);
+set.add(1);
+set.add(2);
+
+System.out.println(set);
+```
+
+Do not assume the output order will be `3, 1, 2`.
+
+### 12.2 Using mutable objects as set elements
+
+If fields used in `equals()` or `hashCode()` change after insertion, lookup behavior may break.
+
+## 13. Summary
+
+* `HashSet` is a hash table based implementation of `Set`.
+* It stores only unique elements and allows one `null`.
+* It does not preserve insertion order and does not sort data.
+* Basic operations like add, remove, and contains are very fast on average.
+* For custom objects, always override both `equals()` and `hashCode()`.
+
+Written By: <a href="https://www.linkedin.com/in/shivasrivastava1/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer"> Shiva Srivastava <ExternalLink className="w-4 h-4" /></a>

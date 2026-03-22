@@ -1,0 +1,197 @@
+---
+title: Queue and Deque
+---
+
+
+## 1. Introduction
+
+`Queue` is a collection designed for processing elements in a specific order, usually **FIFO** which means **First In, First Out**.
+
+`Deque` stands for **Double Ended Queue**.
+It allows insertion and removal from both the front and rear.
+
+These structures are very useful in:
+
+* Task scheduling
+* Buffer management
+* BFS traversal
+* Undo-redo systems
+* Sliding window problems
+
+## 2. Queue Basics
+
+In a normal queue:
+
+* Elements are added at the rear
+* Elements are removed from the front
+
+Example from daily life:
+
+* People standing in a ticket line
+
+The first person to enter the line is the first one served.
+
+## 3. Queue Interface Methods
+
+Common methods in `Queue`:
+
+| Method | Purpose |
+| ------ | ------- |
+| `add()` | Inserts element, throws exception if it fails |
+| `offer()` | Inserts element, returns `false` if it fails |
+| `remove()` | Removes head, throws exception if empty |
+| `poll()` | Removes head, returns `null` if empty |
+| `element()` | Reads head, throws exception if empty |
+| `peek()` | Reads head, returns `null` if empty |
+
+Example:
+
+```java
+import java.util.LinkedList;
+import java.util.Queue;
+
+public class Demo {
+    public static void main(String[] args) {
+        Queue<String> queue = new LinkedList<>();
+
+        queue.offer("A");
+        queue.offer("B");
+        queue.offer("C");
+
+        System.out.println(queue);
+        System.out.println(queue.peek());
+        System.out.println(queue.poll());
+        System.out.println(queue);
+    }
+}
+```
+
+## 4. Queue Implementations
+
+Common implementations:
+
+* `LinkedList`
+* `PriorityQueue`
+* `ArrayDeque`
+
+Each one is used for different purposes.
+
+## 5. What is Deque?
+
+A `Deque` allows operations at both ends.
+
+That means you can:
+
+* Insert at front
+* Insert at rear
+* Remove from front
+* Remove from rear
+
+Because of this, a `Deque` can behave like:
+
+* A queue
+* A stack
+
+## 6. Deque Interface Methods
+
+| Method | Purpose |
+| ------ | ------- |
+| `addFirst()` | Insert at front |
+| `addLast()` | Insert at rear |
+| `offerFirst()` | Insert at front safely |
+| `offerLast()` | Insert at rear safely |
+| `removeFirst()` | Remove from front |
+| `removeLast()` | Remove from rear |
+| `pollFirst()` | Remove from front safely |
+| `pollLast()` | Remove from rear safely |
+| `getFirst()` | Read first element |
+| `getLast()` | Read last element |
+| `peekFirst()` | Read first safely |
+| `peekLast()` | Read last safely |
+
+## 7. Using ArrayDeque
+
+`ArrayDeque` is one of the best general-purpose implementations of `Deque`.
+
+```java
+import java.util.ArrayDeque;
+import java.util.Deque;
+
+public class Demo {
+    public static void main(String[] args) {
+        Deque<Integer> deque = new ArrayDeque<>();
+
+        deque.addFirst(20);
+        deque.addLast(30);
+        deque.addFirst(10);
+
+        System.out.println(deque);
+
+        System.out.println(deque.removeFirst());
+        System.out.println(deque.removeLast());
+        System.out.println(deque);
+    }
+}
+```
+
+## 8. Deque as a Stack
+
+Since a deque supports insertion and deletion at one end, it can be used as a stack.
+
+```java
+Deque<String> stack = new ArrayDeque<>();
+
+stack.push("Java");
+stack.push("Spring");
+stack.push("Hibernate");
+
+System.out.println(stack.pop());
+System.out.println(stack.peek());
+```
+
+## 9. Queue vs Deque
+
+| Feature | Queue | Deque |
+| ------- | ----- | ----- |
+| Insertion | Usually rear only | Front and rear |
+| Removal | Usually front only | Front and rear |
+| Typical behavior | FIFO | FIFO or LIFO |
+| Flexibility | Less | More |
+
+## 10. LinkedList as Queue and Deque
+
+`LinkedList` implements both `Queue` and `Deque`.
+
+```java
+Deque<String> tasks = new LinkedList<>();
+
+tasks.addFirst("Task 1");
+tasks.addLast("Task 2");
+tasks.addLast("Task 3");
+
+System.out.println(tasks);
+```
+
+## 11. Practical Use Cases
+
+### Queue
+
+* Printer job scheduling
+* CPU task scheduling
+* Breadth-first search
+
+### Deque
+
+* Browser history navigation
+* Undo and redo operations
+* Sliding window maximum problems
+
+## 12. Summary
+
+* `Queue` is mainly used for FIFO processing.
+* `Deque` allows insertion and deletion at both ends.
+* `LinkedList` and `ArrayDeque` are popular implementations.
+* `Deque` is more flexible because it can work like both queue and stack.
+* Methods like `offer()`, `poll()`, and `peek()` are preferred when you want safer operations.
+
+Written By: <a href="https://www.linkedin.com/in/shivasrivastava1/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer"> Shiva Srivastava <ExternalLink className="w-4 h-4" /></a>

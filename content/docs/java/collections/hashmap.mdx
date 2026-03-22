@@ -1,0 +1,278 @@
+---
+title: HashMap
+---
+
+## 1. Introduction
+
+`HashMap` is one of the most popular implementations of the `Map` interface in Java.
+It stores data as **key-value pairs** and provides very fast average performance for insertion, retrieval, and deletion.
+
+Use `HashMap` when:
+
+* You need key-value storage
+* Key order is not important
+* Fast access is preferred
+
+## 2. Key Features
+
+* Stores key-value pairs
+* Keys are unique
+* Values can be duplicated
+* Does not maintain insertion order
+* Allows one `null` key and multiple `null` values
+* Is not synchronized
+
+Example:
+
+```java
+import java.util.HashMap;
+import java.util.Map;
+
+public class Demo {
+    public static void main(String[] args) {
+        Map<Integer, String> students = new HashMap<>();
+
+        students.put(101, "Navin");
+        students.put(102, "Kiran");
+        students.put(103, "Riya");
+
+        System.out.println(students);
+    }
+}
+```
+
+## 3. How HashMap Works
+
+`HashMap` uses **hashing** internally.
+
+When you store a key:
+
+1. Java calculates the key's `hashCode()`
+2. It uses that hash to decide where to store the entry
+3. If two keys land in the same place, collision handling is used
+
+This is why `HashMap` is fast on average.
+
+## 4. Creating a HashMap
+
+```java
+HashMap<String, Integer> marks = new HashMap<>();
+```
+
+Prefer the interface type:
+
+```java
+Map<String, Integer> marks = new HashMap<>();
+```
+
+## 5. Common Methods
+
+### 5.1 `put()`
+
+```java
+marks.put("Math", 95);
+marks.put("Science", 88);
+marks.put("Math", 99);
+```
+
+If a key already exists, the value is replaced.
+
+### 5.2 `get()`
+
+```java
+System.out.println(marks.get("Math")); // 99
+```
+
+### 5.3 `remove()`
+
+```java
+marks.remove("Science");
+```
+
+### 5.4 `containsKey()` and `containsValue()`
+
+```java
+System.out.println(marks.containsKey("Math"));
+System.out.println(marks.containsValue(99));
+```
+
+### 5.5 `getOrDefault()`
+
+```java
+int value = marks.getOrDefault("English", 0);
+System.out.println(value);
+```
+
+### 5.6 `putIfAbsent()`
+
+```java
+marks.putIfAbsent("English", 75);
+```
+
+## 6. Iterating Over a HashMap
+
+### Using `entrySet()`
+
+```java
+for (Map.Entry<String, Integer> entry : marks.entrySet()) {
+    System.out.println(entry.getKey() + " -> " + entry.getValue());
+}
+```
+
+### Using `keySet()`
+
+```java
+for (String key : marks.keySet()) {
+    System.out.println(key + " -> " + marks.get(key));
+}
+```
+
+## 7. Duplicate Keys and Duplicate Values
+
+Duplicate keys are not allowed:
+
+```java
+Map<Integer, String> map = new HashMap<>();
+map.put(1, "A");
+map.put(1, "B");
+
+System.out.println(map);
+```
+
+Output:
+
+```java
+{1=B}
+```
+
+Duplicate values are allowed:
+
+```java
+map.put(2, "B");
+```
+
+## 8. `null` in HashMap
+
+`HashMap` allows:
+
+* One `null` key
+* Multiple `null` values
+
+```java
+Map<String, String> config = new HashMap<>();
+
+config.put(null, "default");
+config.put("theme", null);
+
+System.out.println(config);
+```
+
+## 9. HashMap and Custom Keys
+
+If you use custom objects as keys, you must properly override `equals()` and `hashCode()`.
+
+```java
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
+
+class Student {
+    int id;
+    String name;
+
+    Student(int id, String name) {
+        this.id = id;
+        this.name = name;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
+        Student other = (Student) obj;
+        return id == other.id;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
+    }
+}
+
+public class Demo {
+    public static void main(String[] args) {
+        Map<Student, String> map = new HashMap<>();
+
+        map.put(new Student(1, "Navin"), "Java");
+        map.put(new Student(1, "Navin"), "Spring");
+
+        System.out.println(map.size()); // 1
+    }
+}
+```
+
+## 10. Performance
+
+Average time complexity:
+
+| Operation | Time Complexity |
+| --------- | --------------- |
+| `put()`   | O(1)            |
+| `get()`   | O(1)            |
+| `remove()`| O(1)            |
+
+In the worst case, performance can degrade, but average performance remains very good.
+
+## 11. HashMap vs TreeMap
+
+| Feature | HashMap | TreeMap |
+| ------- | ------- | ------- |
+| Ordering | No guaranteed order | Sorted by key |
+| Speed | Faster on average | Slower |
+| Internal structure | Hash table | Red-Black Tree |
+| `null` key | Allowed | Not allowed in natural ordering |
+
+## 12. Common Mistakes
+
+### 12.1 Assuming order is preserved
+
+`HashMap` does not preserve insertion order.
+
+### 12.2 Using mutable keys
+
+If key data changes after insertion, retrieval may fail.
+
+### 12.3 Forgetting `equals()` and `hashCode()`
+
+This is one of the most common real-world mistakes with custom keys.
+
+## 13. Practical Example
+
+```java
+import java.util.HashMap;
+import java.util.Map;
+
+public class StudentMarks {
+    public static void main(String[] args) {
+        Map<String, Integer> marks = new HashMap<>();
+
+        marks.put("Navin", 95);
+        marks.put("Kiran", 88);
+        marks.put("Riya", 91);
+
+        for (Map.Entry<String, Integer> entry : marks.entrySet()) {
+            System.out.println(entry.getKey() + ": " + entry.getValue());
+        }
+    }
+}
+```
+
+## 14. Summary
+
+* `HashMap` stores key-value pairs with unique keys.
+* It provides very fast average performance.
+* It does not maintain insertion order.
+* It allows one `null` key and multiple `null` values.
+* For custom keys, implement both `equals()` and `hashCode()` properly.
+
+Written By: <a href="https://www.linkedin.com/in/shivasrivastava1/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer"> Shiva Srivastava <ExternalLink className="w-4 h-4" /></a>

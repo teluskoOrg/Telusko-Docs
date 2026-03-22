@@ -24,7 +24,7 @@
         "lang-and-util-apis",
         "exception-handling",
 
-        "DISABLED-collections",
+        "collections",
         "collection-internals",
         "stream-api",
 

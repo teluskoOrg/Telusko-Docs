@@ -1,0 +1,251 @@
+---
+title: TreeSet
+---
+
+## 1. Introduction
+
+`TreeSet` is an implementation of the `Set` interface that stores **unique elements in sorted order**.
+Unlike `HashSet`, it does not use hashing for storage. Instead, it uses a tree-based structure.
+
+Use `TreeSet` when:
+
+* You need uniqueness
+* You want elements to stay sorted automatically
+* You often need smallest, largest, or range-based values
+
+## 2. Key Features
+
+* Implements `NavigableSet` and `SortedSet`
+* Stores only unique elements
+* Maintains elements in sorted order
+* Does not allow indexing
+* Usually does not allow `null`
+* Is not synchronized
+
+Example:
+
+```java
+import java.util.Set;
+import java.util.TreeSet;
+
+public class Demo {
+    public static void main(String[] args) {
+        Set<Integer> numbers = new TreeSet<>();
+
+        numbers.add(50);
+        numbers.add(10);
+        numbers.add(30);
+
+        System.out.println(numbers);
+    }
+}
+```
+
+Output:
+
+```java
+[10, 30, 50]
+```
+
+## 3. How TreeSet Works
+
+`TreeSet` internally uses a **Red-Black Tree**, which is a self-balancing binary search tree.
+
+Because of this:
+
+* Elements remain sorted
+* Operations are slower than `HashSet` on average
+* Search, insert, and delete are usually `O(log n)`
+
+## 4. Natural Ordering
+
+By default, `TreeSet` sorts elements using their **natural ordering**.
+
+Examples:
+
+* `Integer` sorts in ascending numeric order
+* `String` sorts alphabetically
+
+```java
+TreeSet<String> names = new TreeSet<>();
+names.add("Zara");
+names.add("Aman");
+names.add("Riya");
+
+System.out.println(names);
+```
+
+Output:
+
+```java
+[Aman, Riya, Zara]
+```
+
+## 5. Common Methods
+
+### 5.1 `add()`, `remove()`, `contains()`
+
+```java
+TreeSet<Integer> set = new TreeSet<>();
+
+set.add(40);
+set.add(20);
+set.add(60);
+
+System.out.println(set.contains(20)); // true
+
+set.remove(40);
+System.out.println(set);
+```
+
+### 5.2 `first()` and `last()`
+
+These methods return the smallest and largest element.
+
+```java
+System.out.println(set.first());
+System.out.println(set.last());
+```
+
+### 5.3 `higher()`, `lower()`, `ceiling()`, `floor()`
+
+These methods are very useful for navigation.
+
+```java
+TreeSet<Integer> data = new TreeSet<>();
+data.add(10);
+data.add(20);
+data.add(30);
+data.add(40);
+
+System.out.println(data.higher(20));  // 30
+System.out.println(data.lower(20));   // 10
+System.out.println(data.ceiling(25)); // 30
+System.out.println(data.floor(25));   // 20
+```
+
+## 6. Range Operations
+
+`TreeSet` is useful when working with ranges.
+
+```java
+TreeSet<Integer> marks = new TreeSet<>();
+marks.add(45);
+marks.add(60);
+marks.add(75);
+marks.add(90);
+
+System.out.println(marks.headSet(75)); // elements less than 75
+System.out.println(marks.tailSet(60)); // elements greater than or equal to 60
+```
+
+## 7. TreeSet with Custom Sorting
+
+You can provide a `Comparator` to control the sorting rule.
+
+```java
+import java.util.Comparator;
+import java.util.TreeSet;
+
+public class Demo {
+    public static void main(String[] args) {
+        TreeSet<String> names = new TreeSet<>(Comparator.reverseOrder());
+
+        names.add("Aman");
+        names.add("Zara");
+        names.add("Rohit");
+
+        System.out.println(names);
+    }
+}
+```
+
+Output:
+
+```java
+[Zara, Rohit, Aman]
+```
+
+## 8. TreeSet and Custom Objects
+
+For custom objects, elements must either:
+
+* implement `Comparable`, or
+* be inserted into a `TreeSet` created with a `Comparator`
+
+Example using `Comparable`:
+
+```java
+import java.util.TreeSet;
+
+class Student implements Comparable<Student> {
+    int id;
+    String name;
+
+    Student(int id, String name) {
+        this.id = id;
+        this.name = name;
+    }
+
+    @Override
+    public int compareTo(Student other) {
+        return this.id - other.id;
+    }
+
+    @Override
+    public String toString() {
+        return id + " " + name;
+    }
+}
+
+public class Demo {
+    public static void main(String[] args) {
+        TreeSet<Student> students = new TreeSet<>();
+        students.add(new Student(3, "Kiran"));
+        students.add(new Student(1, "Amit"));
+        students.add(new Student(2, "Neha"));
+
+        System.out.println(students);
+    }
+}
+```
+
+## 9. `null` in TreeSet
+
+In most practical cases, `TreeSet` does not allow `null`.
+That is because sorting logic needs to compare elements, and `null` cannot be compared in natural ordering.
+
+```java
+TreeSet<Integer> set = new TreeSet<>();
+set.add(null); // throws exception
+```
+
+## 10. Performance
+
+| Operation | Time Complexity |
+| --------- | --------------- |
+| `add()`   | O(log n)        |
+| `remove()`| O(log n)        |
+| `contains()` | O(log n)     |
+
+`TreeSet` is slower than `HashSet`, but it provides sorted data.
+
+## 11. HashSet vs TreeSet
+
+| Feature | HashSet | TreeSet |
+| ------- | ------- | ------- |
+| Order | No guaranteed order | Sorted order |
+| Duplicate elements | Not allowed | Not allowed |
+| Performance | Faster on average | Slower |
+| Internal structure | Hash table | Red-Black Tree |
+| `null` | One `null` allowed | Generally not allowed |
+
+## 12. Summary
+
+* `TreeSet` stores unique elements in sorted order.
+* It uses a Red-Black Tree internally.
+* Basic operations usually take `O(log n)` time.
+* It is very useful when you need sorted sets or navigation methods.
+* For custom objects, use `Comparable` or `Comparator`.
+
+Written By: <a href="https://www.linkedin.com/in/shivasrivastava1/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer"> Shiva Srivastava <ExternalLink className="w-4 h-4" /></a>
