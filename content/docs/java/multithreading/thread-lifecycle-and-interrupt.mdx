@@ -146,7 +146,13 @@ t.join();
 
 The current thread will wait until thread `t` completes execution.
 
-Unlike `sleep()`, waiting threads require **explicit notification** to continue.
+Unlike `sleep()`, waiting threads do not resume only because time passed.
+
+For example:
+
+- `wait()` needs `notify()` or `notifyAll()`
+- `join()` ends waiting when the target thread finishes
+- `LockSupport.park()` resumes after `unpark()` or interruption
 
 
 
@@ -241,6 +247,7 @@ class Worker extends Thread {
             }
 
         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
             System.out.println("Thread interrupted");
         }
 
@@ -290,7 +297,7 @@ Thread.interrupted()
 or
 
 ```java
-isInterrupted()
+Thread.currentThread().isInterrupted()
 ```
 
 Example:
@@ -302,6 +309,11 @@ if(Thread.currentThread().isInterrupted()) {
 ```
 
 This allows threads to **stop gracefully** instead of abruptly terminating.
+
+Important difference:
+
+- `Thread.interrupted()` checks and clears the current thread's interrupt flag
+- `isInterrupted()` checks the flag without clearing it
 
 
 

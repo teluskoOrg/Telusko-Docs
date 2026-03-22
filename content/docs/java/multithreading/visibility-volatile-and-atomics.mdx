@@ -12,8 +12,8 @@ This issue is called a **visibility problem**.
 
 Java provides mechanisms to solve these issues:
 
-- **volatile keyword** – ensures visibility of changes across threads
-- **Atomic classes** – provide thread-safe operations without traditional locks
+- **volatile keyword** - ensures visibility of changes across threads
+- **Atomic classes** - provide thread-safe operations without traditional locks
 
 Understanding these mechanisms is essential for writing **correct and efficient concurrent programs**.
 
@@ -31,7 +31,7 @@ class FlagExample {
     boolean running = true;
 
 }
-````
+```
 
 Two threads use this variable:
 
@@ -52,7 +52,7 @@ running = false;
 Ideally, Thread A should stop when `running` becomes false.
 But sometimes it continues forever.
 
-Reason: Thread A may keep reading a **cached value of running** instead of the updated value written by Thread B.
+Reason: Thread A may keep reading a cached value of `running` instead of the updated value written by Thread B.
 
 This is the **visibility problem**.
 
@@ -64,15 +64,9 @@ The **Java Memory Model (JMM)** defines how threads interact with memory.
 
 Key ideas:
 
-* Variables are stored in **main memory**
-* Threads may work with **local cached copies**
+* Variables are stored in main memory
+* Threads may work with cached or local views of that data
 * Changes by one thread are not automatically visible to others
-
-Memory flow:
-
-1. Thread reads variable from main memory into its working memory
-2. Thread performs operations on the local copy
-3. Thread writes changes back to main memory
 
 Without proper synchronization, updates may not be visible to other threads.
 
@@ -80,12 +74,12 @@ Without proper synchronization, updates may not be visible to other threads.
 
 ## 4. What is volatile
 
-The `volatile` keyword ensures that a variable is always read from **main memory** instead of thread-local caches.
+The `volatile` keyword provides visibility and ordering guarantees for reads and writes of that variable.
 
 When a variable is declared volatile:
 
-* writes by one thread are immediately visible to others
-* reads always fetch the latest value from main memory
+* writes by one thread become visible to others
+* reads observe the latest written value according to the Java Memory Model
 
 Example:
 
@@ -93,7 +87,7 @@ Example:
 volatile boolean running = true;
 ```
 
-Now when one thread changes `running`, all other threads immediately see the updated value.
+Now when one thread changes `running`, other threads can observe the updated value correctly.
 
 
 
@@ -140,17 +134,17 @@ Without `volatile`, the worker thread might never stop.
 
 ## 6. What volatile Guarantees
 
-The volatile keyword provides **two guarantees**:
+The volatile keyword provides **two important guarantees**:
 
 ### Visibility
 
-Changes made by one thread become visible to other threads immediately.
+Changes made by one thread become visible to other threads.
 
 ### Happens-Before Relationship
 
-Writes to a volatile variable **happen-before** subsequent reads of that variable by other threads.
+A write to a volatile variable **happens-before** a later read of that same variable by another thread.
 
-This ensures that threads observe the most recent values.
+This helps ensure threads observe up-to-date values.
 
 
 
@@ -240,7 +234,7 @@ public class Main {
         t1.join();
         t2.join();
 
-        System.out.println(counter.count);
+        System.out.println(counter.count.get());
 
     }
 
@@ -249,7 +243,7 @@ public class Main {
 
 Output:
 
-```
+```text
 2000
 ```
 
@@ -270,7 +264,7 @@ The algorithm works as follows:
 
 This allows safe updates without locking.
 
-CAS operations are implemented using **hardware CPU instructions**, making them very efficient.
+CAS operations are implemented using low-level CPU support, making them very efficient.
 
 
 
@@ -283,13 +277,13 @@ These mechanisms solve different problems.
 | Visibility  | Yes      | Yes                  | Yes            |
 | Atomicity   | No       | Yes                  | Yes            |
 | Locking     | No       | Yes                  | No             |
-| Performance | High     | Lower due to locking | High           |
+| Performance | High     | Lower due to locking | High for simple operations |
 
 Use cases:
 
-* `volatile` → simple flags or state indicators
-* `synchronized` → complex shared operations
-* `Atomic` classes → lock-free thread-safe operations
+* `volatile` -> simple flags or state indicators
+* `synchronized` -> complex shared operations
+* `Atomic` classes -> lock-free thread-safe operations for simple updates
 
 
 
@@ -300,7 +294,7 @@ Use volatile when:
 * variable is shared between threads
 * operations are simple reads/writes
 * no compound operations are involved
-* variable acts as a **status flag**
+* variable acts as a status flag
 
 Example:
 
@@ -316,7 +310,7 @@ Use atomic classes when:
 
 * performing counters or numeric updates
 * multiple threads update a variable frequently
-* you want lock-free concurrency
+* you want lock-free concurrency for simple state changes
 
 Example:
 
@@ -324,7 +318,7 @@ Example:
 AtomicInteger requestCount = new AtomicInteger();
 ```
 
-Atomic classes are widely used in **high-performance concurrent systems**.
+Atomic classes are widely used in high-performance concurrent systems.
 
 
 
@@ -333,7 +327,7 @@ Atomic classes are widely used in **high-performance concurrent systems**.
 Atomic variables often perform better than synchronized blocks because:
 
 * they avoid blocking threads
-* they use low-level CPU instructions
+* they use low-level CPU support
 * they reduce thread contention
 
 However, atomic variables are best suited for **simple operations**.
@@ -346,11 +340,9 @@ For complex critical sections, traditional locking may still be required.
 
 In multithreaded programs, visibility problems occur when threads do not see updates made by other threads.
 
-The `volatile` keyword ensures that changes to a variable become immediately visible across threads.
+The `volatile` keyword ensures that changes to a variable become visible across threads, but it does not guarantee atomicity for compound operations.
 
-However, volatile does not guarantee atomicity for compound operations.
-
-For atomic operations without locks, Java provides atomic classes such as `AtomicInteger`, which rely on efficient compare-and-swap algorithms.
+For atomic operations without traditional locks, Java provides atomic classes such as `AtomicInteger`, which rely on compare-and-swap techniques.
 
 Choosing between `volatile`, `synchronized`, and atomic classes depends on the complexity of the operation and the concurrency requirements of the application.
 

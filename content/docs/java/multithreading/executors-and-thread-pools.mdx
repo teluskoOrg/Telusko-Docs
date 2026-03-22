@@ -1,0 +1,311 @@
+---
+title: Executors and Thread Pools
+---
+
+## 1. Introduction
+
+Creating threads manually with `new Thread()` works for small examples, but it becomes inefficient in real applications.
+
+Why?
+
+- creating a new thread is expensive
+- too many threads waste memory
+- uncontrolled thread creation hurts performance
+- managing thread lifecycle manually becomes difficult
+
+To solve this, Java provides the **Executor framework** in:
+
+```java
+java.util.concurrent
+```
+
+This framework separates:
+
+- **what task to run**
+- **how threads are managed**
+
+The most common way to use it is through **thread pools**.
+
+## 2. What is an Executor
+
+An **Executor** is an object that executes tasks.
+
+Instead of writing:
+
+```java
+new Thread(task).start();
+```
+
+we can write:
+
+```java
+executor.execute(task);
+```
+
+This allows Java to control how tasks are scheduled and how threads are reused.
+
+## 3. What is a Thread Pool
+
+A **thread pool** is a group of worker threads managed by the executor.
+
+When tasks are submitted:
+
+- an available worker thread runs the task
+- if all workers are busy, tasks may wait in a queue
+- completed threads are reused for new tasks
+
+This is better than creating a new thread for every task.
+
+Benefits:
+
+- better performance
+- controlled resource usage
+- improved scalability
+- easier task management
+
+## 4. Executor Interface
+
+The simplest interface is:
+
+```java
+Executor
+```
+
+It has one main method:
+
+```java
+void execute(Runnable command)
+```
+
+Example:
+
+```java
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
+
+public class Main {
+
+    public static void main(String[] args) {
+
+        Executor executor = Executors.newSingleThreadExecutor();
+
+        executor.execute(() -> System.out.println("Task executed"));
+
+    }
+
+}
+```
+
+## 5. ExecutorService
+
+For real applications, Java usually uses:
+
+```java
+ExecutorService
+```
+
+It extends `Executor` and provides additional features:
+
+- submit tasks
+- return results
+- shut down the pool
+- wait for completion
+- manage multiple tasks
+
+## 6. Creating Thread Pools
+
+Java provides factory methods in `Executors`.
+
+Common thread pools:
+
+### newFixedThreadPool(n)
+
+Creates a pool with a fixed number of threads.
+
+```java
+ExecutorService executor = Executors.newFixedThreadPool(3);
+```
+
+Good when you want a stable number of worker threads.
+
+### newCachedThreadPool()
+
+Creates threads as needed and reuses idle ones.
+
+```java
+ExecutorService executor = Executors.newCachedThreadPool();
+```
+
+Useful for many short-lived asynchronous tasks, but it can create too many threads if used carelessly.
+
+### newSingleThreadExecutor()
+
+Creates exactly one worker thread.
+
+```java
+ExecutorService executor = Executors.newSingleThreadExecutor();
+```
+
+Tasks execute one after another in order.
+
+### newScheduledThreadPool(n)
+
+Used for delayed and periodic tasks.
+
+```java
+ScheduledExecutorService executor = Executors.newScheduledThreadPool(2);
+```
+
+## 7. Example Using Fixed Thread Pool
+
+```java
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
+public class Main {
+
+    public static void main(String[] args) {
+
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+
+        for (int i = 1; i <= 5; i++) {
+            int taskId = i;
+            executor.submit(() ->
+                System.out.println("Task " + taskId + " handled by " +
+                    Thread.currentThread().getName())
+            );
+        }
+
+        executor.shutdown();
+
+    }
+
+}
+```
+
+Here only 2 worker threads handle 5 tasks by reusing the same threads.
+
+## 8. execute() vs submit()
+
+These methods are similar, but not identical.
+
+| Method | Used for | Returns |
+| ------ | -------- | ------- |
+| `execute()` | `Runnable` tasks | nothing |
+| `submit()` | `Runnable` or `Callable` tasks | `Future` |
+
+Use `submit()` when you want to:
+
+- get a result
+- track completion
+- handle task failure through `Future`
+
+## 9. Shutting Down an Executor
+
+An executor should be shut down after use.
+
+Important methods:
+
+| Method | Description |
+| ------ | ----------- |
+| `shutdown()` | stops accepting new tasks but completes existing ones |
+| `shutdownNow()` | tries to stop running tasks immediately |
+| `awaitTermination()` | waits for termination |
+
+Example:
+
+```java
+executor.shutdown();
+```
+
+If you forget to shut down the executor, the application may keep running.
+
+## 10. Scheduled Executors
+
+A scheduled executor is used when tasks must run:
+
+- after a delay
+- repeatedly at fixed intervals
+
+Example:
+
+```java
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+
+public class Main {
+
+    public static void main(String[] args) {
+
+        ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
+
+        executor.schedule(() ->
+            System.out.println("Executed after delay"),
+            2,
+            TimeUnit.SECONDS
+        );
+
+    }
+
+}
+```
+
+Periodic tasks can also be scheduled using:
+
+- `scheduleAtFixedRate()`
+- `scheduleWithFixedDelay()`
+
+## 11. Why Thread Pools Improve Performance
+
+Thread pools improve performance because:
+
+- threads are reused
+- thread creation cost is reduced
+- the number of active threads is controlled
+- CPUs are utilized more efficiently
+
+Without a thread pool, creating thousands of threads for thousands of tasks would waste resources.
+
+## 12. Common Mistakes
+
+### Creating too many threads
+
+Using a large pool does not always make the program faster.
+Too many threads can increase context switching overhead.
+
+### Forgetting shutdown
+
+Executors should usually be shut down explicitly.
+
+### Using cached pool carelessly
+
+`newCachedThreadPool()` can create many threads under heavy load.
+
+### Blocking tasks in small pools
+
+If pool threads block for long periods, queued tasks may wait too long.
+
+## 13. Best Practices
+
+- prefer executors over manual thread creation in production code
+- choose pool size based on task type and system capacity
+- use fixed pools when you want predictable concurrency
+- shut down executors properly
+- use scheduled executors for delayed or repeated tasks
+- prefer `Callable` and `Future` when results are needed
+
+## 14. Summary
+
+The Executor framework provides a clean and efficient way to manage multithreaded task execution in Java.
+
+Instead of manually creating threads, we submit tasks to executors.
+Thread pools reuse worker threads, improve performance, and control resource usage.
+
+`ExecutorService` is the most practical interface for real applications because it supports task submission, result tracking, and lifecycle management.
+
+Thread pools are widely used in web servers, background processing systems, and scalable concurrent applications.
+
+
+
+Written By: <a href="https://www.linkedin.com/in/shivasrivastava1/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer">Shiva Srivastava</a>

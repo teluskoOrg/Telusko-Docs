@@ -1,0 +1,340 @@
+---
+title: CompletableFuture
+---
+
+## 1. Introduction
+
+`Future` is useful for getting results from asynchronous tasks, but it has limitations.
+
+Problems with plain `Future`:
+
+- `get()` blocks
+- tasks are hard to chain
+- combining multiple async steps is awkward
+- callbacks are not built in
+
+To solve these issues, Java introduced:
+
+```java
+CompletableFuture
+```
+
+It is part of:
+
+```java
+java.util.concurrent
+```
+
+`CompletableFuture` supports:
+
+- asynchronous task execution
+- result transformation
+- task chaining
+- combining multiple tasks
+- exception handling
+
+It is one of the most important tools for modern concurrent Java programming.
+
+## 2. What is CompletableFuture
+
+A `CompletableFuture` represents a value that may become available in the future.
+
+Unlike `Future`, it allows:
+
+- non-blocking continuation
+- callback-style programming
+- composing async workflows
+
+This means we can define what should happen **after** a task completes, without blocking the current thread.
+
+## 3. Creating a CompletableFuture
+
+One common way is:
+
+```java
+CompletableFuture.supplyAsync(() -> "Hello");
+```
+
+If no executor is provided, Java uses the **common ForkJoinPool**.
+
+There is also:
+
+```java
+CompletableFuture.runAsync(() -> {
+    System.out.println("Task running");
+});
+```
+
+Difference:
+
+- `runAsync()` for tasks with no result
+- `supplyAsync()` for tasks that return a result
+
+## 4. Basic Example
+
+```java
+import java.util.concurrent.CompletableFuture;
+
+public class Main {
+
+    public static void main(String[] args) throws Exception {
+
+        CompletableFuture<String> future =
+            CompletableFuture.supplyAsync(() -> "Java");
+
+        System.out.println(future.get());
+
+    }
+
+}
+```
+
+This is simple, but `CompletableFuture` becomes powerful when we start chaining operations.
+
+## 5. thenApply()
+
+`thenApply()` transforms the result of a completed task.
+
+Example:
+
+```java
+import java.util.concurrent.CompletableFuture;
+
+public class Main {
+
+    public static void main(String[] args) throws Exception {
+
+        CompletableFuture<Integer> future =
+            CompletableFuture.supplyAsync(() -> 10)
+                             .thenApply(value -> value * 2);
+
+        System.out.println(future.get());
+
+    }
+
+}
+```
+
+Here:
+
+- first task returns `10`
+- `thenApply()` transforms it to `20`
+
+## 6. thenAccept() and thenRun()
+
+`thenAccept()` consumes the result but does not return a new value.
+
+```java
+CompletableFuture.supplyAsync(() -> "Telusko")
+                 .thenAccept(System.out::println);
+```
+
+`thenRun()` runs another task after completion, but does not use the result.
+
+```java
+CompletableFuture.supplyAsync(() -> "done")
+                 .thenRun(() -> System.out.println("Finished"));
+```
+
+## 7. Chaining Multiple Steps
+
+One major benefit of `CompletableFuture` is chaining.
+
+Example:
+
+```java
+import java.util.concurrent.CompletableFuture;
+
+public class Main {
+
+    public static void main(String[] args) throws Exception {
+
+        CompletableFuture<String> future =
+            CompletableFuture.supplyAsync(() -> "java")
+                             .thenApply(String::toUpperCase)
+                             .thenApply(text -> "Learning " + text);
+
+        System.out.println(future.get());
+
+    }
+
+}
+```
+
+This creates a readable async pipeline.
+
+## 8. thenCompose()
+
+`thenCompose()` is used when the next step itself returns another `CompletableFuture`.
+
+Example:
+
+```java
+CompletableFuture<String> future =
+    CompletableFuture.supplyAsync(() -> "Java")
+                     .thenCompose(text ->
+                         CompletableFuture.supplyAsync(() -> text + " 21"));
+```
+
+This is similar to flattening nested futures.
+
+Use `thenCompose()` when one async task depends on the result of another async task.
+
+## 9. Combining Independent Tasks
+
+If two tasks are independent, they can run in parallel and then be combined.
+
+Example using `thenCombine()`:
+
+```java
+import java.util.concurrent.CompletableFuture;
+
+public class Main {
+
+    public static void main(String[] args) throws Exception {
+
+        CompletableFuture<Integer> f1 =
+            CompletableFuture.supplyAsync(() -> 10);
+
+        CompletableFuture<Integer> f2 =
+            CompletableFuture.supplyAsync(() -> 20);
+
+        CompletableFuture<Integer> result =
+            f1.thenCombine(f2, Integer::sum);
+
+        System.out.println(result.get());
+
+    }
+
+}
+```
+
+Output:
+
+```text
+30
+```
+
+## 10. Waiting for Multiple Tasks
+
+Java provides:
+
+- `allOf()`
+- `anyOf()`
+
+### allOf()
+
+Waits for all tasks to complete.
+
+```java
+CompletableFuture<Void> all =
+    CompletableFuture.allOf(f1, f2, f3);
+```
+
+### anyOf()
+
+Completes when any one task finishes first.
+
+```java
+CompletableFuture<Object> any =
+    CompletableFuture.anyOf(f1, f2, f3);
+```
+
+These are useful in parallel workflows.
+
+## 11. Exception Handling
+
+Async code must handle exceptions carefully.
+
+`CompletableFuture` provides methods such as:
+
+- `exceptionally()`
+- `handle()`
+- `whenComplete()`
+
+Example:
+
+```java
+import java.util.concurrent.CompletableFuture;
+
+public class Main {
+
+    public static void main(String[] args) throws Exception {
+
+        CompletableFuture<Integer> future =
+            CompletableFuture.supplyAsync(() -> 10 / 0)
+                             .exceptionally(ex -> {
+                                 System.out.println("Error occurred");
+                                 return 0;
+                             });
+
+        System.out.println(future.get());
+
+    }
+
+}
+```
+
+This prevents the whole workflow from failing silently.
+
+## 12. Custom Executor with CompletableFuture
+
+By default, async tasks may run in the common pool.
+
+You can also provide your own executor:
+
+```java
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
+ExecutorService executor = Executors.newFixedThreadPool(2);
+
+CompletableFuture<String> future =
+    CompletableFuture.supplyAsync(() -> "Custom Pool", executor);
+```
+
+This is useful when:
+
+- you want better control
+- tasks are blocking
+- you want isolated thread pools
+
+## 13. CompletableFuture vs Future
+
+| Feature | Future | CompletableFuture |
+| ------- | ------ | ----------------- |
+| Get result | Yes | Yes |
+| Blocking `get()` | Yes | Yes |
+| Non-blocking callbacks | No | Yes |
+| Chaining | No | Yes |
+| Combining tasks | Difficult | Easy |
+| Exception handling | Limited | Rich support |
+
+`CompletableFuture` is more flexible and better for asynchronous workflows.
+
+## 14. Best Practices
+
+- use `CompletableFuture` for async workflows, not only simple background tasks
+- prefer chaining over repeated blocking `get()` calls
+- provide a custom executor for blocking operations
+- handle exceptions explicitly
+- keep async pipelines readable and not excessively deep
+
+## 15. Summary
+
+`CompletableFuture` is a modern and powerful API for asynchronous programming in Java.
+
+It improves on `Future` by supporting:
+
+- callbacks
+- chaining
+- task composition
+- parallel combination
+- built-in exception handling
+
+It is widely used in modern Java applications for non-blocking workflows, service coordination, and concurrent data processing.
+
+
+
+Written By: <a href="https://www.linkedin.com/in/shivasrivastava1/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer">Shiva Srivastava</a>

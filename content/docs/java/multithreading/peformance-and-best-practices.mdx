@@ -1,0 +1,244 @@
+---
+title: Performance and Best Practices
+---
+
+## 1. Introduction
+
+Multithreading can improve application performance, but it does not automatically make a program faster.
+
+If used incorrectly, multithreading can actually make software:
+
+- slower
+- harder to debug
+- memory-heavy
+- more complex
+
+So while learning concurrency, it is important to understand both:
+
+- performance principles
+- best practices for writing safe code
+
+## 2. Multithreading Does Not Always Mean Faster
+
+Many beginners assume that adding more threads always improves speed.
+
+That is not true.
+
+Performance depends on:
+
+- the type of task
+- the number of CPU cores
+- thread overhead
+- locking and contention
+- memory usage
+
+If many threads compete for the same resource, performance may degrade instead of improving.
+
+## 3. CPU-Bound vs I/O-Bound Tasks
+
+Understanding workload type is very important.
+
+### CPU-Bound Tasks
+
+These tasks spend most of their time using the CPU.
+
+Examples:
+
+- calculations
+- image processing
+- data transformation
+
+For CPU-bound work, too many threads can hurt performance because of extra context switching.
+
+### I/O-Bound Tasks
+
+These tasks spend much of their time waiting for external operations.
+
+Examples:
+
+- file access
+- database calls
+- network requests
+
+For I/O-bound work, more threads may help because some threads can run while others are waiting.
+
+## 4. Context Switching Overhead
+
+When many threads compete for CPU time, the operating system switches between them.
+
+This is called **context switching**.
+
+Context switching has a cost:
+
+- CPU time is spent saving and restoring thread state
+- cache efficiency may decrease
+- throughput may fall
+
+So creating more threads than necessary is usually harmful.
+
+## 5. Contention and Locking Cost
+
+If many threads repeatedly fight for the same lock, the program experiences **contention**.
+
+Heavy contention causes:
+
+- waiting
+- reduced parallelism
+- lower throughput
+
+This means thread-safe code is not automatically efficient code.
+
+Correctness comes first, but lock design also affects performance.
+
+## 6. Keep Critical Sections Small
+
+A **critical section** is the part of code protected by a lock.
+
+Best practice:
+
+- keep critical sections short
+- do only the necessary shared-state operation inside the lock
+- move expensive work outside the lock when possible
+
+Bad idea:
+
+- locking around database calls
+- locking around file I/O
+- locking around long computations
+
+## 7. Prefer High-Level Concurrency Utilities
+
+Instead of manually managing low-level synchronization everywhere, prefer Java's higher-level tools:
+
+- executors
+- blocking queues
+- atomic classes
+- concurrent collections
+- synchronizers such as latches and semaphores
+
+These are usually:
+
+- safer
+- easier to maintain
+- better optimized
+
+## 8. Choose the Right Thread Pool Size
+
+Thread pool size should depend on workload.
+
+General guideline:
+
+- CPU-bound tasks: keep pool near CPU core count
+- I/O-bound tasks: pool may be larger
+
+There is no single perfect number for all applications.
+
+Measure in real conditions.
+
+## 9. Avoid Shared Mutable State
+
+Shared mutable data is one of the main causes of concurrency bugs.
+
+Whenever possible:
+
+- use local variables
+- use immutable objects
+- reduce data sharing between threads
+
+Less shared state means:
+
+- fewer locks
+- fewer race conditions
+- simpler reasoning
+
+## 10. Handle Interruptions Properly
+
+Many blocking methods throw `InterruptedException`.
+
+Bad approach:
+
+```java
+catch (InterruptedException e) {
+}
+```
+
+Better approach:
+
+```java
+catch (InterruptedException e) {
+    Thread.currentThread().interrupt();
+}
+```
+
+Ignoring interruption can make shutdown and cancellation logic unreliable.
+
+## 11. Avoid Busy Waiting
+
+Busy waiting means checking a condition repeatedly in a loop.
+
+Example:
+
+```java
+while(!done) {
+}
+```
+
+This wastes CPU time.
+
+Better alternatives:
+
+- `wait()` / `notify()`
+- `Condition`
+- `BlockingQueue`
+- `CountDownLatch`
+- `CompletableFuture`
+
+## 12. Measure Before Optimizing
+
+Concurrency performance should be based on measurement, not guesswork.
+
+Use:
+
+- profiling tools
+- benchmarks
+- load testing
+- thread dumps
+
+Without measurement, it is easy to optimize the wrong thing.
+
+## 13. Common Best Practices
+
+- prefer immutable data when possible
+- minimize shared mutable state
+- use `ExecutorService` instead of creating threads manually
+- choose the right concurrent collection
+- use atomic variables for simple counters and flags
+- document synchronization rules clearly
+- avoid nested locking when possible
+- always release locks in `finally`
+- test concurrent code repeatedly under load
+
+## 14. Common Anti-Patterns
+
+Avoid these mistakes:
+
+- creating a thread for every small task
+- using `volatile` where atomicity is required
+- synchronizing everything unnecessarily
+- ignoring thread interruption
+- using unbounded queues without thinking about memory
+- assuming concurrent code will always behave in the same order
+
+## 15. Summary
+
+Good multithreaded programming is not only about making code run in parallel.
+It is about making programs correct, efficient, and maintainable.
+
+Performance depends on workload type, lock contention, thread count, and resource usage.
+The best results come from choosing the right concurrency tools, minimizing shared state, handling interruption correctly, and measuring real performance instead of guessing.
+
+Following these best practices helps build concurrent Java applications that are both safe and fast.
+
+
+
+Written By: <a href="https://www.linkedin.com/in/shivasrivastava1/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer">Shiva Srivastava</a>

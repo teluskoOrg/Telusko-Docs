@@ -1,0 +1,210 @@
+---
+title: Deadlock, Livelock, and Starvation
+---
+
+## 1. Introduction
+
+Concurrency bugs are often harder to detect than normal logic bugs because the program may work correctly many times before failing.
+
+Three important problems in multithreading are:
+
+- **deadlock**
+- **livelock**
+- **starvation**
+
+All three affect progress, but in different ways.
+
+Understanding them is important for writing safe and reliable concurrent code.
+
+## 2. What is Deadlock
+
+A **deadlock** happens when two or more threads are blocked forever because each is waiting for a resource held by another.
+
+In simple words:
+
+- Thread A waits for Thread B
+- Thread B waits for Thread A
+
+Neither can continue.
+
+## 3. Deadlock Example
+
+```java
+public class Main {
+
+    private static final Object lock1 = new Object();
+    private static final Object lock2 = new Object();
+
+    public static void main(String[] args) {
+
+        Thread t1 = new Thread(() -> {
+            synchronized (lock1) {
+                System.out.println("Thread 1 locked lock1");
+                synchronized (lock2) {
+                    System.out.println("Thread 1 locked lock2");
+                }
+            }
+        });
+
+        Thread t2 = new Thread(() -> {
+            synchronized (lock2) {
+                System.out.println("Thread 2 locked lock2");
+                synchronized (lock1) {
+                    System.out.println("Thread 2 locked lock1");
+                }
+            }
+        });
+
+        t1.start();
+        t2.start();
+
+    }
+
+}
+```
+
+If:
+
+- `t1` gets `lock1`
+- `t2` gets `lock2`
+
+then each thread waits forever for the other lock.
+
+## 4. Conditions for Deadlock
+
+Deadlock usually requires four conditions:
+
+1. Mutual exclusion
+2. Hold and wait
+3. No preemption
+4. Circular wait
+
+If these conditions are present together, deadlock becomes possible.
+
+## 5. How to Prevent Deadlock
+
+Common prevention techniques:
+
+### Lock Ordering
+
+Always acquire locks in the same order.
+
+For example, if every thread always acquires `lock1` before `lock2`, circular wait is avoided.
+
+### tryLock with Timeout
+
+Using `ReentrantLock.tryLock()` can prevent indefinite waiting.
+
+### Reduce Lock Scope
+
+Use fewer locks and smaller critical sections.
+
+### Avoid Nested Locks
+
+Nested locking increases deadlock risk.
+
+## 6. What is Livelock
+
+A **livelock** happens when threads are not blocked, but they keep reacting to each other in a way that prevents real progress.
+
+So:
+
+- threads remain active
+- CPU may still be used
+- useful work still does not finish
+
+## 7. Livelock Example Idea
+
+Imagine two people trying to pass through a narrow hallway:
+
+- both move left
+- both notice the collision risk and move right
+- both again react the same way
+
+They keep moving, but nobody passes.
+
+In programming, threads may repeatedly retry or yield in response to each other and make no progress.
+
+## 8. What is Starvation
+
+**Starvation** happens when a thread waits for a very long time because other threads keep getting access to the resource first.
+
+The starved thread is not permanently blocked by design, but it keeps losing the chance to run.
+
+Examples:
+
+- low-priority thread rarely gets CPU time
+- unfair lock repeatedly favors some threads
+- one task remains queued while others keep getting service
+
+## 9. Deadlock vs Livelock vs Starvation
+
+| Problem | Thread State | Progress |
+| ------- | ------------ | -------- |
+| Deadlock | blocked | no progress |
+| Livelock | active but constantly reacting | no progress |
+| Starvation | waiting too long | only some threads progress |
+
+These problems are related but not identical.
+
+## 10. Role of Thread Scheduling
+
+Thread scheduling can influence starvation and sometimes expose concurrency problems more often.
+
+However, concurrency bugs should never be solved by assuming a certain scheduler behavior.
+
+Programs must be correct regardless of timing differences.
+
+## 11. Using Fair Locks
+
+Java allows fair locking with:
+
+```java
+ReentrantLock lock = new ReentrantLock(true);
+```
+
+Fair locks try to grant access in request order.
+
+This can reduce starvation, but may reduce throughput.
+
+So fairness should be used only when it solves a real problem.
+
+## 12. Detecting These Problems
+
+These issues can be difficult to detect because they may not happen every time.
+
+Ways to investigate:
+
+- thread dumps
+- logging lock acquisition and release
+- timeout-based monitoring
+- stress testing
+- code review of lock ordering
+
+Deadlocks are often easier to detect than livelock and starvation because blocked threads appear clearly in thread dumps.
+
+## 13. Best Practices
+
+- keep locking strategy simple
+- acquire locks in a consistent global order
+- avoid holding locks longer than necessary
+- use higher-level concurrency utilities when possible
+- use timeouts for risky lock acquisition
+- be careful with thread priorities
+- test concurrent code under load
+
+## 14. Summary
+
+Deadlock, livelock, and starvation are major progress-related problems in multithreaded programs.
+
+Deadlock means threads wait forever.
+Livelock means threads stay active but still make no progress.
+Starvation means some threads keep waiting while others continue.
+
+These problems can often be reduced by simple locking strategies, fairness control, limited lock scope, and use of higher-level concurrency tools.
+
+Understanding these issues is essential for designing correct and dependable concurrent software.
+
+
+
+Written By: <a href="https://www.linkedin.com/in/shivasrivastava1/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer">Shiva Srivastava</a>

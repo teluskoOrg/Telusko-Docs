@@ -281,9 +281,9 @@ while(queueIsEmpty) {
 
 This wastes CPU.
 
-With `BlockingQueue`, if the queue is empty, the consumer simply sleeps internally until data is available.
+With `BlockingQueue`, if the queue is empty, the consumer blocks internally until data is available.
 
-Similarly, if the queue is full, the producer sleeps internally until space becomes available.
+Similarly, if the queue is full, the producer blocks internally until space becomes available.
 
 So `BlockingQueue` provides efficient coordination without manual polling.
 

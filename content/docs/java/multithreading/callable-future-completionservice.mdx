@@ -1,0 +1,320 @@
+---
+title: Callable, Future, and CompletionService
+---
+
+## 1. Introduction
+
+In earlier examples, we used `Runnable` to define tasks for threads and executors.
+
+`Runnable` works well when:
+
+- a task performs work
+- no value needs to be returned
+
+But many tasks need to:
+
+- return a result
+- throw checked exceptions
+- be tracked after submission
+
+For such situations, Java provides:
+
+- `Callable`
+- `Future`
+- `CompletionService`
+
+These utilities are part of:
+
+```java
+java.util.concurrent
+```
+
+## 2. Runnable vs Callable
+
+The `Runnable` interface looks like this:
+
+```java
+public interface Runnable {
+    void run();
+}
+```
+
+It cannot return a value.
+
+The `Callable` interface looks like this:
+
+```java
+public interface Callable<V> {
+    V call() throws Exception;
+}
+```
+
+`Callable`:
+
+- returns a value
+- can throw checked exceptions
+
+This makes it more suitable for computation tasks.
+
+## 3. Example of Callable
+
+```java
+import java.util.concurrent.Callable;
+
+class SumTask implements Callable<Integer> {
+
+    public Integer call() {
+        return 10 + 20;
+    }
+
+}
+```
+
+Here the task returns an `Integer`.
+
+## 4. What is Future
+
+When a `Callable` task is submitted to an executor, Java returns a `Future`.
+
+A `Future` represents:
+
+- a pending result
+- a task that may still be running
+
+With `Future`, we can:
+
+- get the result later
+- check whether the task is complete
+- cancel the task
+
+## 5. Example Using Callable and Future
+
+```java
+import java.util.concurrent.*;
+
+public class Main {
+
+    public static void main(String[] args) throws Exception {
+
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+
+        Callable<Integer> task = () -> 25 * 4;
+
+        Future<Integer> future = executor.submit(task);
+
+        System.out.println("Task submitted");
+
+        Integer result = future.get();
+
+        System.out.println("Result: " + result);
+
+        executor.shutdown();
+
+    }
+
+}
+```
+
+Output:
+
+```text
+Task submitted
+Result: 100
+```
+
+## 6. Important Future Methods
+
+Some useful methods of `Future` are:
+
+| Method | Description |
+| ------ | ----------- |
+| `get()` | waits and returns result |
+| `get(timeout, unit)` | waits for limited time |
+| `isDone()` | checks if task finished |
+| `isCancelled()` | checks if task was cancelled |
+| `cancel(true/false)` | tries to cancel task |
+
+Example:
+
+```java
+if (future.isDone()) {
+    System.out.println("Task completed");
+}
+```
+
+## 7. Blocking Nature of get()
+
+The `get()` method blocks until the result is ready.
+
+Example:
+
+```java
+Integer result = future.get();
+```
+
+If the computation is still running, the calling thread waits.
+
+This is important because using `Future` carelessly can make asynchronous code behave synchronously.
+
+## 8. Example with Multiple Futures
+
+```java
+import java.util.concurrent.*;
+import java.util.*;
+
+public class Main {
+
+    public static void main(String[] args) throws Exception {
+
+        ExecutorService executor = Executors.newFixedThreadPool(3);
+        List<Future<Integer>> futures = new ArrayList<>();
+
+        for (int i = 1; i <= 3; i++) {
+            int value = i;
+            futures.add(executor.submit(() -> value * value));
+        }
+
+        for (Future<Integer> future : futures) {
+            System.out.println(future.get());
+        }
+
+        executor.shutdown();
+
+    }
+
+}
+```
+
+This works, but results are consumed in submission order, not completion order.
+
+## 9. Problem with Multiple Futures
+
+Suppose:
+
+- task 1 takes 10 seconds
+- task 2 takes 1 second
+- task 3 takes 2 seconds
+
+If we call `get()` in submission order, a slow first task can delay access to later results.
+
+This is where `CompletionService` helps.
+
+## 10. What is CompletionService
+
+`CompletionService` combines:
+
+- an executor
+- a completion queue
+
+It allows completed task results to be retrieved in the order they finish, not the order they were submitted.
+
+Most commonly, Java uses:
+
+```java
+ExecutorCompletionService
+```
+
+## 11. Example Using CompletionService
+
+```java
+import java.util.concurrent.*;
+
+public class Main {
+
+    public static void main(String[] args) throws Exception {
+
+        ExecutorService executor = Executors.newFixedThreadPool(3);
+        CompletionService<String> service =
+            new ExecutorCompletionService<>(executor);
+
+        service.submit(() -> {
+            Thread.sleep(3000);
+            return "Task 1 completed";
+        });
+
+        service.submit(() -> {
+            Thread.sleep(1000);
+            return "Task 2 completed";
+        });
+
+        service.submit(() -> {
+            Thread.sleep(2000);
+            return "Task 3 completed";
+        });
+
+        for (int i = 0; i < 3; i++) {
+            Future<String> future = service.take();
+            System.out.println(future.get());
+        }
+
+        executor.shutdown();
+
+    }
+
+}
+```
+
+Output order will usually be:
+
+```text
+Task 2 completed
+Task 3 completed
+Task 1 completed
+```
+
+This makes result processing more efficient.
+
+## 12. When to Use Callable, Future, and CompletionService
+
+Use `Callable` when:
+
+- a task must return a value
+- a task may throw checked exceptions
+
+Use `Future` when:
+
+- you need to monitor task status
+- you need the result later
+- cancellation may be required
+
+Use `CompletionService` when:
+
+- many tasks run in parallel
+- results should be processed as soon as each task completes
+
+## 13. Limitations of Future
+
+Although `Future` is useful, it has limitations:
+
+- `get()` blocks
+- combining many dependent tasks is awkward
+- callbacks are not built in
+- chaining async steps is difficult
+
+These limitations led to a more modern API:
+
+```java
+CompletableFuture
+```
+
+## 14. Best Practices
+
+- use `Callable` instead of `Runnable` when a result is needed
+- avoid calling `get()` too early
+- use timeouts when waiting indefinitely is risky
+- shut down executors properly
+- use `CompletionService` for many parallel result-producing tasks
+
+## 15. Summary
+
+`Callable` allows tasks to return values and throw checked exceptions.
+When such tasks are submitted to an executor, Java returns a `Future`, which represents the pending result.
+
+`Future` helps track task completion, retrieve results, and cancel tasks when necessary.
+For multiple parallel tasks, `CompletionService` improves efficiency by allowing results to be processed in completion order.
+
+These utilities are important building blocks for asynchronous programming in Java and lead naturally into the more advanced `CompletableFuture` API.
+
+
+
+Written By: <a href="https://www.linkedin.com/in/shivasrivastava1/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer">Shiva Srivastava</a>

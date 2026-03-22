@@ -1,0 +1,205 @@
+---
+title: Virtual Threads
+---
+
+## 1. Introduction
+
+Traditional Java threads are **platform threads**, which are mapped to operating system threads.
+
+Platform threads are powerful, but they are relatively expensive.
+
+Problems with large numbers of platform threads:
+
+- high memory usage
+- thread creation overhead
+- limited scalability for blocking workloads
+
+To improve this, modern Java introduced:
+
+```java
+Virtual Threads
+```
+
+Virtual threads make it possible to create very large numbers of lightweight threads more efficiently.
+
+They are part of Java's **Project Loom** work and are available in modern Java versions.
+
+They became a standard feature in **Java 21**.
+
+## 2. What is a Virtual Thread
+
+A **virtual thread** is a lightweight thread managed by the JVM rather than being directly tied one-to-one with an operating system thread.
+
+Important idea:
+
+- many virtual threads can be scheduled onto a smaller number of platform threads
+
+This makes them much cheaper to create and use, especially for applications with many blocking tasks.
+
+## 3. Why Virtual Threads Matter
+
+In server applications, many tasks spend time waiting for:
+
+- database responses
+- network I/O
+- file operations
+
+With platform threads, each waiting task occupies an expensive OS thread.
+
+With virtual threads:
+
+- blocking code becomes more scalable
+- we can keep the simple thread-per-task model
+- asynchronous style is not always necessary just for scalability
+
+This is a major improvement for highly concurrent applications.
+
+## 4. Creating a Virtual Thread
+
+Java provides simple APIs for virtual threads.
+
+Example:
+
+```java
+public class Main {
+
+    public static void main(String[] args) throws InterruptedException {
+
+        Thread thread = Thread.ofVirtual().start(() -> {
+            System.out.println("Running in virtual thread");
+        });
+
+        thread.join();
+
+    }
+
+}
+```
+
+Here the thread is virtual, not a normal platform thread.
+
+## 5. Thread Per Task Executor
+
+A common virtual-thread style is using an executor that creates one virtual thread per task.
+
+Example:
+
+```java
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
+public class Main {
+
+    public static void main(String[] args) {
+
+        try (ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor()) {
+            for (int i = 1; i <= 5; i++) {
+                int taskId = i;
+                executor.submit(() ->
+                    System.out.println("Task " + taskId + " on " +
+                        Thread.currentThread())
+                );
+            }
+        }
+
+    }
+
+}
+```
+
+This style is very natural and easy to read.
+
+## 6. Virtual Threads vs Platform Threads
+
+| Feature | Platform Thread | Virtual Thread |
+| ------- | --------------- | -------------- |
+| Backed by OS thread | Yes | Scheduled by JVM |
+| Creation cost | Higher | Much lower |
+| Memory usage | Higher | Lower |
+| Best for | limited number of active threads | massive numbers of mostly blocking tasks |
+
+Virtual threads do not make the CPU magically faster, but they make concurrency more scalable for the right workloads.
+
+## 7. Best Use Cases for Virtual Threads
+
+Virtual threads are especially useful for:
+
+- web servers
+- request-per-thread architectures
+- database-backed services
+- network applications
+- tasks that block frequently
+
+They are ideal when code naturally waits often.
+
+## 8. Virtual Threads and Blocking Code
+
+One major advantage is that normal blocking code can often remain readable:
+
+```java
+String data = service.fetch();
+save(data);
+```
+
+With older models, developers often used complex callback-based or reactive code to avoid blocking too many platform threads.
+
+Virtual threads make synchronous-looking code far more scalable.
+
+## 9. Important Caution: CPU-Bound Work
+
+Virtual threads are not a solution for every problem.
+
+For CPU-heavy tasks:
+
+- the CPU is still the bottleneck
+- too many runnable tasks can still hurt performance
+
+So virtual threads are best for **blocking and high-concurrency workloads**, not for magically accelerating heavy calculations.
+
+## 10. Pinning and Native Blocking
+
+In some situations, a virtual thread may become **pinned** to a platform thread.
+
+This can happen with certain cases such as:
+
+- blocking while holding a monitor with `synchronized`
+- native calls
+- operations that prevent flexible scheduling
+
+This does not mean virtual threads are bad, but it means developers should still understand blocking behavior and monitor real workloads.
+
+## 11. Do Old Concurrency Rules Still Matter
+
+Yes.
+
+Virtual threads do **not** remove the need for:
+
+- thread safety
+- synchronization
+- safe shared-state design
+- proper interruption handling
+
+A virtual thread is still a thread.
+
+Race conditions, deadlocks, and visibility issues are still possible if shared data is handled poorly.
+
+## 12. Best Practices
+
+- use virtual threads mainly for high-concurrency blocking workloads
+- keep using proper synchronization for shared mutable state
+- prefer thread-per-task style where it improves clarity
+- avoid assuming virtual threads help CPU-bound work
+- measure real performance in production-like conditions
+
+## 13. Summary
+
+Virtual threads are lightweight JVM-managed threads that make it easier to run huge numbers of concurrent tasks efficiently.
+
+They are especially valuable for server-side and I/O-heavy applications because they allow developers to keep simple blocking code while improving scalability.
+
+Although they reduce the cost of threads, they do not remove the need for correct concurrency design.
+Used properly, virtual threads are one of the most important modern improvements in Java concurrency.
+
+
+
+Written By: <a href="https://www.linkedin.com/in/shivasrivastava1/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer">Shiva Srivastava</a>

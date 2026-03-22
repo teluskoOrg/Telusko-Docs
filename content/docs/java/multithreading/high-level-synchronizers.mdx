@@ -1,0 +1,333 @@
+---
+title: High Level Synchronizers
+---
+
+## 1. Introduction
+
+As multithreaded programs grow, coordinating threads with only `synchronized`, `wait()`, and `notify()` becomes difficult.
+
+Java provides a set of **high-level synchronizers** in:
+
+```java
+java.util.concurrent
+```
+
+These utilities help threads coordinate around common patterns such as:
+
+- waiting for a set of tasks to finish
+- limiting access to a resource
+- making threads start together
+- exchanging data safely
+
+Instead of building these mechanisms manually, we can use the ready-made synchronizers from the Java concurrency library.
+
+## 2. Why High-Level Synchronizers Are Useful
+
+Traditional synchronization tools are powerful, but low level.
+
+They require developers to manage:
+
+- locks
+- condition checks
+- wake-up signals
+- shared state rules
+
+High-level synchronizers solve specific coordination problems directly.
+
+Benefits:
+
+- less boilerplate code
+- fewer concurrency bugs
+- easier to read
+- easier to maintain
+
+## 3. Common High-Level Synchronizers
+
+Some of the most commonly used synchronizers are:
+
+- `CountDownLatch`
+- `CyclicBarrier`
+- `Semaphore`
+- `Phaser`
+- `Exchanger`
+
+Each one is designed for a different coordination pattern.
+
+## 4. CountDownLatch
+
+A `CountDownLatch` allows one or more threads to wait until a set of operations completes.
+
+It is created with an initial count:
+
+```java
+CountDownLatch latch = new CountDownLatch(3);
+```
+
+Each completed task calls:
+
+```java
+latch.countDown();
+```
+
+A waiting thread calls:
+
+```java
+latch.await();
+```
+
+When the count reaches zero, waiting threads continue.
+
+### Example
+
+```java
+import java.util.concurrent.CountDownLatch;
+
+public class Main {
+
+    public static void main(String[] args) throws InterruptedException {
+
+        CountDownLatch latch = new CountDownLatch(3);
+
+        Runnable task = () -> {
+            System.out.println(Thread.currentThread().getName() + " finished work");
+            latch.countDown();
+        };
+
+        new Thread(task).start();
+        new Thread(task).start();
+        new Thread(task).start();
+
+        latch.await();
+        System.out.println("All tasks completed");
+
+    }
+
+}
+```
+
+Use `CountDownLatch` when one thread must wait for several other tasks to complete.
+
+## 5. CyclicBarrier
+
+A `CyclicBarrier` is used when a group of threads must all reach a common point before any of them continue.
+
+Example:
+
+```java
+CyclicBarrier barrier = new CyclicBarrier(3);
+```
+
+Each thread calls:
+
+```java
+barrier.await();
+```
+
+When all required threads arrive, they all continue together.
+
+### Example
+
+```java
+import java.util.concurrent.CyclicBarrier;
+
+public class Main {
+
+    public static void main(String[] args) {
+
+        CyclicBarrier barrier = new CyclicBarrier(3, () ->
+            System.out.println("All threads reached barrier")
+        );
+
+        Runnable task = () -> {
+            try {
+                System.out.println(Thread.currentThread().getName() + " reached barrier");
+                barrier.await();
+                System.out.println(Thread.currentThread().getName() + " continued");
+            } catch (Exception e) {
+                Thread.currentThread().interrupt();
+            }
+        };
+
+        new Thread(task).start();
+        new Thread(task).start();
+        new Thread(task).start();
+
+    }
+
+}
+```
+
+Unlike `CountDownLatch`, a `CyclicBarrier` can be reused again.
+
+## 6. Semaphore
+
+A `Semaphore` controls how many threads can access a resource at the same time.
+
+It works using **permits**.
+
+Example:
+
+```java
+Semaphore semaphore = new Semaphore(2);
+```
+
+This means at most 2 threads can enter the protected section at once.
+
+Important methods:
+
+| Method | Description |
+| ------ | ----------- |
+| `acquire()` | takes a permit |
+| `release()` | returns a permit |
+
+### Example
+
+```java
+import java.util.concurrent.Semaphore;
+
+class Printer {
+
+    private final Semaphore semaphore = new Semaphore(2);
+
+    void print(String name) {
+        boolean acquired = false;
+        try {
+            semaphore.acquire();
+            acquired = true;
+            System.out.println(name + " is printing");
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        } finally {
+            if (acquired) {
+                semaphore.release();
+            }
+        }
+    }
+
+}
+```
+
+Semaphores are useful for:
+
+- connection pools
+- limited hardware resources
+- rate-limited systems
+
+## 7. Phaser
+
+A `Phaser` is similar to `CyclicBarrier`, but more flexible.
+
+It supports:
+
+- multiple phases
+- dynamic registration of threads
+- repeated coordination steps
+
+Example:
+
+```java
+Phaser phaser = new Phaser(3);
+```
+
+Threads can wait for a phase to complete using:
+
+```java
+phaser.arriveAndAwaitAdvance();
+```
+
+This is helpful when work proceeds in stages.
+
+## 8. Exchanger
+
+An `Exchanger` allows two threads to exchange data with each other.
+
+Example:
+
+```java
+Exchanger<String> exchanger = new Exchanger<>();
+```
+
+One thread sends one value, and the other sends another value. Both threads receive the partner's value.
+
+### Example
+
+```java
+import java.util.concurrent.Exchanger;
+
+public class Main {
+
+    public static void main(String[] args) {
+
+        Exchanger<String> exchanger = new Exchanger<>();
+
+        new Thread(() -> {
+            try {
+                String received = exchanger.exchange("Data from Thread 1");
+                System.out.println("Thread 1 received: " + received);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }).start();
+
+        new Thread(() -> {
+            try {
+                String received = exchanger.exchange("Data from Thread 2");
+                System.out.println("Thread 2 received: " + received);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }).start();
+
+    }
+
+}
+```
+
+## 9. CountDownLatch vs CyclicBarrier
+
+These two synchronizers are often compared.
+
+| Feature | CountDownLatch | CyclicBarrier |
+| ------- | -------------- | ------------- |
+| Reusable | No | Yes |
+| Waiting model | One or more threads wait for tasks | Group waits for each other |
+| Count changes | Only decreases | Resets after each cycle |
+| Best for | One-time completion events | Repeated phase coordination |
+
+## 10. When to Use Which Synchronizer
+
+Use:
+
+- `CountDownLatch` for one-time waiting
+- `CyclicBarrier` when threads must meet at a common point
+- `Semaphore` when access to a resource must be limited
+- `Phaser` for multi-stage workflows
+- `Exchanger` when two threads need to swap data
+
+Choosing the right synchronizer makes the code cleaner and safer.
+
+## 11. Best Practices
+
+- prefer high-level synchronizers over manual `wait()` and `notify()` when possible
+- always handle `InterruptedException` properly
+- release permits in `finally` blocks when using semaphores
+- use the simplest synchronizer that fits the problem
+- do not force all concurrency problems into one tool
+
+## 12. Summary
+
+High-level synchronizers provide structured ways to coordinate threads in Java.
+
+They reduce the complexity of manual synchronization and help solve common concurrency patterns such as:
+
+- waiting for task completion
+- starting threads together
+- limiting shared access
+- coordinating multi-phase work
+
+Important synchronizers such as `CountDownLatch`, `CyclicBarrier`, `Semaphore`, `Phaser`, and `Exchanger` are essential tools for building robust multithreaded applications.
+
+
+
+Written By: <a href="https://www.linkedin.com/in/shivasrivastava1/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer">Shiva Srivastava</a>

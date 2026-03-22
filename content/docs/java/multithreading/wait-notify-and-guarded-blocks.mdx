@@ -204,7 +204,9 @@ public class Main {
                 for(int i = 1; i <= 5; i++) {
                     resource.produce(i);
                 }
-            } catch(Exception e) { }
+            } catch(InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
         });
 
         Thread consumer = new Thread(() -> {
@@ -212,7 +214,9 @@ public class Main {
                 for(int i = 1; i <= 5; i++) {
                     resource.consume();
                 }
-            } catch(Exception e) { }
+            } catch(InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
         });
 
         producer.start();
@@ -307,7 +311,7 @@ This mechanism allows threads to cooperate efficiently.
 
 ### Missed Notifications
 
-If `notify()` occurs before `wait()`, the waiting thread may miss the signal.
+If code relies only on the signal and does not recheck shared state carefully, a thread may wait longer than expected.
 
 Guarded blocks help avoid this issue.
 

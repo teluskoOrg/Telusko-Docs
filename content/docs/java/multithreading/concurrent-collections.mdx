@@ -1,0 +1,274 @@
+---
+title: Concurrent Collections
+---
+
+## 1. Introduction
+
+In multithreaded programs, multiple threads often need to read and modify shared collections such as lists, sets, maps, and queues.
+
+Regular collections from `java.util` like:
+
+- `ArrayList`
+- `HashMap`
+- `HashSet`
+
+are **not thread-safe** by default.
+
+If multiple threads access and modify them concurrently, problems may occur:
+
+- race conditions
+- inconsistent data
+- `ConcurrentModificationException`
+- corrupted internal state
+
+To solve this, Java provides **concurrent collections** in:
+
+```java
+java.util.concurrent
+```
+
+These collections are designed for safe and efficient use in multithreaded environments.
+
+## 2. Why Normal Collections Are Unsafe
+
+Consider this example:
+
+```java
+List<Integer> list = new ArrayList<>();
+```
+
+If multiple threads call `list.add()` at the same time, the internal array may be updated incorrectly.
+
+Similarly:
+
+```java
+Map<String, Integer> map = new HashMap<>();
+```
+
+Concurrent modification of a `HashMap` can produce unpredictable results.
+
+So, in concurrent programs, normal collections should not be shared without proper protection.
+
+## 3. Old Approach: Synchronized Wrappers
+
+Java provides synchronized wrappers such as:
+
+```java
+Collections.synchronizedList(new ArrayList<>());
+Collections.synchronizedMap(new HashMap<>());
+```
+
+These make collection methods thread-safe by locking around operations.
+
+However, they have limitations:
+
+- one lock can become a bottleneck
+- iteration still needs external synchronization
+- performance may suffer under heavy concurrency
+
+This is why concurrent collections are usually preferred.
+
+## 4. Common Concurrent Collections
+
+Important concurrent collections include:
+
+- `ConcurrentHashMap`
+- `CopyOnWriteArrayList`
+- `CopyOnWriteArraySet`
+- `ConcurrentLinkedQueue`
+- `BlockingQueue` implementations
+- `ConcurrentSkipListMap`
+- `ConcurrentSkipListSet`
+
+Each one is designed for a different usage pattern.
+
+## 5. ConcurrentHashMap
+
+`ConcurrentHashMap` is the most commonly used concurrent map.
+
+It allows:
+
+- safe concurrent reads
+- safe concurrent updates
+- better performance than `Hashtable` or synchronized maps
+
+Example:
+
+```java
+import java.util.concurrent.ConcurrentHashMap;
+
+public class Main {
+
+    public static void main(String[] args) {
+
+        ConcurrentHashMap<String, Integer> map = new ConcurrentHashMap<>();
+
+        map.put("A", 1);
+        map.put("B", 2);
+
+        System.out.println(map.get("A"));
+
+    }
+
+}
+```
+
+`ConcurrentHashMap` is highly optimized for concurrent access.
+
+## 6. Atomic Map Operations
+
+One strong advantage of `ConcurrentHashMap` is support for atomic compound operations.
+
+Examples:
+
+- `putIfAbsent()`
+- `computeIfAbsent()`
+- `compute()`
+- `merge()`
+
+Example:
+
+```java
+map.putIfAbsent("Java", 1);
+```
+
+This avoids common race conditions that happen with separate check-then-act code.
+
+## 7. CopyOnWriteArrayList
+
+`CopyOnWriteArrayList` is useful when:
+
+- reads are frequent
+- writes are rare
+
+Whenever the collection is modified, a new internal copy is created.
+
+Example:
+
+```java
+import java.util.concurrent.CopyOnWriteArrayList;
+
+public class Main {
+
+    public static void main(String[] args) {
+
+        CopyOnWriteArrayList<String> list = new CopyOnWriteArrayList<>();
+
+        list.add("Java");
+        list.add("Python");
+
+        for (String item : list) {
+            System.out.println(item);
+        }
+
+    }
+
+}
+```
+
+This is excellent for read-heavy scenarios, but write operations are costly.
+
+## 8. ConcurrentLinkedQueue
+
+`ConcurrentLinkedQueue` is a non-blocking thread-safe queue.
+
+It is useful when multiple threads need to add and remove elements without manual locking.
+
+Example:
+
+```java
+import java.util.concurrent.ConcurrentLinkedQueue;
+
+public class Main {
+
+    public static void main(String[] args) {
+
+        ConcurrentLinkedQueue<Integer> queue = new ConcurrentLinkedQueue<>();
+
+        queue.add(10);
+        queue.add(20);
+
+        System.out.println(queue.poll());
+
+    }
+
+}
+```
+
+It is suitable for high-throughput asynchronous systems.
+
+## 9. ConcurrentSkipListMap and ConcurrentSkipListSet
+
+These are concurrent sorted collections.
+
+They maintain elements in sorted order while supporting safe concurrent access.
+
+Useful when:
+
+- sorted data is required
+- concurrent reads and writes happen together
+
+Examples:
+
+- `ConcurrentSkipListMap`
+- `ConcurrentSkipListSet`
+
+## 10. Iterator Behavior in Concurrent Collections
+
+Concurrent collections often provide **weakly consistent iterators**.
+
+This means:
+
+- they do not usually throw `ConcurrentModificationException`
+- they may reflect some updates made during iteration
+- they do not necessarily show every change immediately
+
+This behavior is intentional and useful in concurrent environments.
+
+## 11. ConcurrentHashMap vs HashMap
+
+| Feature | HashMap | ConcurrentHashMap |
+| ------- | ------- | ----------------- |
+| Thread-safe | No | Yes |
+| Concurrent reads | Unsafe | Safe |
+| Concurrent updates | Unsafe | Safe |
+| Performance under concurrency | Poor | Good |
+| Null keys / values | Allowed | Not allowed |
+
+Important note:
+
+`ConcurrentHashMap` does not allow `null` keys or `null` values.
+
+## 12. When to Use Which Collection
+
+Use:
+
+- `ConcurrentHashMap` for shared key-value data
+- `CopyOnWriteArrayList` for read-heavy lists
+- `ConcurrentLinkedQueue` for lock-free queues
+- `BlockingQueue` for producer-consumer systems
+- `ConcurrentSkipListMap` when sorted concurrent maps are needed
+
+Choosing the right collection depends on access pattern, update frequency, and ordering requirements.
+
+## 13. Best Practices
+
+- prefer concurrent collections over manual synchronization for shared data structures
+- choose collections based on workload patterns
+- avoid `CopyOnWriteArrayList` when writes are frequent
+- use atomic methods such as `computeIfAbsent()` instead of manual check-then-act code
+- understand iterator behavior in concurrent environments
+
+## 14. Summary
+
+Concurrent collections are specialized data structures designed for safe and efficient multithreaded access.
+
+They provide better scalability and cleaner code than wrapping normal collections with manual synchronization.
+
+Important tools such as `ConcurrentHashMap`, `CopyOnWriteArrayList`, and `ConcurrentLinkedQueue` are widely used in server applications, caches, task systems, and asynchronous pipelines.
+
+Selecting the right concurrent collection is an important part of writing high-quality concurrent Java programs.
+
+
+
+Written By: <a href="https://www.linkedin.com/in/shivasrivastava1/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer">Shiva Srivastava</a>
