@@ -1,0 +1,106 @@
+---
+title: What Is FastAPI?
+---
+
+## Introduction
+
+FastAPI is a modern Python framework used to build web APIs. It is designed for backend development, which means it helps us create the server-side part of an application that receives requests, processes data, talks to databases, and sends responses back to clients.
+
+If you have used websites or mobile apps that fetch data from a server, there is usually an API working in the background. FastAPI helps us build that API using Python in a clean and structured way.
+
+## Why This Matters
+
+A beginner often learns syntax first and frameworks later. But when building backend applications, it is important to understand where a framework fits.
+
+FastAPI gives you a practical way to turn Python code into real endpoints such as:
+- `GET /students`
+- `POST /orders`
+- `PUT /profile`
+
+That means you are not only learning Python syntax. You are learning how backend applications are actually built and exposed to the outside world.
+
+## Core Idea
+
+A FastAPI application is made of a few simple ideas:
+
+- an app object that represents your API
+- routes that define which URL should run which function
+- request handling to read incoming data
+- response handling to send data back in JSON or other formats
+- validation support so incorrect input can be rejected automatically
+
+One reason FastAPI became popular is that it combines developer-friendly code with features that are useful in real projects. It supports type hints, automatic API documentation, validation, and async programming without making the beginner experience too hard.
+
+FastAPI is built on top of strong Python libraries such as Starlette and Pydantic, but as a learner you can start by thinking of it simply as a framework that helps you build APIs clearly and quickly.
+
+## A Minimal Example
+
+```python
+from fastapi import FastAPI
+
+app = FastAPI()
+
+@app.get("/")
+def home():
+    return {"message": "Welcome to FastAPI"}
+```
+
+## Explanation
+
+This example contains the core structure of a FastAPI app.
+
+- `FastAPI()` creates the application object
+- `app.get("/")` tells FastAPI that this function should run when someone sends a `GET` request to the root URL
+- `home()` is a normal Python function
+- the returned dictionary is automatically converted into JSON
+
+So if a client visits `/`, the API sends this response:
+
+```json
+{
+  "message": "Welcome to FastAPI"
+}
+```
+
+## Where FastAPI Is Used
+
+FastAPI is a strong choice for many backend use cases:
+
+- REST API development
+- backend for web and mobile applications
+- authentication systems
+- admin panels and dashboards
+- microservices
+- machine learning model APIs
+- internal business tools
+
+A small team can start with simple endpoints and later grow the project into a larger backend service.
+
+## What Makes FastAPI Different
+
+The table below gives a simple overview of why developers often like FastAPI.
+
+| Feature | What it means for a learner |
+| ------- | --------------------------- |
+| Python-based | You can build APIs using a language that reads naturally |
+| Type hints support | Your code becomes easier to read and validate |
+| Automatic docs | Swagger UI and ReDoc are generated for you |
+| Validation | Incoming data can be checked automatically |
+| Async support | It can handle modern high-concurrency use cases |
+
+## Common Mistakes
+
+A common beginner mistake is to think FastAPI replaces Python fundamentals. It does not. FastAPI becomes much easier when you already understand:
+
+- Python functions
+- imports
+- dictionaries
+- classes at a basic level
+- type hints
+- basic HTTP ideas
+
+Another mistake is assuming FastAPI is only about speed. Speed matters, but the bigger advantage for beginners is clarity. The code is usually easy to follow, and many features feel natural once you understand the basics.
+
+## Summary
+
+FastAPI is a Python framework for building APIs and backend services. It helps you create routes, handle requests, validate data, and return responses in a structured way. As you move ahead, you will see that FastAPI is not only easy to start with, but also capable enough for serious backend development.

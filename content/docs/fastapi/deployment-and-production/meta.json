@@ -1,0 +1,11 @@
+{
+    "title": "Deployment and Production",
+    "pages": [
+        "production-readiness-checklist.mdx",
+        "environment-based-configuration.mdx",
+        "dockerizing-fastapi-applications.mdx",
+        "deploying-on-vps-and-cloud-platforms.mdx",
+        "reverse-proxy-with-nginx.mdx",
+        "scaling-caching-and-background-workers.mdx"
+    ]
+}

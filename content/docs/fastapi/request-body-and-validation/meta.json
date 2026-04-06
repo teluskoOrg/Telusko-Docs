@@ -1,0 +1,11 @@
+{
+    "title": "Request Body and Validation",
+    "pages": [
+        "pydantic-models-basics.mdx",
+        "request-body-validation.mdx",
+        "field-constraints-and-custom-validation.mdx",
+        "nested-models-and-lists.mdx",
+        "schema-examples-and-metadata.mdx",
+        "partial-updates-and-patch-requests.mdx"
+    ]
+}

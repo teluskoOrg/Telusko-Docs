@@ -1,0 +1,11 @@
+{
+    "title": "Routing and Parameters",
+    "pages": [
+        "creating-routes-and-path-operations.mdx",
+        "path-parameters.mdx",
+        "query-parameters.mdx",
+        "request-headers-and-cookies.mdx",
+        "route-tags-summary-and-documentation.mdx",
+        "api-versioning-basics.mdx"
+    ]
+}

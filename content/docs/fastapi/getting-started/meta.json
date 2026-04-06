@@ -1,0 +1,11 @@
+{
+    "title": "Getting Started",
+    "pages": [
+        "what-is-fastapi.mdx",
+        "why-fastapi-for-backend-development.mdx",
+        "installing-python-pip-and-virtualenv.mdx",
+        "creating-your-first-fastapi-project.mdx",
+        "running-the-dev-server-with-uvicorn.mdx",
+        "understanding-swagger-ui-and-redoc.mdx"
+    ]
+}

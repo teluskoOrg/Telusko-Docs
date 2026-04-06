@@ -1,0 +1,22 @@
+{
+    "root": false,
+    "title": "FastAPI",
+    "icon": "CodeXml",
+    "pages": [
+        "getting-started",
+        "DISABLED-python-and-http-foundations",
+        "DISABLED-project-structure-and-tooling",
+        "DISABLED-routing-and-parameters",
+        "DISABLED-request-body-and-validation",
+        "DISABLED-response-handling-and-errors",
+        "DISABLED-dependency-injection",
+        "DISABLED-database-and-persistence",
+        "DISABLED-authentication-and-authorization",
+        "DISABLED-middleware-security-and-cors",
+        "DISABLED-files-forms-and-background-tasks",
+        "DISABLED-websockets-and-real-time",
+        "DISABLED-testing-and-debugging",
+        "DISABLED-deployment-and-production",
+        "DISABLED-architecture-and-best-practices"
+    ]
+}

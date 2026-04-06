@@ -28,3 +28,4 @@ next-env.d.ts
 .env
 
 /public/images/java/
+/prompts-local/

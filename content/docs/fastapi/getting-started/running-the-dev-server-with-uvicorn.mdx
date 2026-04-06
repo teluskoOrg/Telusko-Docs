@@ -1,0 +1,115 @@
+---
+title: Running the Dev Server with Uvicorn
+---
+
+## Introduction
+
+After creating your first FastAPI project, you need a way to run it locally. That is where Uvicorn comes in. Uvicorn is an ASGI server that can serve your FastAPI application during development.
+
+In simple terms, FastAPI defines your application, and Uvicorn runs it so you can open it in a browser or call it from tools like Postman.
+
+## Why This Matters
+
+Writing route functions is only one part of backend development. You also need a server process that listens for HTTP requests and passes them to your application.
+
+Without Uvicorn, your FastAPI code is just a Python file. With Uvicorn, it becomes a running web application.
+
+## Core Idea
+
+FastAPI follows the ASGI standard, which is used by modern Python web applications. Uvicorn is a lightweight ASGI server that works very well with FastAPI.
+
+You can think of the relationship like this:
+
+- FastAPI defines the application logic
+- Uvicorn runs the application and handles incoming requests
+
+## Basic Command
+
+If your main file is `main.py` and your app object is `app`, run:
+
+```bash
+uvicorn main:app --reload
+```
+
+## Explanation
+
+This command has three important parts:
+
+| Part | Meaning |
+| ---- | ------- |
+| `uvicorn` | starts the ASGI server |
+| `main:app` | load `app` from the file `main.py` |
+| `--reload` | restart the server automatically when code changes |
+
+The `--reload` option is especially helpful during development because you do not need to restart the server manually after every edit.
+
+## Example
+
+Suppose `main.py` contains this code:
+
+```python
+from fastapi import FastAPI
+
+app = FastAPI()
+
+@app.get("/")
+def home():
+    return {"message": "Server is running"}
+```
+
+Now run:
+
+```bash
+uvicorn main:app --reload
+```
+
+After the server starts, open:
+
+```text
+http://127.0.0.1:8000
+```
+
+You should see a JSON response from your API.
+
+## What You Usually See in the Terminal
+
+When Uvicorn starts successfully, it normally shows:
+- the local server address
+- the process start message
+- reload information when `--reload` is enabled
+
+This helps you confirm that the backend is actually running.
+
+## Development vs Production
+
+The `--reload` flag is meant for development only. It is useful while learning and coding locally. Production deployment uses a more controlled setup.
+
+A simple comparison:
+
+| Mode | Typical use |
+| ---- | ----------- |
+| Development | local coding and testing |
+| Production | live deployed backend for real users |
+
+You will study production setup later, but it is good to know from the beginning that local and deployed environments are not handled in exactly the same way.
+
+## Common Mistakes
+
+### Wrong module or app name
+
+If the command says the app cannot be imported, check:
+- the filename is correct
+- the app object is named `app`
+- you are running the command from the correct directory
+
+### Forgetting to activate the virtual environment
+
+If `uvicorn` is not recognized, your project environment may not be active.
+
+### Using `--reload` in production thinking
+
+Some beginners assume the development setup is the final deployment setup. It is not. `--reload` is a convenience feature for local development.
+
+## Summary
+
+Uvicorn is the server that runs your FastAPI application. The command `uvicorn main:app --reload` starts your app locally and reloads it when your code changes. Once you know how to run the development server, you are ready to test routes and start exploring FastAPI more comfortably.

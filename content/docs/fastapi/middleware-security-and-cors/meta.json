@@ -1,0 +1,11 @@
+{
+    "title": "Middleware Security and CORS",
+    "pages": [
+        "what-middleware-does.mdx",
+        "using-built-in-and-custom-middleware.mdx",
+        "cors-in-fastapi.mdx",
+        "security-headers-and-trusted-hosts.mdx",
+        "rate-limiting-and-api-protection-basics.mdx",
+        "logging-monitoring-and-request-tracing.mdx"
+    ]
+}

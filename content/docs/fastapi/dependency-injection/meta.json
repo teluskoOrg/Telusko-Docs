@@ -1,0 +1,11 @@
+{
+    "title": "Dependency Injection",
+    "pages": [
+        "understanding-depends.mdx",
+        "shared-logic-with-dependencies.mdx",
+        "query-auth-and-db-dependencies.mdx",
+        "class-based-dependencies.mdx",
+        "dependency-overrides-for-testing.mdx",
+        "lifespan-events-and-resource-management.mdx"
+    ]
+}
