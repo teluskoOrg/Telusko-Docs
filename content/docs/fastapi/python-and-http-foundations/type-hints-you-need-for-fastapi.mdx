@@ -1,0 +1,114 @@
+---
+title: Type Hints You Need for FastAPI
+---
+
+## Introduction
+
+Type hints are one of the most important parts of FastAPI. They are not just optional decoration. In FastAPI, type hints help the framework understand what kind of data an endpoint expects and what kind of data it should return.
+
+That is why type hints appear so often in FastAPI examples.
+
+## Why This Matters
+
+FastAPI uses type hints for three important things:
+
+- input validation
+- better editor support
+- automatic API documentation
+
+So when you write clear type hints, you are not only improving Python readability. You are also helping FastAPI generate safer and better documented APIs.
+
+## Core Idea
+
+A type hint tells Python readers, tools, and frameworks what kind of value is expected.
+
+```python
+def add(a: int, b: int) -> int:
+    return a + b
+```
+
+Here:
+- `a: int` means `a` should be an integer
+- `b: int` means `b` should be an integer
+- `-> int` means the function returns an integer
+
+In plain Python, these hints are mostly guidance. In FastAPI, they become much more useful because the framework reads them and acts on them.
+
+## FastAPI Example
+
+```python
+from fastapi import FastAPI
+
+app = FastAPI()
+
+@app.get("/square/{number}")
+def square(number: int) -> dict:
+    return {"number": number, "square": number * number}
+```
+
+## Explanation
+
+This example shows how type hints improve API behavior.
+
+- `number: int` tells FastAPI that the path parameter must be an integer
+- `-> dict` tells the reader the function returns a dictionary
+- if a client sends a non-integer path value, FastAPI can reject it automatically
+
+This is one of the reasons FastAPI feels clean and powerful.
+
+## Common Type Hints You Will Use
+
+| Type hint | Example use |
+| --------- | ----------- |
+| `int` | IDs, counts, ages |
+| `str` | names, titles, emails |
+| `bool` | flags such as `active=true` |
+| `float` | prices, ratings, measurements |
+| `list[str]` | list of names or tags |
+| `dict` | structured response data |
+
+## Example with Query Parameters
+
+```python
+from fastapi import FastAPI
+
+app = FastAPI()
+
+@app.get("/search")
+def search(keyword: str, limit: int = 10):
+    return {
+        "keyword": keyword,
+        "limit": limit
+    }
+```
+
+Here:
+- `keyword` must be a string
+- `limit` must be an integer
+- `limit` has a default value of `10`
+
+FastAPI uses this information when building validation and documentation.
+
+## Why Type Hints Help Beginners
+
+Type hints make backend code easier to read because they show intent clearly. A learner can look at a function and quickly understand what kind of data is expected.
+
+This becomes even more valuable when working with request bodies, response models, authentication helpers, and database logic.
+
+## Common Mistakes
+
+### Thinking type hints are only for advanced developers
+
+In FastAPI, type hints are part of the normal workflow. Beginners should get comfortable with them early.
+
+### Using vague types everywhere
+
+If everything is just `dict` or left untyped, the code becomes less clear. Use specific types when possible.
+
+### Forgetting that type hints help the docs too
+
+Type hints are one reason FastAPI can generate useful documentation automatically.
+
+## Summary
+
+Type hints are a core part of FastAPI development. They help with validation, readability, and documentation. If you understand how to use basic hints such as `int`, `str`, `bool`, `list`, and return types, you will find FastAPI code much easier to write and understand.

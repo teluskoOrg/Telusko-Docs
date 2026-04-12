@@ -1,5 +1,5 @@
 {
-    "title": "Getting Started",
+    "title": "Basic FastAPI",
     "pages": [
         "what-is-fastapi.mdx",
         "why-fastapi-for-backend-development.mdx",

@@ -71,11 +71,15 @@ It presents the API in a structured documentation style, which is useful when yo
 
 ## Request to Documentation Flow
 
-```mermaid
-flowchart TD
-    A[FastAPI Route Definitions] --> B[OpenAPI Schema]
-    B --> C[Swagger UI at /docs]
-    B --> D[ReDoc at /redoc]
+```text
+FastAPI Route Definitions
+           |
+           v
+      OpenAPI Schema
+        /         \
+       v           v
+Swagger UI      ReDoc
+ at /docs      at /redoc
 ```
 
 This shows an important idea: Swagger UI and ReDoc are not separate manual documents. They are generated from the API structure you define in your code.

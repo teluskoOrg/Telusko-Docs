@@ -75,11 +75,17 @@ Now the project has two endpoints. This is still simple, but it already shows th
 
 ## How the Request Flow Works
 
-```mermaid
-flowchart LR
-    A[Client Request] --> B[FastAPI Route]
-    B --> C[Python Function]
-    C --> D[JSON Response]
+```text
+Client Request
+      |
+      v
+FastAPI Route
+      |
+      v
+Python Function
+      |
+      v
+JSON Response
 ```
 
 This is the basic lifecycle you will keep seeing throughout backend development.
