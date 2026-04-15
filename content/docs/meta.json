@@ -4,6 +4,7 @@
         "index.mdx",
         "java",
         "python",
-        "fastapi"
+        "fastapi",
+        "spring-ai"
     ]
 }

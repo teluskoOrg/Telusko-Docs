@@ -1,0 +1,244 @@
+---
+title: Running the UI
+---
+
+
+<Steps>
+<Video id="XNHkh3RrldM" />
+
+---
+
+
+## Overview
+
+The Spring AI UI project is a **React-based web application** designed to compare responses from multiple AI models simultaneously. It provides a user-friendly interface that communicates with a Spring Boot backend, which handles connections to different Large Language Models (LLMs) through the Spring AI framework.
+
+```
+React UI (Frontend)          Spring Boot Backend          AI Models
+   Port: 5173      ------>    Port: 80/8080     ------>   OpenAI
+                                                ------>   Anthropic (Claude)
+                                                ------>   Ollama (Local)
+```
+
+
+![Features](https://dyz1pdcuffwr5.cloudfront.net/SpringAI/spring_ai_features.png)
+
+
+---
+
+
+## Prerequisites
+
+Before running the UI, ensure you have the following installed:
+
+| Requirement | Purpose | Verification Command |
+|------------|---------|---------------------|
+| **Node.js** | JavaScript runtime for React | `node --version` |
+| **npm** | Package manager for dependencies | `npm --version` |
+| **Git** | Version control for cloning repository | `git --version` |
+
+**Note**: Ensure your Node.js and npm versions are up-to-date (later than the versions specified in the tutorial).
+
+
+---
+
+
+## Project Setup
+
+### Step 1: Clone the Repository
+
+```bash
+git clone <repository-url>
+cd llm-comparison-ui
+```
+
+**Github UI Link :** [llm-comparson-ui]( https://github.com/Gaurav560/llm-comparison-ui)
+
+### Step 2: Install Dependencies
+
+Navigate to the project folder and install required packages:
+
+```bash
+npm install
+```
+
+**What this does**: Downloads all dependencies specified in `package.json`, including React libraries and required modules.
+
+### Step 3: Start the Development Server
+
+Run the React development server:
+
+```bash
+npm run dev
+```
+
+**Expected Output**: The development server starts, typically on `http://localhost:5173`.
+
+### Step 4: Access the Application
+
+Open your browser and navigate to the URL displayed in the terminal (usually `http://localhost:5173`).
+
+
+---
+
+
+## UI Functionality
+
+The React UI provides:
+
+### 1. Input Field
+
+* User enters a prompt
+
+### 2. Submit Button
+
+* Sends request to backend
+
+### 3. Compare Models Feature
+
+A **“Compare All Models”** button:
+
+* Sends the same prompt to multiple AI models:
+
+  * OpenAI
+  * Anthropic
+  * Ollama (local model)
+
+### 4. Display Output
+
+* Responses from each model are displayed on the UI
+
+
+![Spring_AI_UI](https://dyz1pdcuffwr5.cloudfront.net/SpringAI/spring_ai.jpeg)
+
+
+---
+
+
+## Project Structure
+
+### Key Files and Components
+
+```
+llm-comparison-ui/
+├── src/
+│   ├── app.jsx          # Main application logic and UI components
+│   ├── components/      # Reusable React components
+│   └── ...
+├── public/
+│   └── index.html       # HTML page for component loading
+├── package.json         # Project dependencies and scripts
+└── README.md
+```
+
+### Core Component: app.jsx
+
+Located in the `src` folder, `app.jsx` contains:
+- **UI Building Logic**: Constructs the interface elements
+- **Request Management**: Handles communication with the backend
+- **Model Comparison Logic**: Manages requests to multiple AI models
+
+
+## How It Works? 
+
+### User Interaction Flow
+
+1. **User Input**: Enter a prompt in the text field
+2. **Submit Request**: Click the "Compare All Models" button
+3. **Backend Processing**: UI sends requests to Spring Boot backend endpoints
+4. **Model Invocation**: Backend uses Spring AI to connect with different LLMs
+5. **Response Display**: Results from all models are displayed side-by-side
+
+### Backend Endpoints
+
+The UI communicates with three different model endpoints:
+
+| Endpoint | Model Provider | URL Pattern |
+|----------|---------------|-------------|
+| OpenAI | OpenAI API | `http://localhost:80/api/openai` |
+| Anthropic | Claude Models | `http://localhost:80/api/anthropic` |
+| Ollama | Local Models | `http://localhost:80/api/ollama` |
+
+### Request Handling
+
+When you submit a prompt, the `handleSubmit` function sends requests to:
+- **Local:80/api/openai** - OpenAI endpoint
+- **Local:80/api/anthropic** - Anthropic (Claude) endpoint
+- **Local:80/api/ollama** - Ollama (local models) endpoint
+
+Each request includes:
+- **Model Name**: Identifies which specific model to use
+- **Prompt**: The user's input text
+
+
+---
+
+
+## Common Issues and Troubleshooting
+
+### Issue 1: "Site Can't Be Reached" Error
+
+**Symptom**: Browser displays "This site can't be reached" when accessing the UI.
+
+**Cause**: React development server is not running.
+
+**Solution**:
+```bash
+cd llm-comparison-ui
+npm install
+npm run dev
+```
+
+### Issue 2: "Failed to Fetch" Error
+
+**Symptom**: UI loads but displays "fail to fetch" error when submitting prompts.
+
+**Cause**: Spring Boot backend is not running on the expected port (typically port 80 or 8080).
+
+**Solution**:
+1. Ensure the Spring Boot backend application is running
+2. Verify the backend is listening on the correct port
+3. Check backend logs for startup errors
+4. Confirm backend endpoints are accessible
+
+![Spring_AI_Error](https://dyz1pdcuffwr5.cloudfront.net/SpringAI/spring_ai_error.jpeg)
+
+### Issue 3: Node.js or npm Not Found
+
+**Symptom**: Commands not recognized in terminal.
+
+**Cause**: Node.js and npm are not installed or not in system PATH.
+
+**Solution**:
+1. Download and install Node.js from [nodejs.org](https://nodejs.org/)
+2. Restart your terminal after installation
+3. Verify installation with `node --version` and `npm --version`
+
+### Issue 4: Port Already in Use
+
+**Symptom**: Error message indicating port 5173 is already in use.
+
+**Solution**:
+- Stop the existing process using the port, or
+- Modify the port in the Vite configuration
+
+
+---
+
+
+## Summary
+
+* **The UI is a pre-built React application** that interacts with a **Spring Boot backend using Spring AI** to send prompts and display AI-generated responses.
+
+* **Setup involves running `npm install` and `npm run dev`**, which installs dependencies and starts the React development server.
+
+* The UI allows users to **enter prompts and compare responses from multiple AI models** (OpenAI, Anthropic, and Ollama) via backend APIs.
+
+* **Frontend and backend must run together**—if the backend is not running, the UI shows errors like **“Failed to fetch”**.
+
+* The main logic is handled in **`app.jsx`**, where API calls are made and responses from different models are processed and displayed.
+
+
+</Steps>
+
+Written By: <a href="https://www.linkedin.com/in/muskangarg03/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer"> Muskan Garg <ExternalLink className="w-4 h-4" /></a>

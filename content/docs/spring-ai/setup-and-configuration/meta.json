@@ -1,0 +1,8 @@
+{   "title":"Setup And Configuration",
+    "pages":[
+        "openai-and-anthropic-keys.mdx",
+        "ollama-setup.mdx",
+        "running-the-ui.mdx",
+        "setting-springboot-and-springai-project.mdx"
+    ]
+} 
