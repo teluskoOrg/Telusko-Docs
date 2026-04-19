@@ -1,0 +1,172 @@
+---
+title: Recommended FastAPI Project Structure
+---
+
+## Introduction
+
+When you start learning FastAPI, it is common to put everything in a single file. That works for small experiments, but as your project grows, a clean folder structure becomes important for readability and maintainability.
+
+This topic covers the standard way to organize a FastAPI project so your code stays manageable as features are added.
+
+## Why This Matters
+
+A messy project structure causes real problems:
+- hard to find where a feature lives
+- routes, models, and database logic mixed together
+- difficult to onboard new team members
+- harder to write and run tests
+
+A well-organized project feels natural to navigate even when it grows.
+
+## Simple Single-File Structure
+
+For very small projects or learning, a single file is fine:
+
+```
+my_project/
+├── main.py
+└── requirements.txt
+```
+
+Everything goes into `main.py`. This is a good starting point.
+
+## Small Project Structure
+
+Once you have a few routes and models, split them into focused files:
+
+```
+my_project/
+├── main.py
+├── models.py
+├── schemas.py
+├── database.py
+├── routers/
+│   └── items.py
+└── requirements.txt
+```
+
+| File or Folder | Purpose |
+| -------------- | ------- |
+| `main.py` | Creates the app and includes routers |
+| `models.py` | Database table definitions |
+| `schemas.py` | Pydantic models for request and response shapes |
+| `database.py` | Database connection setup |
+| `routers/` | Route handlers grouped by feature |
+
+## Medium Project Structure
+
+For a real application with multiple features:
+
+```
+my_project/
+├── app/
+│   ├── __init__.py
+│   ├── main.py
+│   ├── config.py
+│   ├── database.py
+│   ├── models/
+│   │   ├── __init__.py
+│   │   └── user.py
+│   ├── schemas/
+│   │   ├── __init__.py
+│   │   └── user.py
+│   ├── routers/
+│   │   ├── __init__.py
+│   │   └── users.py
+│   └── services/
+│       ├── __init__.py
+│       └── user_service.py
+├── tests/
+│   └── test_users.py
+├── .env
+├── requirements.txt
+└── pyproject.toml
+```
+
+## Explanation of Each Part
+
+### app/main.py
+
+This is the entry point. It creates the FastAPI instance and registers routers.
+
+```python
+from fastapi import FastAPI
+from app.routers import users
+
+app = FastAPI()
+
+app.include_router(users.router)
+```
+
+### app/routers/users.py
+
+Contains route definitions for a specific feature.
+
+```python
+from fastapi import APIRouter
+
+router = APIRouter(prefix="/users", tags=["users"])
+
+@router.get("/")
+def list_users():
+    return []
+```
+
+### app/schemas/user.py
+
+Pydantic models that define the shape of incoming and outgoing data.
+
+```python
+from pydantic import BaseModel
+
+class UserCreate(BaseModel):
+    name: str
+    email: str
+
+class UserResponse(BaseModel):
+    id: int
+    name: str
+    email: str
+```
+
+### app/models/user.py
+
+Database table models, typically using SQLAlchemy.
+
+```python
+from sqlalchemy import Column, Integer, String
+from app.database import Base
+
+class User(Base):
+    __tablename__ = "users"
+    id = Column(Integer, primary_key=True)
+    name = Column(String)
+    email = Column(String, unique=True)
+```
+
+### app/services/user_service.py
+
+Business logic separated from routing logic.
+
+```python
+def get_all_users(db):
+    return db.query(User).all()
+```
+
+## Common Mistakes
+
+### Putting all routes in main.py
+
+This works at first but becomes hard to manage. Move routes into routers early.
+
+### Mixing schema and model definitions
+
+Keep Pydantic schemas separate from database models. They serve different purposes.
+
+### Skipping the `__init__.py` files
+
+Python needs these to treat directories as packages. Always include them even if they are empty.
+
+## Summary
+
+A good FastAPI project structure separates concerns: routes live in routers, data shapes live in schemas, database definitions live in models, and business logic lives in services. Start with a single file, then grow the structure as the project grows.

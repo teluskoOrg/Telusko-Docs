@@ -1,0 +1,161 @@
+---
+title: requirements.txt vs pyproject.toml
+---
+
+## Introduction
+
+Every Python project needs a way to declare its dependencies. When someone else sets up your project, they need to know which packages to install. Two common approaches are `requirements.txt` and `pyproject.toml`.
+
+Understanding both formats helps you make the right choice for your FastAPI project.
+
+## Why This Matters
+
+Without a proper dependency file:
+- other developers cannot reproduce your environment
+- deployment servers do not know what to install
+- upgrading or auditing packages becomes harder
+
+A clear dependency declaration is part of a professional project setup.
+
+## requirements.txt
+
+A `requirements.txt` file is a plain text list of packages with optional version pins.
+
+```
+fastapi==0.110.0
+uvicorn==0.29.0
+pydantic==2.6.4
+sqlalchemy==2.0.28
+python-dotenv==1.0.1
+```
+
+### Installing from requirements.txt
+
+```bash
+pip install -r requirements.txt
+```
+
+### Generating requirements.txt from your environment
+
+After installing packages in a virtual environment:
+
+```bash
+pip freeze > requirements.txt
+```
+
+This captures every installed package and its version, including indirect dependencies.
+
+### Pros and Cons of requirements.txt
+
+| Pros | Cons |
+| ---- | ---- |
+| Simple and widely understood | No separation between dev and production dependencies |
+| Works everywhere pip is available | No project metadata |
+| Easy to read and edit | `pip freeze` captures too many indirect packages |
+
+## pyproject.toml
+
+`pyproject.toml` is a modern, standardized configuration file for Python projects. It can replace `setup.py`, `setup.cfg`, and `requirements.txt` in a single file.
+
+```toml
+[project]
+name = "my-fastapi-app"
+version = "1.0.0"
+description = "A FastAPI backend service"
+requires-python = ">=3.10"
+dependencies = [
+    "fastapi>=0.110.0",
+    "uvicorn>=0.29.0",
+    "pydantic>=2.6.0",
+    "sqlalchemy>=2.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "httpx",
+    "black",
+    "ruff",
+]
+```
+
+### Installing from pyproject.toml
+
+With `pip`:
+
+```bash
+pip install .
+```
+
+With dev dependencies:
+
+```bash
+pip install ".[dev]"
+```
+
+### Pros and Cons of pyproject.toml
+
+| Pros | Cons |
+| ---- | ---- |
+| Separates dev and production dependencies | Slightly more complex to set up |
+| Stores project metadata in one place | Less familiar to beginners |
+| Flexible version constraints | Requires understanding of extras syntax |
+
+## Separating Dev and Production Dependencies
+
+One clear advantage of `pyproject.toml` is the ability to separate dependencies.
+
+In `requirements.txt`, this is done with multiple files:
+
+```
+requirements.txt          <- production
+requirements-dev.txt      <- development only
+```
+
+Install development requirements:
+
+```bash
+pip install -r requirements.txt -r requirements-dev.txt
+```
+
+In `pyproject.toml`, this is handled with optional dependency groups as shown in the example above.
+
+## Recommended Approach for FastAPI Projects
+
+For a simple learning project: use `requirements.txt`. It is easy to start with.
+
+For a real or team project: use `pyproject.toml`. It gives better control over versions, metadata, and dev versus production splits.
+
+Many modern Python tools such as `poetry`, `uv`, and `hatch` use `pyproject.toml` as their primary configuration format.
+
+## Example requirements.txt for a FastAPI Project
+
+```
+fastapi>=0.110.0
+uvicorn[standard]>=0.29.0
+pydantic>=2.6.0
+pydantic-settings>=2.2.0
+sqlalchemy>=2.0.0
+python-dotenv>=1.0.0
+alembic>=1.13.0
+```
+
+Note: `uvicorn[standard]` installs uvicorn with optional extras for WebSocket and HTTP/2 support.
+
+## Common Mistakes
+
+### Committing packages from a global Python install
+
+Always create and activate a virtual environment before installing packages. This keeps the requirements file clean and project-specific.
+
+### Using exact pins for everything in pyproject.toml
+
+Exact pins like `fastapi==0.110.0` are better suited for `requirements.txt` lockfiles. In `pyproject.toml`, use flexible ranges like `fastapi>=0.110.0` to allow compatible updates.
+
+### Forgetting to update the dependency file after adding a package
+
+After installing a new package, update the relevant file so others get the same package when they install.
+
+## Summary
+
+`requirements.txt` is a simple and practical way to declare dependencies for FastAPI projects. `pyproject.toml` is the modern standard that supports richer configuration and separation of dev and production dependencies. Start with `requirements.txt` and move to `pyproject.toml` as your project becomes more structured.

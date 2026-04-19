@@ -1,0 +1,225 @@
+---
+title: Code Formatting, Linting, and Typing
+---
+
+## Introduction
+
+Writing code that works is the first step. Writing code that is clean, consistent, and checked for errors is what makes it maintainable. FastAPI projects benefit from tooling that handles formatting, catches bugs through linting, and verifies type correctness.
+
+## Why This Matters
+
+As a project grows and multiple developers contribute, consistent code style becomes critical. Without automated tools:
+- code style differs between files and contributors
+- common bugs get missed in review
+- type mismatches cause runtime errors that could have been caught earlier
+
+These tools do not replace good thinking, but they catch a large category of mistakes automatically.
+
+## Code Formatting with Black
+
+Black is an opinionated Python code formatter. It reformats your code to a consistent style with no configuration needed.
+
+### Installing Black
+
+```bash
+pip install black
+```
+
+### Running Black
+
+Format a single file:
+
+```bash
+black main.py
+```
+
+Format the entire project:
+
+```bash
+black .
+```
+
+Check what would change without actually changing it:
+
+```bash
+black --check .
+```
+
+### What Black Does
+
+```python
+# Before Black
+def create_user(name:str,email:str,age:int)->dict:
+    return {"name":name,"email":email,"age":age}
+
+# After Black
+def create_user(name: str, email: str, age: int) -> dict:
+    return {"name": name, "email": email, "age": age}
+```
+
+Black applies consistent spacing, line length, and formatting rules across the entire codebase.
+
+## Linting with Ruff
+
+Ruff is a fast Python linter. It checks your code for errors, unused imports, undefined variables, and style issues.
+
+### Installing Ruff
+
+```bash
+pip install ruff
+```
+
+### Running Ruff
+
+Check for issues:
+
+```bash
+ruff check .
+```
+
+Fix auto-fixable issues:
+
+```bash
+ruff check --fix .
+```
+
+### What Ruff Catches
+
+```python
+import os
+import json  # unused import
+
+def get_user(id):
+    user = {"name": "Alice"}
+    return user
+```
+
+Ruff flags `import json` as an unused import and can remove it automatically.
+
+### Configuring Ruff in pyproject.toml
+
+```toml
+[tool.ruff]
+line-length = 88
+select = ["E", "F", "I"]
+ignore = ["E501"]
+
+[tool.ruff.isort]
+known-first-party = ["app"]
+```
+
+| Rule set | What it checks |
+| -------- | -------------- |
+| `E` | PEP 8 style errors |
+| `F` | pyflakes errors like undefined names |
+| `I` | import sorting |
+
+## Type Checking with mypy
+
+FastAPI relies heavily on type hints. Mypy is a static type checker that verifies those hints are used consistently.
+
+### Installing mypy
+
+```bash
+pip install mypy
+```
+
+### Running mypy
+
+```bash
+mypy app/
+```
+
+### What mypy Catches
+
+```python
+def add(a: int, b: int) -> int:
+    return a + b
+
+result = add("hello", 2)  # mypy catches this: expected int, got str
+```
+
+Mypy flags the incorrect argument type before the code ever runs.
+
+### Configuring mypy in pyproject.toml
+
+```toml
+[tool.mypy]
+python_version = "3.11"
+strict = false
+ignore_missing_imports = true
+```
+
+Running mypy in strict mode catches more issues but requires all code to be fully annotated.
+
+## Combining the Tools
+
+A typical setup runs all three tools together. You can add them to a development workflow or CI pipeline.
+
+Example development check sequence:
+
+```bash
+black .
+ruff check --fix .
+mypy app/
+```
+
+## Pre-commit Hooks
+
+Pre-commit runs these tools automatically before every git commit, catching issues before they enter the repository.
+
+### Installing pre-commit
+
+```bash
+pip install pre-commit
+```
+
+### Example .pre-commit-config.yaml
+
+```yaml
+repos:
+  - repo: https://github.com/psf/black
+    rev: 24.3.0
+    hooks:
+      - id: black
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.3.5
+    hooks:
+      - id: ruff
+        args: [--fix]
+```
+
+### Activating the hooks
+
+```bash
+pre-commit install
+```
+
+After this, every `git commit` automatically runs Black and Ruff on staged files.
+
+## Tool Comparison
+
+| Tool | Purpose | Speed |
+| ---- | ------- | ----- |
+| Black | Code formatting | Fast |
+| Ruff | Linting and import sorting | Very fast |
+| mypy | Static type checking | Moderate |
+
+## Common Mistakes
+
+### Skipping type hints because mypy is optional
+
+FastAPI uses type hints for request validation and documentation generation. Incomplete type hints mean missing validation and inaccurate docs.
+
+### Formatting and linting only locally
+
+Add these checks to your CI pipeline so every pull request is verified automatically.
+
+### Using conflicting tools
+
+Black and some older formatters conflict on line length. When using Black, configure Ruff to use the same line length (default is 88 for both).
+
+## Summary
+
+Black formats code consistently, Ruff catches linting and import errors quickly, and mypy checks that type hints are correct. Together these tools keep a FastAPI project clean and prevent common mistakes from reaching production. Setting them up with pre-commit hooks ensures the checks run automatically before every commit.

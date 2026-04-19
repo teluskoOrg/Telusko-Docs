@@ -1,0 +1,179 @@
+---
+title: Environment Variables and Settings
+---
+
+## Introduction
+
+A FastAPI application often needs configuration values such as database URLs, API keys, secret tokens, and feature flags. These values should not be hardcoded into the source code. Instead, they are loaded from the environment using environment variables.
+
+## Why This Matters
+
+Hardcoding configuration values causes problems:
+- sensitive credentials get committed to version control
+- the same code cannot run in development and production without modification
+- changing a value requires editing and redeploying code
+
+Environment variables solve these problems by keeping configuration outside the codebase.
+
+## What Is an Environment Variable
+
+An environment variable is a key-value pair stored in the operating system or in a `.env` file. The application reads it at startup.
+
+Example `.env` file:
+
+```
+DATABASE_URL=postgresql://user:password@localhost/mydb
+SECRET_KEY=mysecretkey123
+DEBUG=true
+APP_NAME=My FastAPI App
+```
+
+## Reading Environment Variables Directly
+
+Python can read environment variables using the built-in `os` module.
+
+```python
+import os
+
+database_url = os.getenv("DATABASE_URL", "sqlite:///./default.db")
+```
+
+The second argument to `os.getenv` is the default value if the variable is not set.
+
+## Using python-dotenv
+
+The `python-dotenv` library loads variables from a `.env` file automatically.
+
+Install it:
+
+```bash
+pip install python-dotenv
+```
+
+Usage:
+
+```python
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+
+database_url = os.getenv("DATABASE_URL")
+```
+
+This reads the `.env` file in the current directory and makes the values available through `os.getenv`.
+
+## Using Pydantic Settings
+
+FastAPI projects often use Pydantic's settings management for a cleaner approach.
+
+Install the required package:
+
+```bash
+pip install pydantic-settings
+```
+
+Create a settings file:
+
+```python
+from pydantic_settings import BaseSettings
+
+class Settings(BaseSettings):
+    app_name: str = "My API"
+    database_url: str
+    secret_key: str
+    debug: bool = False
+
+    class Config:
+        env_file = ".env"
+
+settings = Settings()
+```
+
+Use settings in your application:
+
+```python
+from fastapi import FastAPI
+from app.config import settings
+
+app = FastAPI(title=settings.app_name)
+
+@app.get("/info")
+def app_info():
+    return {"app": settings.app_name, "debug": settings.debug}
+```
+
+## Why Pydantic Settings Is Preferred
+
+| Approach | Pros | Cons |
+| -------- | ---- | ---- |
+| `os.getenv` | Simple, no dependencies | No type validation, no defaults management |
+| `python-dotenv` only | Easy to set up | Still uses strings without type safety |
+| Pydantic settings | Type validated, IDE support, clean API | Requires extra package |
+
+Pydantic settings validates types automatically. If `DEBUG` is expected to be a boolean, Pydantic converts the string `"true"` from the `.env` file into `True` for you.
+
+## Keeping .env Out of Version Control
+
+Always add `.env` to `.gitignore`:
+
+```
+.env
+```
+
+Instead, provide a `.env.example` file that shows the required variables without real values:
+
+```
+DATABASE_URL=
+SECRET_KEY=
+DEBUG=false
+APP_NAME=
+```
+
+New developers copy this file and fill in their values.
+
+## Accessing Settings Efficiently
+
+Create the settings object once and reuse it. Avoid creating a new `Settings()` instance in every function.
+
+```python
+# config.py
+from pydantic_settings import BaseSettings
+
+class Settings(BaseSettings):
+    database_url: str
+    secret_key: str
+
+    class Config:
+        env_file = ".env"
+
+settings = Settings()
+```
+
+Import `settings` wherever it is needed:
+
+```python
+from app.config import settings
+```
+
+## Common Mistakes
+
+### Committing a .env file with real secrets
+
+This is a serious security mistake. Always check that `.env` is in `.gitignore` before pushing.
+
+### Hardcoding values directly in source files
+
+Avoid this pattern:
+
+```python
+DATABASE_URL = "postgresql://admin:password123@localhost/prod"
+```
+
+### Not providing defaults for optional settings
+
+Settings that have safe defaults should declare them so the app can start without those variables in a development environment.
+
+## Summary
+
+Environment variables keep sensitive configuration out of the codebase. FastAPI projects typically use a `.env` file with `pydantic-settings` to load, validate, and access configuration values in a type-safe way. Never commit real credentials to version control.
