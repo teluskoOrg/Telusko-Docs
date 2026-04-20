@@ -1,0 +1,11 @@
+{
+    "title": "Architecture and Best Practices",
+    "pages": [
+        "layered-architecture-for-fastapi-projects.mdx",
+        "clean-code-and-naming-conventions.mdx",
+        "validation-service-and-router-separation.mdx",
+        "reusable-exception-and-response-patterns.mdx",
+        "building-a-complete-fastapi-backend-roadmap.mdx",
+        "common-beginner-mistakes-and-how-to-avoid-them.mdx"
+    ]
+}

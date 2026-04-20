@@ -1,0 +1,122 @@
+---
+title: Creating Your First FastAPI Project
+---
+
+## Introduction
+
+After setting up Python and a virtual environment, the next step is to create your first FastAPI project. At this stage, the goal is not to build a large backend. The goal is to understand the smallest working project structure and see how a FastAPI app is created.
+
+A beginner should first become comfortable with the file layout, the app object, and the idea of mapping a URL to a Python function.
+
+## Why This Matters
+
+Many learners can run copied code, but they do not always understand how the project is organized. That becomes a problem later when the application grows.
+
+If you understand the first project structure properly, then topics like routers, dependencies, services, and databases will make much more sense later.
+
+## Basic Project Structure
+
+A very small FastAPI project can begin like this:
+
+```text
+fastapi-demo/
++-- .venv/
++-- main.py
+```
+
+This is enough for the first project. Later, we will split the app into multiple files and folders.
+
+## The First App File
+
+Create a file named `main.py`.
+
+```python
+from fastapi import FastAPI
+
+app = FastAPI()
+
+@app.get("/")
+def read_root():
+    return {"message": "My first FastAPI project"}
+```
+
+## Explanation
+
+This file contains three important parts:
+
+- `from fastapi import FastAPI`
+  imports the FastAPI class
+- `app = FastAPI()`
+  creates the application instance
+- `@app.get("/")`
+  creates a route for the root URL
+
+When a client sends a `GET` request to `/`, FastAPI runs `read_root()` and returns the dictionary as JSON.
+
+## A Slightly Better Example
+
+You can add one more route to make the project feel more real.
+
+```python
+from fastapi import FastAPI
+
+app = FastAPI()
+
+@app.get("/")
+def read_root():
+    return {"message": "Welcome to the project"}
+
+@app.get("/about")
+def about():
+    return {"topic": "FastAPI Getting Started"}
+```
+
+Now the project has two endpoints. This is still simple, but it already shows that backend projects are built route by route.
+
+## How the Request Flow Works
+
+```text
+Client Request
+      |
+      v
+FastAPI Route
+      |
+      v
+Python Function
+      |
+      v
+JSON Response
+```
+
+This is the basic lifecycle you will keep seeing throughout backend development.
+
+## What to Keep in Mind
+
+At the beginning, one file is enough. Do not rush into advanced folder structures too early. Learn the purpose of the app object and route functions first.
+
+As the project grows, you will later organize code into:
+- routers
+- schemas
+- services
+- models
+- configuration files
+
+But that separation becomes meaningful only after the basic structure is clear.
+
+## Common Mistakes
+
+### Naming the app object incorrectly
+
+When you run the server, FastAPI tools often expect a reference like `main:app`. That means the file is `main.py` and the application object is named `app`.
+
+### Writing too much code too early
+
+For the first project, keep things small. One file and one or two routes are enough.
+
+### Mixing unrelated concepts
+
+Do not try to learn databases, authentication, and deployment on day one. Learn the core application shape first.
+
+## Summary
+
+Your first FastAPI project only needs a project folder, a `main.py` file, and an `app = FastAPI()` object with one or two routes. This simple start is important because it teaches the structure that every larger FastAPI backend will build on later.

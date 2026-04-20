@@ -1,0 +1,278 @@
+---
+title: OpenAI and Anthropic Keys
+---
+
+
+<Steps>
+<Video id="YZ2CQkNWyO8" />
+
+---
+
+
+Spring AI supports three types of AI model providers, each with different requirements and cost structures. This guide focuses on obtaining API keys for cloud-based services (OpenAI and Anthropic) while providing context on the local alternative (Ollama).
+
+
+### Understanding Your Options
+
+| Provider | Type | Cost | API Key Required | Hardware Requirements | Response Quality |
+|----------|------|------|------------------|---------------------|------------------|
+| **OpenAI** | Cloud | Paid (Pay-per-use) | Yes | Minimal | High |
+| **Anthropic** | Cloud | Paid (Pay-per-use) | Yes | Minimal | High |
+| **Ollama** | Local | Free | No | High (runs locally) | Moderate |
+
+
+---
+
+
+### Cost vs Performance Trade-offs
+
+
+![Cloud_Services_Comparison](https://dyz1pdcuffwr5.cloudfront.net/SpringAI/cloud_service_comparison.png)
+
+
+### When to Use Which Service?
+
+#### Use Cloud Services (OpenAI/Anthropic) When:
+- Building production applications
+- Need high-quality, consistent responses
+- Have budget for API costs
+- Working with limited local hardware
+- Require latest model capabilities
+- Need enterprise support
+
+#### Use Ollama (Local) When:
+- Prioritizing cost avoidance
+- Working with sensitive/private data
+- Developing/testing applications
+- No internet connectivity available
+- Have powerful local hardware
+- Learning and experimentation
+
+
+---
+
+## Prerequisites
+
+Before obtaining API keys, ensure you have:
+
+1. ✅ Valid email address
+2. ✅ Payment method (credit/debit card) for cloud services
+3. ✅ Budget for API credits (recommended: $5-10 to start)
+4. ✅ Secure location to store API keys
+
+
+---
+
+
+## OpenAI API Key Setup
+
+### Step 1: Create an OpenAI Account
+
+1. Navigate to **[OpenAI Platform](https://platform.openai.com)**
+2. Click on **"Sign Up"**
+3. Complete registration:
+   - Enter email address
+   - Create a secure password
+   - Verify email address
+4. Complete profile setup
+
+### Step 2: Access Dashboard
+
+1. Log in to your OpenAI account
+2. Navigate to **[OpenAI Dashboard](https://platform.openai.com/dashboard)**
+3. You'll see the main dashboard interface
+
+### Step 3: Check Billing and Credits
+
+1. Click on **"Billing"** in the left sidebar (or Settings → Billing)
+2. **Verify you have credits**:
+   - New accounts may receive free trial credits
+   - If no credits available, add payment method
+3. **Add Payment Method** (if needed):
+   - Click **"Add payment method"**
+   - Enter credit/debit card details
+   - Set usage limits (recommended for cost control)
+4. **Purchase Credits** (recommended):
+   - Minimum: $5 for initial testing
+   - Recommended: $10-20 for project development
+   - Credits don't expire for active accounts
+
+### Step 4: Create API Key
+
+1. Navigate to **"API Keys"** section:
+   - Click on **"API Keys"** in left sidebar
+   - Or go to Settings → API Keys
+2. Click **"Create new secret key"** button
+3. **Configure Key Settings**:
+   - **Name**: Enter descriptive name (e.g., "Spring AI Demo", "Production App")
+   - **Project**: Select "Default project" or specific project
+   - **Permissions**: Choose appropriate permissions:
+     - **All** (for full access)
+     - **Read-only** (for monitoring)
+     - **Restricted** (custom permissions)
+   - Recommended: Start with "All" for development
+4. Click **"Create secret key"**
+
+### Step 5: Save Your API Key
+
+**⚠️ CRITICAL: You can only view the API key once!**
+
+1. **Copy the generated key immediately**
+   - Format: `sk-proj-...` (starts with sk-)
+   - Length: Long alphanumeric string
+2. **Store securely**:
+   - Password manager (recommended)
+   - Environment variables
+   - Secure notes application
+3. **Never share or commit to version control**
+
+**Example API Key Format:**
+```
+sk-proj-aBcDeFgHiJkLmNoPqRsTuVwXyZ123456789
+```
+
+### Step 6: Verify API Key (Optional)
+
+Test your API key using curl:
+
+```bash
+curl https://api.openai.com/v1/models \
+  -H "Authorization: Bearer YOUR_API_KEY"
+```
+
+Successful response confirms key is active.
+
+
+---
+
+
+## Anthropic API Key Setup
+
+### Step 1: Create Anthropic Account
+
+1. Navigate to **[Anthropic Console](https://console.anthropic.com)**
+2. Click on **"Sign Up"** or **"Get Started"**
+3. Complete registration:
+   - Enter email address
+   - Create secure password
+   - Verify email address
+4. Complete profile information
+
+### Step 2: Access Dashboard
+
+1. Log in to your Anthropic account
+2. Navigate to **[Anthropic Dashboard](https://console.anthropic.com)**
+3. You'll see the main console interface
+
+### Step 3: Check Credits
+
+1. Go to **"Settings"** (gear icon or menu)
+2. Navigate to **"Billing"** or **"Credits"** section
+3. **Verify you have credits**:
+   - New accounts may receive trial credits
+   - Check credit balance
+4. **Add Credits** (if needed):
+   - Click **"Add credits"** or **"Billing"**
+   - Enter payment information
+   - Purchase credit package
+   - Recommended: Start with $5-10
+
+### Step 4: Create API Key
+
+1. Navigate to **"API Keys"** section:
+   - Click on **"API Keys"** in dashboard
+   - Or go to Settings → API Keys
+2. Click **"Create Key"** button
+3. **Configure Key Settings**:
+   - **Project**: Select "Default project" or create new project
+   - **Name**: Enter descriptive name (e.g., "Spring AI Project", "Claude Integration")
+   - **Permissions**: Set as needed (usually default is fine)
+4. Click **"Create Key"** or **"Generate"**
+
+### Step 5: Save Your API Key
+
+**⚠️ CRITICAL: You can only view the API key once!**
+
+1. **Copy the generated key immediately**
+   - Format: `sk-ant-...` (starts with sk-ant-)
+   - Length: Long alphanumeric string
+2. **Store securely**:
+   - Password manager (recommended)
+   - Environment variables
+   - Secure notes application
+3. **Never share or commit to version control**
+
+**Example API Key Format:**
+```
+sk-ant-api03-aBcDeFgHiJkLmNoPqRsTuVwXyZ123456789
+```
+
+### Step 6: Verify API Key (Optional)
+
+Test your Anthropic API key using curl:
+
+```bash
+curl https://api.anthropic.com/v1/messages \
+  -H "x-api-key: YOUR_API_KEY" \
+  -H "anthropic-version: 2023-06-01" \
+  -H "content-type: application/json" \
+  -d '{"model":"claude-3-haiku-20240307","max_tokens":100,"messages":[{"role":"user","content":"Hello"}]}'
+```
+
+
+---
+
+
+![Troubleshooting_Spring_AI_Issues](https://dyz1pdcuffwr5.cloudfront.net/SpringAI/spring_ai_troubleshoot.png)
+
+
+---
+
+
+### Testing API Keys
+
+**Test OpenAI Key:**
+```bash
+curl https://api.openai.com/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $OPENAI_API_KEY" \
+  -d '{
+    "model": "gpt-3.5-turbo",
+    "messages": [{"role": "user", "content": "Hello"}],
+    "max_tokens": 50
+  }'
+```
+
+**Test Anthropic Key:**
+```bash
+curl https://api.anthropic.com/v1/messages \
+  -H "x-api-key: $ANTHROPIC_API_KEY" \
+  -H "anthropic-version: 2023-06-01" \
+  -H "content-type: application/json" \
+  -d '{
+    "model": "claude-3-haiku-20240307",
+    "max_tokens": 50,
+    "messages": [{"role": "user", "content": "Hello"}]
+  }'
+```
+
+
+---
+
+
+## Summary
+
+*  Spring AI integrates Java applications with AI models by connecting to either cloud providers (OpenAI, Anthropic) or local models (Ollama).
+
+*  Cloud-based AI services require API keys, account setup, and credits, offering high-quality performance and scalability, but involve usage costs.
+
+*  Local models like Ollama run on your machine without API keys or payment, providing better privacy and cost savings, but requiring strong hardware and offering comparatively lower performance.
+
+*  API keys are critical for authentication and must be handled securely, using environment variables and avoiding exposure in source code or version control systems.
+
+*  Choosing the right AI provider depends on use case priorities such as performance (cloud), cost (local), and data privacy (local vs cloud), while monitoring usage and costs is essential for cloud services.
+
+
+</Steps>
+
+Written By: <a href="https://www.linkedin.com/in/muskangarg03/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer"> Muskan Garg <ExternalLink className="w-4 h-4" /></a>

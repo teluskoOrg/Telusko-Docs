@@ -3,6 +3,8 @@
     "pages":[
         "index.mdx",
         "java",
-        "python"
+        "python",
+        "fastapi",
+        "spring-ai"
     ]
 }

@@ -1,0 +1,11 @@
+{
+    "title": "Testing and Debugging",
+    "pages": [
+        "why-api-testing-matters.mdx",
+        "testing-with-pytest-and-testclient.mdx",
+        "mocking-database-and-dependencies.mdx",
+        "integration-testing-basics.mdx",
+        "debugging-validation-and-runtime-errors.mdx",
+        "performance-profiling-basics.mdx"
+    ]
+}

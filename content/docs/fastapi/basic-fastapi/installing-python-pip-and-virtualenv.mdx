@@ -1,0 +1,133 @@
+---
+title: Installing Python, Pip and Virtualenv
+---
+
+## Introduction
+
+Before building a FastAPI project, you need a working Python environment. That usually means three things:
+
+- Python installed on your system
+- `pip` available for installing packages
+- a virtual environment tool so project dependencies stay isolated
+
+This setup may look like a small step, but it is one of the most important parts of professional Python development.
+
+## Why This Matters
+
+Backend projects depend on external packages. FastAPI itself is a package. Uvicorn is another package. Database libraries, authentication libraries, and testing tools are also packages.
+
+If you install everything globally on your machine, projects can start interfering with each other. One project may need one package version, while another project may need a different version. A virtual environment solves this problem.
+
+## Core Idea
+
+Here is the role of each part:
+
+| Tool | Purpose |
+| ---- | ------- |
+| Python | runs your code |
+| pip | installs Python packages |
+| virtualenv or `venv` | creates an isolated environment for a project |
+
+For most beginners, Python's built-in `venv` module is enough. You do not always need a separate `virtualenv` package to get started.
+
+## Step 1: Install Python
+
+Download and install a recent Python version from the official Python website.
+
+After installation, verify it from the terminal:
+
+```bash
+python --version
+```
+
+In some systems, you may need:
+
+```bash
+python3 --version
+```
+
+If Python is installed correctly, you should see a version number.
+
+## Step 2: Check pip
+
+`pip` usually comes with Python. You can verify it like this:
+
+```bash
+pip --version
+```
+
+If your system uses `pip3`, then run:
+
+```bash
+pip3 --version
+```
+
+This confirms that your package manager is ready.
+
+## Step 3: Create a Virtual Environment
+
+Move into your project folder and create an isolated environment:
+
+```bash
+python -m venv .venv
+```
+
+This command creates a local environment inside the `.venv` folder.
+
+## Step 4: Activate the Environment
+
+Activation depends on your operating system.
+
+| Platform | Command |
+| -------- | ------- |
+| Windows PowerShell | `.venv\Scripts\Activate.ps1` |
+| Windows Command Prompt | `.venv\Scripts\activate.bat` |
+| macOS or Linux | `source .venv/bin/activate` |
+
+Once activated, package installation commands will work inside this project environment.
+
+## Step 5: Install FastAPI and Uvicorn
+
+```bash
+pip install fastapi uvicorn
+```
+
+This installs:
+- `fastapi` for the framework
+- `uvicorn` for running the app server during development
+
+## Example Workflow
+
+```bash
+mkdir fastapi-demo
+cd fastapi-demo
+python -m venv .venv
+.venv\Scripts\Activate.ps1
+pip install fastapi uvicorn
+```
+
+## Explanation
+
+This workflow sets up a clean project environment. Now if you install more libraries later, they stay inside this project and do not affect your other Python work.
+
+## Common Mistakes
+
+### Using the wrong Python command
+
+Some systems respond to `python`, others use `python3`. If a command fails, check which one your system supports.
+
+### Forgetting to activate the virtual environment
+
+If the environment is not active, packages may install globally instead of locally.
+
+### Confusing `virtualenv` and `venv`
+
+For beginner projects, `venv` is usually enough. You can learn other environment tools later.
+
+### Not checking installation
+
+After each setup step, verify it. Confirm Python version, pip version, and package installation. Small checks save time.
+
+## Summary
+
+A proper FastAPI setup begins with Python, pip, and an isolated virtual environment. Python runs your code, pip installs packages, and the virtual environment keeps project dependencies clean and organized. Once this foundation is ready, creating a FastAPI app becomes much smoother.

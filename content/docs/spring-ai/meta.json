@@ -1,0 +1,9 @@
+{   "title":"Spring AI",
+    "icon":"CodeXml",
+    "pages":[
+        "getting-started.mdx",
+        "introduction.mdx",
+        "setup-and-configuration",
+        "ai-models-integration"
+    ]
+} 

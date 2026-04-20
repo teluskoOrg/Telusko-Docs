@@ -1,0 +1,124 @@
+---
+title: HTTP Methods, Status Codes and Headers
+---
+
+## Introduction
+
+FastAPI is used to build web APIs, and web APIs communicate through HTTP. That means every backend developer must understand three core HTTP ideas:
+
+- methods
+- status codes
+- headers
+
+These are not FastAPI-specific concepts. They belong to web communication itself.
+
+## Why This Matters
+
+If you understand Python but not HTTP, backend development will feel incomplete. An API is not only about writing functions. It is about handling requests correctly and sending proper responses back to the client.
+
+FastAPI gives you tools to work with HTTP, but first you should understand what HTTP is doing.
+
+## HTTP Methods
+
+An HTTP method tells the server what kind of action the client wants to perform.
+
+| Method | Common use |
+| ------ | ---------- |
+| `GET` | fetch data |
+| `POST` | create new data |
+| `PUT` | replace existing data |
+| `PATCH` | partially update data |
+| `DELETE` | remove data |
+
+### Example Meaning
+
+- `GET /users` means fetch users
+- `POST /users` means create a new user
+- `DELETE /users/5` means delete user with ID `5`
+
+## Status Codes
+
+A status code tells the client what happened after the request was processed.
+
+| Status code | Meaning |
+| ----------- | ------- |
+| `200` | request succeeded |
+| `201` | resource created successfully |
+| `400` | bad request from client |
+| `401` | authentication required |
+| `403` | access forbidden |
+| `404` | resource not found |
+| `500` | internal server error |
+
+These codes are important because they help the client understand the result without reading full server logic.
+
+## Headers
+
+Headers carry extra information with a request or response.
+
+Examples include:
+- content type
+- authorization token
+- caching instructions
+- accepted response format
+
+A simple example is the `Content-Type` header, which tells the server or client what kind of data is being sent.
+
+## FastAPI Example
+
+```python
+from fastapi import FastAPI, Header
+
+app = FastAPI()
+
+@app.get("/info")
+def get_info(user_agent: str | None = Header(default=None)):
+    return {"user_agent": user_agent}
+```
+
+## Explanation
+
+This route reads a header value named `User-Agent`.
+
+- `Header(...)` tells FastAPI to read data from request headers
+- if the header exists, FastAPI passes it into `user_agent`
+- the function then returns that value in JSON format
+
+This example shows that headers are part of normal request handling in backend systems.
+
+## How They Work Together
+
+```text
+Client Request
+   |        \
+   |         \
+   v          v
+HTTP Method  Headers
+      \      /
+       \    /
+        v  v
+    FastAPI Route
+          |
+          v
+Response with Status Code
+```
+
+This flow shows that method, headers, and status code are all part of the same request-response conversation.
+
+## Common Mistakes
+
+### Treating all requests the same way
+
+A `GET` request should not be used carelessly for creating data. HTTP methods have meaning and should be used properly.
+
+### Ignoring status codes
+
+Returning data is not enough. A good API also communicates success or failure through proper status codes.
+
+### Forgetting that headers matter
+
+Many real systems rely on headers for authentication, content handling, and client metadata.
+
+## Summary
+
+HTTP methods describe the action, status codes describe the result, and headers carry extra request or response information. These ideas are essential for understanding FastAPI because every API endpoint works through this HTTP communication model.

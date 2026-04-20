@@ -1,0 +1,126 @@
+---
+title: Refresh Python for FastAPI
+---
+
+## Introduction
+
+FastAPI is a Python framework, so your comfort with Python directly affects how easily you learn FastAPI. You do not need to know every advanced Python feature before starting, but you should be comfortable with the parts of Python that appear often in backend code.
+
+This page is a quick refresh of the Python concepts that support FastAPI learning. The goal is not to reteach the whole language, but to make sure the important pieces are clear before moving deeper into API development.
+
+## Why This Matters
+
+A beginner sometimes struggles with FastAPI not because the framework is too hard, but because the Python used inside it feels unfamiliar. For example, route functions, imports, dictionaries, classes, and return values appear everywhere in FastAPI code.
+
+If these foundations are clear, the framework feels much more natural.
+
+## Core Python Concepts You Need
+
+### Functions
+
+FastAPI routes are built using Python functions.
+
+```python
+def greet_user(name):
+    return f"Hello, {name}"
+```
+
+In FastAPI, a route function works in a similar way. It receives input and returns output.
+
+### Dictionaries
+
+API responses are often returned as Python dictionaries, which FastAPI converts into JSON.
+
+```python
+user = {
+    "id": 1,
+    "name": "Navin",
+    "active": True
+}
+```
+
+This is important because JSON-style data is the most common format in backend APIs.
+
+### Lists
+
+Many endpoints return collections of items.
+
+```python
+courses = ["Python", "FastAPI", "SQL"]
+```
+
+You will often return a list of dictionaries from an API endpoint.
+
+### Imports
+
+Python projects are organized through imports.
+
+```python
+from fastapi import FastAPI
+```
+
+This means you need to be comfortable with how Python brings code from one module into another.
+
+### Classes at a Basic Level
+
+FastAPI uses class-based models through Pydantic, so basic class familiarity is helpful.
+
+```python
+class Student:
+    def __init__(self, name):
+        self.name = name
+```
+
+You do not need advanced object-oriented programming on day one, but basic class understanding will help later.
+
+## A Small Python Example
+
+```python
+def get_student():
+    student = {
+        "name": "Asha",
+        "course": "FastAPI Basics"
+    }
+    return student
+
+print(get_student())
+```
+
+## Explanation
+
+This example combines a function and a dictionary, which are both very common in FastAPI.
+
+- `get_student()` is a function
+- `student` stores structured data in dictionary form
+- `return student` sends that data back
+
+A FastAPI route often follows the same pattern, except the result is returned to an HTTP client instead of being printed locally.
+
+## Python Features You Will See Often in FastAPI
+
+| Python concept | Why it matters in FastAPI |
+| -------------- | ------------------------- |
+| functions | routes and dependencies are functions |
+| dictionaries | responses are often built with them |
+| lists | many endpoints return collections |
+| imports | code is split into files and modules |
+| classes | request and response models are class-based |
+| type hints | validation and documentation depend on them |
+
+## Common Mistakes
+
+### Trying to learn all of Python first
+
+You do not need to master every Python topic before starting FastAPI. Focus on the Python that supports backend learning.
+
+### Ignoring functions and data structures
+
+Functions, dictionaries, and lists appear constantly in API code. These should feel comfortable.
+
+### Treating framework code like magic
+
+If a line of FastAPI code feels confusing, try to reduce it back to plain Python. That usually makes the idea easier to understand.
+
+## Summary
+
+To learn FastAPI smoothly, you should be comfortable with Python functions, dictionaries, lists, imports, and basic classes. These foundations make the framework easier to read and help you focus on backend ideas instead of struggling with language basics.

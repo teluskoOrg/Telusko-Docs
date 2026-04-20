@@ -1,0 +1,11 @@
+{
+    "title": "Python and HTTP Foundations",
+    "pages": [
+        "refresh-python-for-fastapi.mdx",
+        "type-hints-you-need-for-fastapi.mdx",
+        "async-await-basics.mdx",
+        "http-methods-status-codes-and-headers.mdx",
+        "rest-api-basics.mdx",
+        "client-server-request-response-cycle.mdx"
+    ]
+}

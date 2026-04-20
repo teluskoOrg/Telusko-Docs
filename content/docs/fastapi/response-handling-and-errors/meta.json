@@ -1,0 +1,11 @@
+{
+    "title": "Response Handling and Errors",
+    "pages": [
+        "response-models.mdx",
+        "jsonresponse-streamingresponse-and-fileresponse.mdx",
+        "status-codes-and-custom-responses.mdx",
+        "raising-httpexception.mdx",
+        "global-exception-handlers.mdx",
+        "custom-error-response-design.mdx"
+    ]
+}

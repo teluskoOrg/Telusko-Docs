@@ -1,0 +1,110 @@
+---
+title: REST API Basics
+---
+
+## Introduction
+
+When people build APIs with FastAPI, they are often building REST APIs. REST is a common style for designing web APIs in a way that is structured, predictable, and easy for clients to use.
+
+You do not need to memorize every formal definition at the beginning. What matters most is understanding the practical design mindset behind REST.
+
+## Why This Matters
+
+If you understand REST basics, your routes become easier to design and your APIs become easier to consume. This helps both the backend developer and the frontend or mobile team using the API.
+
+REST gives a clean way to think about resources and actions.
+
+## Core Idea
+
+In REST, the API usually revolves around resources.
+Examples of resources are:
+- users
+- courses
+- orders
+- products
+
+These resources are represented through URLs.
+
+Examples:
+- `/users`
+- `/courses`
+- `/orders/10`
+
+Then HTTP methods are used to decide what should happen to those resources.
+
+| Route | Meaning |
+| ----- | ------- |
+| `GET /users` | get all users |
+| `GET /users/5` | get one user |
+| `POST /users` | create a user |
+| `PUT /users/5` | replace user data |
+| `DELETE /users/5` | delete a user |
+
+## FastAPI Example
+
+```python
+from fastapi import FastAPI
+
+app = FastAPI()
+
+@app.get("/books")
+def get_books():
+    return [{"id": 1, "title": "Python Basics"}]
+
+@app.post("/books")
+def create_book():
+    return {"message": "Book created"}
+```
+
+## Explanation
+
+This example shows a simple REST pattern:
+- the resource is `books`
+- `GET /books` fetches books
+- `POST /books` creates a book
+
+The path stays resource-focused, and the HTTP method tells us the action.
+
+## REST Design Habits for Beginners
+
+Good REST design usually means:
+- use nouns for resource names
+- keep route names clear and consistent
+- use HTTP methods according to purpose
+- return meaningful status codes
+- design predictable URL structures
+
+For example, this is usually clearer:
+- `/students`
+
+than this:
+- `/getAllStudentsDataNow`
+
+The first style is simpler and more maintainable.
+
+## REST Is About Communication Discipline
+
+REST helps teams agree on a predictable structure. A frontend developer should be able to guess that:
+- `GET /products` lists products
+- `POST /products` creates a product
+- `DELETE /products/2` removes product `2`
+
+That predictability is a big reason REST remains common.
+
+## Common Mistakes
+
+### Using verbs everywhere in URLs
+
+REST APIs usually keep the action in the HTTP method, not in the route name.
+
+### Designing inconsistent paths
+
+If some routes are plural, some singular, and some action-heavy, the API quickly becomes harder to understand.
+
+### Ignoring the resource model
+
+REST becomes much easier when you think in terms of resources first.
+
+## Summary
+
+A REST API organizes backend communication around resources and standard HTTP methods. It helps you design clear, predictable endpoints such as `GET /users` or `POST /orders`. Since FastAPI is often used to build REST APIs, understanding this pattern is an important backend foundation.

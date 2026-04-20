@@ -1,0 +1,291 @@
+---
+title: Setting the SpringBoot with SpringAI Project
+---
+
+
+<Steps>
+<Video id="wXgcb1LC4uk" />
+
+---
+
+
+The **SpringBoot application integrated with Spring AI** enables seamless integration with multiple AI model providers including OpenAI, Anthropic (Claude), and Ollama (local models), allowing developers to leverage AI capabilities within their Spring applications.
+
+## Prerequisites
+
+| Requirement | Version | Purpose |
+|------------|---------|---------|
+| **Java** | 21 or higher | Required runtime for Spring Boot |
+| **IntelliJ IDEA** | Community/Ultimate | IDE for development |
+| **Maven** | Latest | Dependency management |
+| **Internet Connection** | - | For downloading dependencies and accessing cloud AI APIs |
+
+ > IntelliJ Community Edition doesn't support direct Spring project creation, so we'll use Spring Initializer web interface.
+
+
+---
+
+
+## Project Creation
+
+### Step 1: Initialize Project Using Spring Initializer
+
+1. Navigate to [https://start.spring.io](https://start.spring.io)
+2. Configure project metadata:
+
+| Setting | Value |
+|---------|-------|
+| Project | Maven |
+| Language | Java |
+| Spring Boot | Latest stable version |
+| Java Version | **21** |
+| Packaging | Jar |
+| Group | com.example (or your preference) |
+| Artifact | spring-ai-demo (or your preference) |
+
+### Step 2: Add Required Dependencies
+
+Select the following dependencies from the available options:
+
+#### 1. **Spring Web**
+- **Purpose**: Provides RESTful web services capabilities
+- **Usage**: Creates controller endpoints for AI model interactions
+
+#### 2. **OpenAI**
+- **Purpose**: Integration with OpenAI models (GPT-3.5, GPT-4, etc.)
+- **Type**: Cloud-based API
+- **Requires**: API key
+
+#### 3. **Ollama**
+- **Purpose**: Integration with local open-source LLMs
+- **Type**: Local execution
+- **Requires**: Ollama installation on local machine
+
+#### 4. **Anthropic Claude**
+- **Purpose**: Integration with Anthropic's Claude models
+- **Type**: Cloud-based API
+- **Requires**: API key
+
+### Step 3: Generate and Download Project
+
+1. Click **"Generate"** button
+2. Download the ZIP file
+3. Extract to your preferred workspace directory
+
+### Step 4: Open in IntelliJ IDEA
+
+1. Open IntelliJ IDEA
+2. Select **"Open"** or **"Import Project"**
+3. Navigate to the extracted project folder
+4. Select the project root directory (containing `pom.xml`)
+5. Click **"OK"** and wait for Maven to download dependencies
+
+
+---
+
+
+## Configuration Setup
+
+### Location: application.properties
+
+Navigate to `src/main/resources/application.properties` to configure API keys and model settings.
+
+### 1. OpenAI Configuration
+
+```properties
+# OpenAI API Key (Required)
+spring.ai.openai.api-key=<YOUR_OPENAI_API_KEY>
+
+# Optional: Specify model (default: gpt-3.5-turbo)
+spring.ai.openai.chat.options.model=gpt-4
+```
+
+### 2. Anthropic Configuration
+
+```properties
+# Anthropic API Key (Required)
+spring.ai.anthropic.api-key=<YOUR_ANTHROPIC_API_KEY>
+
+# Optional: Specify Claude model (default: claude-2)
+spring.ai.anthropic.chat.options.model=claude-3-opus
+```
+
+### 3. Ollama Configuration (Local Models)
+
+```properties
+# Ollama Model Configuration (No API key required)
+spring.ai.ollama.chat.options.model=deepseek-r1:7b
+
+# Alternative models you can configure:
+# spring.ai.ollama.chat.options.model=mistral:latest
+# spring.ai.ollama.chat.options.model=llama3.2:latest
+# spring.ai.ollama.chat.options.model=gemma:7b
+```
+
+
+---
+
+
+## Application Architecture
+
+### Controller Structure
+
+The application uses separate controller files for each AI model provider, enabling modular and maintainable code:
+
+```
+src/main/java/com/telusko/SpringAIDemo
+├── controller/
+│   ├── OpenAIController.java      # Handles OpenAI requests
+│   ├── AnthropicController.java   # Handles Anthropic requests
+│   └── OllamaController.java      # Handles Ollama requests
+└── SpringAiDemoApplication.java   # Main application class
+```
+
+### URL Routing Architecture
+
+Each controller exposes separate endpoints:
+
+| Controller | Endpoint | Purpose |
+|------------|----------|---------|
+| OpenAIController | `/api/openai` | Routes requests to OpenAI models |
+| AnthropicController | `/api/anthropic` | Routes requests to Anthropic models |
+| OllamaController | `/api/ollama` | Routes requests to local Ollama models |
+
+### Example Controller Structure
+
+```java
+@RestController
+@RequestMapping("/api")
+public class OpenAIController {
+
+    @Autowired
+    private ChatClient chatClient;
+
+    @PostMapping("/openai")
+    public String chat(@RequestBody String prompt) {
+        return chatClient.call(prompt);
+    }
+}
+```
+
+
+---
+
+
+## Common Issues and Troubleshooting
+
+### Issue 1: "Failed to Fetch" Error in UI
+
+**Symptom**: UI displays "failed to fetch" when submitting requests.
+
+**Causes and Solutions**:
+
+| Cause | Solution |
+|-------|----------|
+| Backend not running | Start Spring Boot application |
+| Port mismatch | Verify UI points to correct backend port |
+| CORS configuration | Add CORS configuration in Spring Boot |
+| Missing API keys | Check `application.properties` for valid keys |
+
+### Issue 2: OpenAI/Anthropic API Key Error
+
+**Symptom**:
+```
+401 Unauthorized: Invalid API key
+```
+
+**Solution**:
+1. Verify API key is correct (no extra spaces)
+2. Check API key has not expired
+3. Ensure account has sufficient credits
+4. Verify key format matches provider requirements
+
+### Issue 3: Ollama Connection Error
+
+**Symptom**:
+```
+Connection refused: http://localhost:11434
+```
+
+**Solution**:
+1. Start Ollama service: `ollama serve`
+2. Verify Ollama is running: `ollama list`
+3. Check model is downloaded: `ollama pull deepseek-r1:7b`
+4. Ensure no firewall blocking localhost:11434
+
+### Issue 4: Dependency Download Failures
+
+**Symptom**: Maven fails to download Spring AI dependencies.
+
+**Solution**:
+1. Check internet connection
+2. Update Maven settings.xml
+3. Clear Maven cache: `mvn clean install -U`
+4. Use latest Spring Boot version compatible with Spring AI
+
+
+---
+
+
+## Model Configuration Options
+
+### Customizing Default Models
+
+You can specify different models for each provider:
+
+```properties
+# OpenAI Models
+spring.ai.openai.chat.options.model=gpt-3.5-turbo  # Faster, cheaper
+spring.ai.openai.chat.options.model=gpt-4          # More capable
+spring.ai.openai.chat.options.model=gpt-4-turbo    # Latest features
+
+# Anthropic Models
+spring.ai.anthropic.chat.options.model=claude-3-haiku   # Fastest
+spring.ai.anthropic.chat.options.model=claude-3-sonnet  # Balanced
+spring.ai.anthropic.chat.options.model=claude-3-opus    # Most capable
+
+# Ollama Models (must be downloaded first)
+spring.ai.ollama.chat.options.model=mistral:latest
+spring.ai.ollama.chat.options.model=llama3.2:latest
+spring.ai.ollama.chat.options.model=deepseek-r1:7b
+```
+
+### Advanced Configuration Options
+
+```properties
+# Temperature (creativity) - Range: 0.0 to 1.0
+spring.ai.openai.chat.options.temperature=0.7
+
+# Max tokens (response length)
+spring.ai.openai.chat.options.max-tokens=1000
+
+# Top P (nucleus sampling)
+spring.ai.openai.chat.options.top-p=1.0
+```
+
+
+---
+
+
+![API_Key_Management](https://dyz1pdcuffwr5.cloudfront.net/SpringAI/API_Key_Management.png)
+
+
+---
+
+
+## Summary
+
+* **Spring Boot project is initialized using Spring Initializer (start.spring.io)** with Java 21 and required dependencies such as Spring Web, OpenAI, Anthropic, and Ollama for AI integration.
+
+* **API keys for cloud models (OpenAI, Anthropic) are configured in `application.properties`**, while local models like Ollama require only model name configuration without any API key.
+
+* **Spring AI dependencies in `pom.xml` enable integration with multiple AI providers**, allowing a unified approach to interact with different LLMs.
+
+* **Separate REST controllers are created for each AI model** (OpenAI, Anthropic, Ollama) to handle requests and route prompts to the respective models.
+
+* **Spring AI abstracts model interactions**, enabling seamless communication with AI models through configuration and dependency injection without handling low-level API logic.
+
+
+</Steps>
+
+Written By: <a href="https://www.linkedin.com/in/muskangarg03/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer"> Muskan Garg <ExternalLink className="w-4 h-4" /></a>

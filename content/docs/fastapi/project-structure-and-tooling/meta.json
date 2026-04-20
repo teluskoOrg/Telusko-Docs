@@ -1,0 +1,11 @@
+{
+    "title": "Project Structure and Tooling",
+    "pages": [
+        "recommended-fastapi-project-structure.mdx",
+        "understanding-main-py-and-app-instances.mdx",
+        "environment-variables-and-settings.mdx",
+        "requirements-txt-vs-pyproject-toml.mdx",
+        "using-uvicorn-and-gunicorn.mdx",
+        "code-formatting-linting-and-typing.mdx"
+    ]
+}

@@ -1,0 +1,11 @@
+{
+    "title": "Files, Forms and Background Tasks",
+    "pages": [
+        "handling-form-data.mdx",
+        "uploading-single-and-multiple-files.mdx",
+        "serving-static-files.mdx",
+        "sending-emails-and-notifications.mdx",
+        "backgroundtasks-in-fastapi.mdx",
+        "building-small-async-workflows.mdx"
+    ]
+}

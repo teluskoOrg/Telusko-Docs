@@ -1,0 +1,11 @@
+{
+    "title": "Authentication and Authorization",
+    "pages": [
+        "authentication-vs-authorization.mdx",
+        "password-hashing-and-user-registration.mdx",
+        "oauth2-password-flow.mdx",
+        "jwt-access-and-refresh-tokens.mdx",
+        "role-based-access-control.mdx",
+        "protecting-routes-and-current-user-dependencies.mdx"
+    ]
+}

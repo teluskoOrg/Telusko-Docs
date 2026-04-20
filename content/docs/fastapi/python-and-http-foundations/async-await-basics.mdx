@@ -1,0 +1,108 @@
+---
+title: Async Await Basics
+---
+
+## Introduction
+
+FastAPI supports both normal synchronous functions and asynchronous functions. That is why you often see `async def` in examples. To use FastAPI confidently, you should understand the basic meaning of `async` and `await`.
+
+You do not need deep concurrency theory at the beginning, but you should know when asynchronous code is useful and why it exists.
+
+## Why This Matters
+
+Backend applications often spend time waiting for things such as:
+- database operations
+- external API calls
+- file handling
+- network communication
+
+If the application can handle waiting more efficiently, it can serve multiple requests better. That is where asynchronous programming becomes useful.
+
+## Core Idea
+
+A normal function is written like this:
+
+```python
+def get_message():
+    return "Hello"
+```
+
+An asynchronous function is written like this:
+
+```python
+async def get_message():
+    return "Hello"
+```
+
+The `async` keyword marks the function as asynchronous.
+The `await` keyword is used inside an async function to wait for another async operation.
+
+## Small Example
+
+```python
+import asyncio
+
+async def main():
+    print("Start")
+    await asyncio.sleep(1)
+    print("Done")
+```
+
+## Explanation
+
+- `async def main()` creates an asynchronous function
+- `await asyncio.sleep(1)` pauses without blocking in the same way a normal sleep call would
+- this style is useful when the program is waiting for operations that take time
+
+The important beginner idea is simple: async code helps handle waiting more efficiently.
+
+## FastAPI Example
+
+```python
+from fastapi import FastAPI
+
+app = FastAPI()
+
+@app.get("/ping")
+async def ping():
+    return {"message": "pong"}
+```
+
+This route is asynchronous because it uses `async def`.
+
+At first, this route does not look very different from a normal route. The bigger benefit appears when the route performs asynchronous operations such as database calls or HTTP requests.
+
+## Sync vs Async
+
+| Style | Function form | Often used when |
+| ----- | ------------- | --------------- |
+| synchronous | `def` | the code is simple or uses blocking libraries |
+| asynchronous | `async def` | the code waits on async I/O operations |
+
+Both styles are valid in FastAPI. The important thing is to use them appropriately.
+
+## When Beginners Get Confused
+
+Some learners think every FastAPI route must use `async def`. That is not true. FastAPI supports both `def` and `async def`.
+
+A better way to think about it is:
+- use `def` for regular synchronous work
+- use `async def` when working with asynchronous libraries or async I/O tasks
+
+## Common Mistakes
+
+### Using `await` outside an async function
+
+This is not allowed. `await` must be used inside a function declared with `async def`.
+
+### Thinking async automatically makes everything faster
+
+Async helps especially with waiting tasks, not every kind of task. It is useful, but it is not magic.
+
+### Mixing sync and async without understanding the libraries involved
+
+Whether async is useful depends on what the called library supports.
+
+## Summary
+
+`async` and `await` help FastAPI handle waiting tasks more efficiently. You do not need to master advanced concurrency immediately, but you should understand that asynchronous code is useful when the backend waits on operations such as network calls, file handling, or database work.

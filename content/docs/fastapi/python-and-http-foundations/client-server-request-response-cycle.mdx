@@ -1,0 +1,126 @@
+---
+title: Client Server Request Response Cycle
+---
+
+## Introduction
+
+At the heart of backend development is a simple process: a client sends a request, the server processes it, and the server sends a response back. This is called the request-response cycle.
+
+If you understand this cycle clearly, FastAPI becomes much easier to understand because every route you write becomes part of this flow.
+
+## Why This Matters
+
+Many beginners focus only on code inside the backend function. But a backend developer should also understand the whole path:
+- who sends the request
+- what data arrives
+- how the server processes it
+- what response is sent back
+
+This broader picture helps you design better APIs and debug issues more effectively.
+
+## Core Idea
+
+A client can be:
+- a browser
+- a mobile app
+- a frontend application
+- another backend service
+- a testing tool like Postman
+
+The server receives the request, runs backend logic, and returns a response.
+
+A response usually includes:
+- a status code
+- headers
+- a body such as JSON data
+
+## Example Flow
+
+```text
+Client
+  |
+  v
+HTTP Request
+  |
+  v
+FastAPI Server
+  |
+  v
+Route Function
+  |
+  v
+Business Logic or Data Access
+  |
+  v
+HTTP Response
+  |
+  v
+Client
+```
+
+This is the basic lifecycle behind every FastAPI endpoint.
+
+## Small FastAPI Example
+
+```python
+from fastapi import FastAPI
+
+app = FastAPI()
+
+@app.get("/hello")
+def say_hello():
+    return {"message": "Hello from the server"}
+```
+
+## Explanation
+
+When a client requests `/hello`:
+
+1. the request reaches the FastAPI server
+2. FastAPI matches the route `@app.get("/hello")`
+3. the function `say_hello()` runs
+4. the returned dictionary becomes a JSON response
+5. the client receives that response
+
+This is a complete request-response cycle in a very small form.
+
+## What the Server Often Does Internally
+
+A real backend may do more work during this cycle:
+- validate user input
+- check authentication
+- call a database
+- talk to another service
+- format the response
+- return an error if something fails
+
+Even when the logic becomes more advanced, the basic cycle remains the same.
+
+## Why This Helps in Real Projects
+
+When you understand the request-response cycle, you can reason more clearly about backend behavior.
+
+For example:
+- if data is missing, maybe the request body was wrong
+- if access is denied, maybe authentication failed
+- if the client sees an error, maybe the server returned the wrong status code
+
+This way of thinking helps with both development and debugging.
+
+## Common Mistakes
+
+### Thinking only about the route function
+
+The route is important, but it is only one part of the whole flow.
+
+### Forgetting the client perspective
+
+A backend should be easy for clients to understand and use. That means requests and responses should be predictable.
+
+### Ignoring response design
+
+Good backend development is not only about processing data. It is also about sending clear responses back to the client.
+
+## Summary
+
+The client-server request-response cycle is the core pattern of backend development. A client sends a request, the FastAPI server processes it, and a response is returned. Once this flow is clear, every FastAPI topic becomes easier to place in the larger backend picture.

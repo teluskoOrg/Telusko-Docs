@@ -1,0 +1,11 @@
+{
+    "title": "WebSockets and Real-Time",
+    "pages": [
+        "websocket-basics.mdx",
+        "creating-a-chat-style-websocket-endpoint.mdx",
+        "connection-management.mdx",
+        "broadcasting-messages.mdx",
+        "real-time-notifications-patterns.mdx",
+        "when-to-use-websockets-vs-rest.mdx"
+    ]
+}

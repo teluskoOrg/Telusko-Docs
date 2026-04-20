@@ -22,7 +22,7 @@ export const metadata: Metadata = {
 export default function Layout({ children }: LayoutProps<'/'>) {
   return (
     <html lang="en" className={inter.className} suppressHydrationWarning>
-      <body className="flex flex-col min-h-screen">
+      <body className="flex flex-col min-h-screen" suppressHydrationWarning>
         <Banner id="close" variant='rainbow' rainbowColors={[
       'rgba(59, 91, 255, 0.6)',     // primary blue
     'rgba(88, 116, 255, 0.7)', 
