@@ -1,0 +1,201 @@
+---
+title: Introduction
+description: A comprehensive introduction to  Spring AI
+---
+
+
+<Video id="4nBG848oArI" />
+
+
+---
+
+
+## What is Spring AI?
+
+**Spring AI** is an application framework for AI engineering that enables developers to integrate Artificial Intelligence features into existing Java-based applications. It provides a seamless way to connect Large Language Models (LLMs) with Java applications without requiring Python dependencies or migration to Python ecosystems.
+
+### Core Purpose
+
+Spring AI bridges the gap between **enterprise Java applications** and **Generative AI models**, allowing developers to:
+- Add AI capabilities to existing products
+- Connect applications with Generative AI services
+- Feed enterprise data to GenAI models
+- Leverage AI features using familiar Spring Boot patterns
+
+![Spring_AI_Usage](https://dyz1pdcuffwr5.cloudfront.net/SpringAI/spring_ai_integration.png)
+
+
+---
+
+
+## Key Concepts
+
+### Large Language Model (LLM) Integration
+
+Spring AI acts as a **Java abstraction layer** that connects your application to various LLM providers:
+
+```
+Java Application ← Spring AI → LLM Models (OpenAI, Anthropic, Ollama)
+```
+
+**Data Flow:**
+1. Frontend sends a prompt
+2. Spring Boot receives the request
+3. Spring AI communicates with AI models
+4. LLM processes the prompt
+5. Response is returned to the user
+
+### AI Engineering Framework
+
+Spring AI is inspired by **LangChain** but designed specifically for the Java ecosystem. It focuses on making AI integration straightforward for Java developers familiar with Spring framework conventions.
+
+
+---
+
+
+## What is an LLM (Large Language Model)?
+A **Large Language Model (LLM)** is an AI model trained on massive datasets that can:
+
+* Understand natural language
+* Generate human-like responses
+* Answer questions
+* Summarize text
+* Generate code
+* Translate languages
+
+
+---
+
+
+## Supported AI Models
+
+Spring AI supports a wide range of AI models across different providers:
+
+### 1. **Cloud-Based Models**
+
+#### OpenAI
+- **Model**: GPT-4o, GPT-4, GPT-3.5
+- **Requirement**: API Key
+- **Use Case**: Advanced language understanding and generation
+
+#### Anthropic
+- **Model**: Claude (Claude 3 Opus, Sonnet, Haiku)
+- **Requirement**: API Key
+- **Use Case**: Long-context conversations and analysis
+
+#### Other Cloud Providers
+- Google Vertex AI
+- Azure OpenAI
+- Amazon Bedrock
+- Mistral AI
+- Stability AI
+
+### 2. **Local Models**
+
+#### Ollama
+- **Models**: Gemma 2, Llama, Deepseek, and others
+- **Requirement**: Local installation (no API key needed)
+- **Use Case**: Privacy-sensitive applications, offline capabilities
+- **Advantage**: No cloud costs, complete data control
+
+![Model_Comparison](https://dyz1pdcuffwr5.cloudfront.net/SpringAI/spring_model_comparison.png)
+
+
+---
+
+
+## Core Features
+
+### 1. **Chat Completion**
+
+The primary feature demonstrated in Spring AI:
+- **One-time interaction**: User sends prompt, receives response
+- **Not continuous chat**: Each request is independent (no conversation context by default)
+- **Simple flow**: Input → Process → Output
+
+**Example Flow:**
+```
+User Input: "Explain Spring AI"
+     ↓
+Spring AI Framework
+     ↓
+LLM Model (GPT-4o/Claude/Gemma)
+     ↓
+Generated Response
+```
+
+### 2. **Multiple Provider Support**
+
+Test and compare responses from different models:
+- Compare response quality
+- Compare response speed
+- Choose best model for specific use cases
+
+### 3. **Flexible Configuration**
+
+- Configure providers through Spring properties
+- Switch models without code changes
+- Control parameters (temperature, max tokens, etc.)
+
+
+---
+
+
+## Architecture Overview
+
+### Framework Components
+
+![Spring_Integration_Flow](https://dyz1pdcuffwr5.cloudfront.net/SpringAI/spring_flow.png)
+
+### Integration Layer
+
+Spring AI provides:
+- **Abstraction**: Unified interface across different LLM providers
+- **Configuration**: Spring-native configuration management
+- **Error Handling**: Consistent error handling and retry mechanisms
+- **Streaming**: Support for streaming responses
+- **Type Safety**: Strong typing for requests and responses
+
+
+---
+
+
+## Enterprise AI Integration Benefits
+
+### 1. **No Python Migration Required**
+- Keep existing Java codebase
+- Use familiar Spring patterns
+- Leverage Java ecosystem tools
+
+### 2. **Production-Ready**
+- Built on battle-tested Spring Boot
+- Enterprise support available
+- Security and compliance features
+
+### 3. **Data Strategy**
+- Bring your enterprise data to GenAI
+- Maintain data governance
+- Control data flow and privacy
+
+### 4. **Scalability**
+- Leverage Spring's scalability features
+- Load balancing and clustering support
+- Cloud-native deployment options
+
+
+---
+
+
+## Summary
+
+Spring AI is a powerful framework that:
+- **Connects** Java applications with LLM models
+- **Eliminates** the need for Python migration
+- **Provides** enterprise-grade AI integration
+- **Supports** multiple providers (OpenAI, Anthropic, Ollama)
+- **Enables** easy comparison and switching between models
+- **Maintains** familiar Spring Boot patterns
+- **Focuses** on practical AI engineering for Java developers
+
+
+Written By: <a href="https://www.linkedin.com/in/muskangarg03/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer"> Muskan Garg <ExternalLink className="w-4 h-4" /></a>

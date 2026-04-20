@@ -1,0 +1,8 @@
+{   "title":"AI Models Integration",
+    "pages":[
+        "working-with-openai-chatmodel.mdx",
+        "working-with-anthropic-and-chatclient.mdx",
+        "working-with-ollama-and-metadata.mdx"
+
+    ]
+} 
