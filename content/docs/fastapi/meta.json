@@ -8,7 +8,7 @@
         "basic-fastapi",
         "python-and-http-foundations",
         "project-structure-and-tooling",
-        "DISABLED-routing-and-parameters",
+        "routing-and-parameters",
         "DISABLED-request-body-and-validation",
         "DISABLED-response-handling-and-errors",
         "DISABLED-dependency-injection",

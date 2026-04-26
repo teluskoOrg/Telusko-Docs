@@ -1,0 +1,158 @@
+---
+title: API Versioning Basics
+---
+
+## Introduction
+
+As an API evolves, you may need to change how endpoints work in ways that are not backward compatible. API versioning lets you introduce these changes while keeping existing clients working. It is a common pattern in production APIs.
+
+## Why This Matters
+
+Without versioning, every breaking change you make to the API can break existing clients. With versioning, clients that depend on version one continue to work while new clients can use version two. This makes your API more reliable and easier to maintain over time.
+
+## Common Versioning Strategies
+
+| Strategy | Example | Notes |
+| -------- | ------- | ----- |
+| URL path versioning | `/v1/users` | Most common, easy to understand |
+| Query parameter | `/users?version=1` | Less common, harder to route |
+| Header versioning | `Accept: application/vnd.api+v1+json` | Clean URLs but harder to test |
+
+URL path versioning is the most straightforward approach and the one most commonly used with FastAPI.
+
+## URL Path Versioning
+
+The simplest approach is to include the version number in the route path:
+
+```python
+from fastapi import FastAPI
+
+app = FastAPI()
+
+@app.get("/v1/users")
+def list_users_v1():
+    return [{"id": 1, "name": "Alice"}]
+
+@app.get("/v2/users")
+def list_users_v2():
+    return [{"id": 1, "name": "Alice", "email": "alice@example.com"}]
+```
+
+V2 returns more fields. V1 clients still work because `/v1/users` is unchanged.
+
+## Using Routers for Versioning
+
+For larger projects, organize each version into its own router:
+
+```python
+# routers/v1/users.py
+from fastapi import APIRouter
+
+router = APIRouter()
+
+@router.get("/users")
+def list_users():
+    return [{"id": 1, "name": "Alice"}]
+```
+
+```python
+# routers/v2/users.py
+from fastapi import APIRouter
+
+router = APIRouter()
+
+@router.get("/users")
+def list_users():
+    return [{"id": 1, "name": "Alice", "email": "alice@example.com"}]
+```
+
+```python
+# main.py
+from fastapi import FastAPI
+from routers.v1 import users as users_v1
+from routers.v2 import users as users_v2
+
+app = FastAPI()
+
+app.include_router(users_v1.router, prefix="/v1", tags=["v1"])
+app.include_router(users_v2.router, prefix="/v2", tags=["v2"])
+```
+
+This structure keeps version-specific code fully separated.
+
+## Using Separate FastAPI Apps
+
+For strong isolation between versions, each version can be a separate FastAPI app mounted onto a parent app:
+
+```python
+from fastapi import FastAPI
+
+app = FastAPI()
+v1_app = FastAPI()
+v2_app = FastAPI()
+
+@v1_app.get("/users")
+def v1_users():
+    return [{"id": 1, "name": "Alice"}]
+
+@v2_app.get("/users")
+def v2_users():
+    return [{"id": 1, "name": "Alice", "email": "alice@example.com"}]
+
+app.mount("/v1", v1_app)
+app.mount("/v2", v2_app)
+```
+
+Each mounted app has its own Swagger UI at `/v1/docs` and `/v2/docs`.
+
+## Deprecating Old Versions
+
+Mark routes in an old version as deprecated before removing them:
+
+```python
+@app.get("/v1/users", deprecated=True, tags=["v1"])
+def list_users_v1():
+    return [{"id": 1, "name": "Alice"}]
+```
+
+This signals to API consumers that they should migrate to the newer version.
+
+## What Counts as a Breaking Change
+
+Not every change needs a new version. A breaking change is one that forces existing clients to update their code.
+
+| Change type | Breaking? |
+| ----------- | --------- |
+| Adding a new optional field to a response | No |
+| Removing a field from a response | Yes |
+| Changing a field type | Yes |
+| Adding a new endpoint | No |
+| Changing the behavior of an existing endpoint | Yes |
+| Adding a required request field | Yes |
+
+## Versioning and Documentation
+
+When using router-based versioning with tags, each version appears as its own section in Swagger UI, making it easy to browse what changed:
+
+```python
+app.include_router(users_v1.router, prefix="/v1", tags=["Users V1"])
+app.include_router(users_v2.router, prefix="/v2", tags=["Users V2"])
+```
+
+## Common Mistakes
+
+### Versioning every minor change
+
+Only create a new version for breaking changes. Additive changes such as new optional fields do not require a new version.
+
+### Never retiring old versions
+
+Old versions need maintenance. Set a clear deprecation and removal timeline and communicate it to API consumers.
+
+### Putting version logic inside a single function
+
+Avoid branching inside one route function to handle multiple versions. Keep versions in separate files to make the code easier to read and delete when a version is retired.
+
+## Summary
+
+API versioning allows you to evolve your FastAPI backend without breaking existing clients. URL path versioning using prefixes and routers is the most practical approach for FastAPI projects. Mark old versions as deprecated before removal and create new versions only for breaking changes.

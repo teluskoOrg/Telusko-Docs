@@ -1,0 +1,147 @@
+---
+title: Path Parameters
+---
+
+## Introduction
+
+Path parameters are variable parts of a URL path. They let you pass data to a route directly through the URL itself. FastAPI reads them automatically from the path and passes them as function arguments.
+
+## Why This Matters
+
+Many API endpoints are designed around specific resources. Instead of creating a separate route for each user or item, you define one route with a path parameter that accepts any ID. This keeps your API clean and scalable.
+
+## Basic Path Parameter
+
+To define a path parameter, put it inside curly braces in the path string and declare it as a function argument with the same name:
+
+```python
+from fastapi import FastAPI
+
+app = FastAPI()
+
+@app.get("/users/{user_id}")
+def get_user(user_id: int):
+    return {"user_id": user_id}
+```
+
+A request to `/users/42` returns:
+
+```json
+{
+  "user_id": 42
+}
+```
+
+## Type Validation
+
+By adding a type hint, FastAPI automatically validates the path parameter and converts it to the correct type.
+
+```python
+@app.get("/items/{item_id}")
+def get_item(item_id: int):
+    return {"item_id": item_id}
+```
+
+If the client sends `/items/hello`, FastAPI returns a 422 Unprocessable Entity response because `"hello"` cannot be converted to an integer. No manual validation code is needed.
+
+## Supported Types
+
+| Type | Example path | Received value |
+| ---- | ------------ | -------------- |
+| `int` | `/items/5` | `5` |
+| `float` | `/items/3.14` | `3.14` |
+| `str` | `/users/alice` | `"alice"` |
+| `bool` | `/flag/true` | `True` |
+
+## Multiple Path Parameters
+
+A route can have more than one path parameter:
+
+```python
+@app.get("/users/{user_id}/posts/{post_id}")
+def get_post(user_id: int, post_id: int):
+    return {"user_id": user_id, "post_id": post_id}
+```
+
+A request to `/users/1/posts/7` returns:
+
+```json
+{
+  "user_id": 1,
+  "post_id": 7
+}
+```
+
+## Using Enum for Fixed Choices
+
+When a path parameter should only accept specific values, use a Python `Enum`:
+
+```python
+from enum import Enum
+from fastapi import FastAPI
+
+app = FastAPI()
+
+class Category(str, Enum):
+    electronics = "electronics"
+    clothing = "clothing"
+    food = "food"
+
+@app.get("/products/{category}")
+def get_products(category: Category):
+    return {"category": category}
+```
+
+FastAPI validates that the value is one of the allowed choices and includes those choices in the generated documentation.
+
+## Path Parameter with a Matching Fixed Route
+
+When you have both a fixed path and a parameterized path at the same level, declare the fixed route first:
+
+```python
+@app.get("/users/me")          # fixed route — must come first
+def get_current_user():
+    return {"user": "current user"}
+
+@app.get("/users/{user_id}")   # parameterized route
+def get_user(user_id: str):
+    return {"user_id": user_id}
+```
+
+If the parameterized route came first, a request to `/users/me` would match it and pass `"me"` as `user_id`.
+
+## Path Parameters with Slashes
+
+To capture a path that itself contains slashes, use the `:path` type converter:
+
+```python
+@app.get("/files/{file_path:path}")
+def read_file(file_path: str):
+    return {"file_path": file_path}
+```
+
+A request to `/files/images/logo.png` sets `file_path` to `"images/logo.png"`.
+
+## Common Mistakes
+
+### Mismatched parameter name
+
+The name inside the curly braces must exactly match the function argument name:
+
+```python
+@app.get("/users/{user_id}")
+def get_user(id: int):      # wrong: should be user_id
+    ...
+```
+
+### Assuming path parameters are always strings
+
+FastAPI converts types based on the annotation. Use `int` when numeric IDs are expected so validation happens automatically.
+
+### Forgetting route order with overlapping paths
+
+Always define specific static paths before parameterized ones at the same level.
+
+## Summary
+
+Path parameters capture variable parts of the URL. FastAPI extracts them, validates their type, and passes them to the route function. Use type hints to get automatic validation and use `Enum` when only specific values are allowed.

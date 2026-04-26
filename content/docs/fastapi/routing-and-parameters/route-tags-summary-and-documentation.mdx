@@ -1,0 +1,187 @@
+---
+title: Route Tags, Summary, and Documentation
+---
+
+## Introduction
+
+FastAPI automatically generates interactive API documentation at `/docs` and `/redoc`. You can improve the quality of that documentation by adding tags, summaries, descriptions, and deprecation markers to your routes without writing any documentation manually.
+
+## Why This Matters
+
+Auto-generated documentation is one of the biggest advantages of FastAPI. When your endpoints are properly labeled, developers consuming your API can understand what each route does without reading the source code. Well-organized docs also make APIs easier to maintain and share.
+
+## Tags
+
+Tags group related routes together in the documentation. All routes with the same tag appear under one collapsible section in Swagger UI.
+
+```python
+from fastapi import FastAPI
+
+app = FastAPI()
+
+@app.get("/users", tags=["users"])
+def list_users():
+    return []
+
+@app.post("/users", tags=["users"])
+def create_user():
+    return {"message": "created"}
+
+@app.get("/items", tags=["items"])
+def list_items():
+    return []
+```
+
+The Swagger UI shows a `users` section and an `items` section, each with their respective routes.
+
+## Summary and Description
+
+The `summary` parameter is a short one-line description shown next to the route in the documentation. The `description` parameter adds a longer explanation.
+
+```python
+@app.get(
+    "/users/{user_id}",
+    tags=["users"],
+    summary="Get a user by ID",
+    description="Returns a single user object for the given user ID. Returns 404 if the user does not exist.",
+)
+def get_user(user_id: int):
+    return {"user_id": user_id}
+```
+
+## Using Docstrings as Descriptions
+
+If no `description` is provided, FastAPI uses the function's docstring:
+
+```python
+@app.get("/users/{user_id}", tags=["users"])
+def get_user(user_id: int):
+    """
+    Retrieve a user by their unique ID.
+
+    - **user_id**: The integer ID of the user to retrieve.
+    """
+    return {"user_id": user_id}
+```
+
+The docstring supports Markdown formatting and renders in the documentation.
+
+## Deprecating a Route
+
+Mark a route as deprecated when it should no longer be used but must remain available for backward compatibility:
+
+```python
+@app.get("/old-endpoint", tags=["legacy"], deprecated=True)
+def old_endpoint():
+    return {"message": "use /new-endpoint instead"}
+```
+
+Deprecated routes appear in the documentation with a visual strikethrough or warning indicator.
+
+## Response Description
+
+Describe what the response means using `response_description`:
+
+```python
+@app.get(
+    "/users",
+    tags=["users"],
+    response_description="A list of all registered users",
+)
+def list_users():
+    return []
+```
+
+## Operation IDs
+
+FastAPI generates a unique `operationId` for each route automatically. You can override it:
+
+```python
+@app.get("/users", operation_id="fetch_all_users")
+def list_users():
+    return []
+```
+
+This is useful when generating client code from the OpenAPI schema, where the operation ID becomes a function or method name.
+
+## Tags at the Router Level
+
+When using routers, apply tags at the router level so you do not repeat them on every route:
+
+```python
+from fastapi import APIRouter
+
+router = APIRouter(prefix="/users", tags=["users"])
+
+@router.get("/")
+def list_users():
+    return []
+
+@router.get("/{user_id}")
+def get_user(user_id: int):
+    return {"user_id": user_id}
+```
+
+Both routes automatically receive the `users` tag.
+
+## Tag Metadata
+
+You can add descriptions and external links to tags using the `openapi_tags` parameter on the app:
+
+```python
+tags_metadata = [
+    {
+        "name": "users",
+        "description": "Operations related to user management.",
+    },
+    {
+        "name": "items",
+        "description": "Operations for managing catalog items.",
+        "externalDocs": {
+            "description": "Item documentation",
+            "url": "https://example.com/items-docs",
+        },
+    },
+]
+
+app = FastAPI(openapi_tags=tags_metadata)
+```
+
+This adds richer descriptions to each tag section in Swagger UI.
+
+## Documentation Metadata on the App
+
+Set global documentation properties on the `FastAPI` instance:
+
+```python
+app = FastAPI(
+    title="My Store API",
+    description="API for managing products, users, and orders.",
+    version="2.0.0",
+    contact={
+        "name": "Support Team",
+        "email": "support@example.com",
+    },
+    license_info={
+        "name": "MIT",
+    },
+)
+```
+
+## Common Mistakes
+
+### Skipping tags entirely
+
+Without tags, all routes appear in a flat list under `default`. Tags make a large API significantly easier to browse.
+
+### Writing overly long summaries
+
+The summary should be one short phrase. Put longer explanations in the description or docstring.
+
+### Forgetting to mark deprecated routes
+
+Removing a deprecated route without warning breaks existing API consumers. Mark it deprecated first, then remove it in a later version.
+
+## Summary
+
+FastAPI uses route-level metadata like `tags`, `summary`, `description`, and `deprecated` to build useful, organized API documentation automatically. Applying tags at the router level keeps code DRY. Good documentation helps developers understand your API without needing to read source code.

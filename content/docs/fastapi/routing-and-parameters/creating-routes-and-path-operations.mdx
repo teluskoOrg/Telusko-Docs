@@ -1,0 +1,139 @@
+---
+title: Creating Routes and Path Operations
+---
+
+## Introduction
+
+In FastAPI, a route is a combination of a URL path and an HTTP method. When a client sends a request to a specific URL with a specific method, FastAPI runs the function attached to that route. These functions are called path operation functions.
+
+## Why This Matters
+
+Routes are the foundation of any API. Every feature of your backend is exposed through a route. Understanding how to define them clearly is the first practical step in building a FastAPI application.
+
+## Defining a Route
+
+A route is defined by decorating a function with a method decorator on the `app` object.
+
+```python
+from fastapi import FastAPI
+
+app = FastAPI()
+
+@app.get("/")
+def root():
+    return {"message": "Hello World"}
+```
+
+- `@app.get("/")` tells FastAPI that this function handles GET requests to the `/` path
+- The function returns a dictionary, which FastAPI converts to a JSON response automatically
+
+## HTTP Method Decorators
+
+FastAPI provides decorators for all common HTTP methods:
+
+| Decorator | HTTP Method | Common Use |
+| --------- | ----------- | ---------- |
+| `@app.get` | GET | Retrieve data |
+| `@app.post` | POST | Create new data |
+| `@app.put` | PUT | Replace existing data |
+| `@app.patch` | PATCH | Partially update data |
+| `@app.delete` | DELETE | Remove data |
+
+## Multiple Routes
+
+You can define as many routes as needed:
+
+```python
+@app.get("/users")
+def list_users():
+    return [{"id": 1, "name": "Alice"}, {"id": 2, "name": "Bob"}]
+
+@app.post("/users")
+def create_user():
+    return {"message": "User created"}
+
+@app.delete("/users/{user_id}")
+def delete_user(user_id: int):
+    return {"message": f"User {user_id} deleted"}
+```
+
+## The Same Path, Different Methods
+
+The same URL path can have multiple route definitions if they use different HTTP methods:
+
+```python
+@app.get("/items")
+def get_items():
+    return []
+
+@app.post("/items")
+def add_item():
+    return {"message": "Item added"}
+```
+
+FastAPI routes these correctly based on the HTTP method of the incoming request.
+
+## Async Route Functions
+
+Routes can be synchronous or asynchronous:
+
+```python
+@app.get("/sync")
+def sync_route():
+    return {"type": "synchronous"}
+
+@app.get("/async")
+async def async_route():
+    return {"type": "asynchronous"}
+```
+
+Use `async def` when the function performs async I/O operations such as database calls or HTTP requests.
+
+## Return Values
+
+FastAPI automatically converts return values to JSON:
+
+```python
+@app.get("/data")
+def get_data():
+    return {"key": "value"}           # dict becomes JSON object
+```
+
+You can also return lists, strings, integers, and Pydantic models. FastAPI handles the serialization.
+
+## Route Order Matters
+
+FastAPI matches routes in the order they are defined. If two routes could match the same path, the first one wins.
+
+```python
+@app.get("/users/me")       # this must come before /users/{user_id}
+def get_current_user():
+    return {"user": "me"}
+
+@app.get("/users/{user_id}")
+def get_user(user_id: int):
+    return {"user_id": user_id}
+```
+
+If `/users/{user_id}` came first, the string `"me"` would be passed as `user_id` and cause a validation error.
+
+## Common Mistakes
+
+### Forgetting the leading slash in the path
+
+```python
+@app.get("users")    # wrong
+@app.get("/users")   # correct
+```
+
+### Defining duplicate routes
+
+Two routes with the same method and path will not raise an error, but only the first one will ever be called.
+
+### Using the wrong HTTP method
+
+A `GET` endpoint should never modify data. Follow REST conventions: use `POST` to create, `PUT` or `PATCH` to update, and `DELETE` to remove.
+
+## Summary
+
+Routes in FastAPI are defined by decorating functions with method decorators like `@app.get` or `@app.post`. The function's return value is automatically converted to a JSON response. Route order matters when paths could overlap, and both synchronous and asynchronous functions are supported.

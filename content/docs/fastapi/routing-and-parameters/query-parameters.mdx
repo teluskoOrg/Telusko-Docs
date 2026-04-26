@@ -1,0 +1,186 @@
+---
+title: Query Parameters
+---
+
+## Introduction
+
+Query parameters are key-value pairs appended to the URL after a `?`. They are commonly used for filtering, searching, sorting, and pagination. FastAPI reads them automatically from the URL and maps them to function arguments.
+
+## Why This Matters
+
+Not all data belongs in the URL path. When you want to filter a list of items or control how many results are returned, query parameters are the right tool. Understanding how FastAPI handles them saves you from writing repetitive parsing code.
+
+## Basic Query Parameter
+
+Any function argument that is not a path parameter is treated as a query parameter by FastAPI:
+
+```python
+from fastapi import FastAPI
+
+app = FastAPI()
+
+@app.get("/items")
+def list_items(skip: int = 0, limit: int = 10):
+    return {"skip": skip, "limit": limit}
+```
+
+A request to `/items?skip=20&limit=5` returns:
+
+```json
+{
+  "skip": 20,
+  "limit": 5
+}
+```
+
+A request to `/items` with no query parameters uses the default values:
+
+```json
+{
+  "skip": 0,
+  "limit": 10
+}
+```
+
+## Required Query Parameters
+
+Omit the default value to make a query parameter required:
+
+```python
+@app.get("/search")
+def search(q: str):
+    return {"query": q}
+```
+
+A request to `/search` without `?q=something` returns a 422 error. The parameter is mandatory.
+
+## Optional Query Parameters
+
+Use `Optional` from `typing` or `None` as the default to make a parameter optional:
+
+```python
+from typing import Optional
+
+@app.get("/products")
+def list_products(category: Optional[str] = None):
+    if category:
+        return {"filter": category}
+    return {"filter": "none"}
+```
+
+With Python 3.10 and above:
+
+```python
+@app.get("/products")
+def list_products(category: str | None = None):
+    ...
+```
+
+## Multiple Query Parameters
+
+A route can have several query parameters at once:
+
+```python
+@app.get("/items")
+def list_items(
+    skip: int = 0,
+    limit: int = 10,
+    sort: str = "name",
+    active: bool = True
+):
+    return {
+        "skip": skip,
+        "limit": limit,
+        "sort": sort,
+        "active": active,
+    }
+```
+
+Request: `/items?skip=0&limit=5&sort=price&active=false`
+
+FastAPI handles the type conversion of each parameter including the boolean.
+
+## Boolean Query Parameters
+
+FastAPI accepts multiple formats for boolean query parameters:
+
+| URL value | Python value |
+| --------- | ------------ |
+| `true`, `1`, `on`, `yes` | `True` |
+| `false`, `0`, `off`, `no` | `False` |
+
+```python
+@app.get("/items")
+def list_items(published: bool = True):
+    return {"published": published}
+```
+
+## Query Parameters with Validation Using Query()
+
+The `Query` function from FastAPI adds validation and metadata to query parameters:
+
+```python
+from fastapi import FastAPI, Query
+
+app = FastAPI()
+
+@app.get("/items")
+def list_items(
+    q: str = Query(default=None, min_length=3, max_length=50),
+    page: int = Query(default=1, ge=1),
+):
+    return {"q": q, "page": page}
+```
+
+| Constraint | Meaning |
+| ---------- | ------- |
+| `min_length` | Minimum string length |
+| `max_length` | Maximum string length |
+| `ge` | Greater than or equal to |
+| `le` | Less than or equal to |
+| `gt` | Greater than |
+| `lt` | Less than |
+
+## Alias for Query Parameters
+
+If the query parameter name in the URL does not match a valid Python variable name, use an alias:
+
+```python
+from fastapi import Query
+
+@app.get("/items")
+def list_items(item_query: str = Query(default=None, alias="item-query")):
+    return {"item_query": item_query}
+```
+
+The client sends `?item-query=book`, and FastAPI maps it to `item_query`.
+
+## Path and Query Parameters Together
+
+A route can have both path and query parameters simultaneously:
+
+```python
+@app.get("/users/{user_id}/items")
+def get_user_items(user_id: int, skip: int = 0, limit: int = 10):
+    return {"user_id": user_id, "skip": skip, "limit": limit}
+```
+
+FastAPI knows `user_id` is a path parameter because it is in the path string. The others are query parameters.
+
+## Common Mistakes
+
+### Confusing path and query parameters
+
+Path parameters are in the URL path: `/users/{user_id}`. Query parameters come after `?`: `/users?id=1`.
+
+### Not providing defaults for optional parameters
+
+If a query parameter has no default value, it is required. If it should be optional, always set a default.
+
+### Forgetting type hints
+
+Without type hints, FastAPI treats all query parameters as strings and skips validation.
+
+## Summary
+
+Query parameters in FastAPI are declared as function arguments with default values. Required parameters have no default. Optional ones use `None`. The `Query` function adds validation rules and metadata. FastAPI handles type conversion and validation automatically based on the type hints provided.

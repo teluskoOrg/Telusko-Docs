@@ -1,0 +1,157 @@
+---
+title: Request Headers and Cookies
+---
+
+## Introduction
+
+Every HTTP request carries headers and sometimes cookies. Headers contain metadata about the request such as content type, authentication tokens, or client information. Cookies store small pieces of state sent by the browser with every request. FastAPI provides a clean way to read both.
+
+## Why This Matters
+
+Reading headers is essential for authentication, content negotiation, and tracking clients. Cookies are used for session management. Understanding how to access these in FastAPI lets you build more complete APIs.
+
+## Reading Request Headers
+
+Use the `Header` function from FastAPI to declare a header parameter:
+
+```python
+from fastapi import FastAPI, Header
+from typing import Optional
+
+app = FastAPI()
+
+@app.get("/info")
+def get_info(user_agent: Optional[str] = Header(default=None)):
+    return {"User-Agent": user_agent}
+```
+
+FastAPI maps `user_agent` to the `User-Agent` HTTP header automatically. Underscores in argument names are converted to hyphens to match the HTTP header format.
+
+## Header Name Conversion
+
+HTTP headers use hyphens such as `X-Request-ID`, but Python variable names cannot contain hyphens. FastAPI automatically converts underscores to hyphens:
+
+| Function argument | HTTP header |
+| ----------------- | ----------- |
+| `user_agent` | `User-Agent` |
+| `x_request_id` | `X-Request-ID` |
+| `accept_language` | `Accept-Language` |
+
+## Custom Headers
+
+Reading a custom header such as an API key sent by the client:
+
+```python
+from fastapi import FastAPI, Header, HTTPException
+from typing import Optional
+
+app = FastAPI()
+
+@app.get("/secure")
+def secure_endpoint(x_api_key: Optional[str] = Header(default=None)):
+    if x_api_key != "expected-key":
+        raise HTTPException(status_code=401, detail="Invalid API key")
+    return {"status": "authorized"}
+```
+
+## Multiple Header Values
+
+Some headers can appear multiple times in a single request. Declare them as a list to receive all values:
+
+```python
+from typing import List
+
+@app.get("/items")
+def get_items(x_token: List[str] = Header(default=[])):
+    return {"tokens": x_token}
+```
+
+## Reading All Headers
+
+To access all headers without declaring them individually, use the `Request` object:
+
+```python
+from fastapi import FastAPI, Request
+
+app = FastAPI()
+
+@app.get("/headers")
+def read_headers(request: Request):
+    return dict(request.headers)
+```
+
+## Reading Cookies
+
+Use the `Cookie` function to declare cookie parameters:
+
+```python
+from fastapi import FastAPI, Cookie
+from typing import Optional
+
+app = FastAPI()
+
+@app.get("/me")
+def get_profile(session_id: Optional[str] = Cookie(default=None)):
+    return {"session_id": session_id}
+```
+
+The argument name must match the cookie name sent by the client.
+
+## Setting Cookies in a Response
+
+To set a cookie in the response, use the `Response` object:
+
+```python
+from fastapi import FastAPI, Response
+
+app = FastAPI()
+
+@app.post("/login")
+def login(response: Response):
+    response.set_cookie(key="session_id", value="abc123", httponly=True)
+    return {"message": "Logged in"}
+```
+
+Cookie options:
+
+| Option | Purpose |
+| ------ | ------- |
+| `httponly=True` | Prevents JavaScript from reading the cookie |
+| `secure=True` | Cookie is only sent over HTTPS |
+| `max_age` | How long the cookie lasts in seconds |
+| `samesite` | Controls cross-site cookie sending |
+
+## Deleting Cookies
+
+```python
+@app.post("/logout")
+def logout(response: Response):
+    response.delete_cookie(key="session_id")
+    return {"message": "Logged out"}
+```
+
+## Headers vs Cookies vs Query Parameters
+
+| Location | Best for |
+| -------- | -------- |
+| Headers | Authentication tokens, content type, metadata |
+| Cookies | Session data, persistent client state |
+| Query parameters | Filters, pagination, search |
+
+## Common Mistakes
+
+### Expecting case-sensitive header matching
+
+HTTP headers are case-insensitive. FastAPI normalizes them, so `User-Agent` and `user-agent` refer to the same header.
+
+### Forgetting that cookies are not automatically available for all clients
+
+APIs consumed by mobile apps or server-to-server clients often send tokens in headers rather than cookies. Design based on your actual clients.
+
+### Storing sensitive data in cookies without proper flags
+
+Always use `httponly=True` and `secure=True` for cookies that hold session or authentication data.
+
+## Summary
+
+FastAPI reads request headers using the `Header` function and cookies using the `Cookie` function. Underscore-to-hyphen conversion handles the naming mismatch between Python and HTTP. Cookies can be set and deleted through the response object. Use `httponly` and `secure` flags for cookies that carry sensitive session data.
