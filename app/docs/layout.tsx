@@ -7,7 +7,7 @@ export default function Layout({ children }: LayoutProps<'/docs'>) {
     <DocsLayout tree={source.pageTree}   {...baseOptions()} sidebar={{
     enabled: true,
     tabs:false,
-    defaultOpenLevel:1
+    defaultOpenLevel:0
     
     // replace the default sidebar
     // component:

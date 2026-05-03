@@ -1,0 +1,135 @@
+---
+title: Understanding main.py and App Instances
+---
+
+## Introduction
+
+Every FastAPI project has a starting point. By convention, that file is called `main.py`. It is where the FastAPI application instance is created and where the overall configuration of the project comes together.
+
+Understanding what happens in `main.py` gives you a clear picture of how a FastAPI project is assembled.
+
+## Why This Matters
+
+When you run a FastAPI application, the server needs to know where the app object lives. Everything else in your project connects back to that single object. If you do not understand what `main.py` does, the rest of the project can feel disconnected.
+
+## The App Instance
+
+The core of every FastAPI project is one line:
+
+```python
+from fastapi import FastAPI
+
+app = FastAPI()
+```
+
+This creates the FastAPI application object. Everything else such as routes, middleware, and event handlers is attached to this object.
+
+## A Basic main.py
+
+```python
+from fastapi import FastAPI
+
+app = FastAPI()
+
+@app.get("/")
+def root():
+    return {"message": "API is running"}
+```
+
+When uvicorn starts the server with `uvicorn main:app`, it:
+- imports the `main` module
+- finds the `app` object inside it
+- uses that object to handle all incoming requests
+
+## Adding Metadata to the App
+
+The `FastAPI()` constructor accepts optional parameters that improve the API documentation.
+
+```python
+app = FastAPI(
+    title="My API",
+    description="An example API built with FastAPI",
+    version="1.0.0",
+)
+```
+
+| Parameter | What it does |
+| --------- | ------------ |
+| `title` | Sets the title shown in Swagger UI |
+| `description` | Adds a description to the documentation page |
+| `version` | Labels the API version in the docs |
+
+These show up at `/docs` when the server is running.
+
+## Including Routers
+
+As projects grow, routes are split into separate files called routers. The main app brings them together using `include_router`.
+
+```python
+from fastapi import FastAPI
+from app.routers import users, items
+
+app = FastAPI()
+
+app.include_router(users.router)
+app.include_router(items.router)
+```
+
+This keeps `main.py` clean. It only handles wiring, not the route logic itself.
+
+## Startup and Shutdown Events
+
+FastAPI lets you run code when the application starts or shuts down.
+
+```python
+@app.on_event("startup")
+async def startup_event():
+    print("Application is starting")
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    print("Application is shutting down")
+```
+
+This is useful for tasks like:
+- opening a database connection pool on startup
+- closing resources cleanly on shutdown
+
+## Multiple App Instances
+
+It is possible to create more than one FastAPI instance and mount them together.
+
+```python
+from fastapi import FastAPI
+
+main_app = FastAPI()
+admin_app = FastAPI()
+
+main_app.mount("/admin", admin_app)
+```
+
+This pattern is used when different parts of an API need independent configurations, such as separate authentication rules.
+
+## Common Mistakes
+
+### Naming the file differently and getting confused with uvicorn
+
+If the file is named `server.py` instead of `main.py`, the uvicorn command changes accordingly:
+
+```bash
+uvicorn server:app --reload
+```
+
+The format is always `filename:variable_name`.
+
+### Defining routes directly in main.py for large projects
+
+For small projects this is fine, but for anything with more than a few endpoints, use routers to keep the code organized.
+
+### Creating multiple app instances without understanding mounting
+
+Multiple instances are advanced usage. Start with a single app until you understand routers well.
+
+## Summary
+
+`main.py` is the entry point of a FastAPI project. It creates the application instance, registers routers, sets metadata, and optionally defines startup and shutdown events. The `app` object in this file is what the server uses to handle all requests.

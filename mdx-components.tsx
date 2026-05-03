@@ -7,6 +7,8 @@ import { Step, Steps } from 'fumadocs-ui/components/steps';
 import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
 import Quote from '@/components/ui/Quote';
 import Badge from '@/components/ui/Badge';
+import { ComingSoonCard } from '@/components/coming-soon-card';
+import { ComingSoonAccordion } from '@/components/coming-soon-accordion';
 import Image from 'next/image';
 import { ExternalLink } from 'lucide-react'
 
@@ -30,6 +32,8 @@ export function getMDXComponents(components?: MDXComponents): MDXComponents {
     Video,
     Quote,
     Badge,
+    ComingSoonCard,
+    ComingSoonAccordion,
     ExternalLink,
     Image,
     ...components,

@@ -36,12 +36,12 @@ export default function Layout({ children }: LayoutProps<'/'>) {
     // 'rgba(140, 170, 255, 0.3)',
     'transparent',
   ]} > <a 
-    href="https://go.telusko.com/industry-ready-course" 
+    href="https://learn.telusko.com/courses/complete%20devops%20bootcamp%3A%20master%20devops%20in%2012%20weeks" 
     target="_blank" 
     rel="noopener noreferrer" 
     className="flex items-center gap-2 justify-center no-underline hover:no-underline text-sm sm:text-base md:text-lg"
   >
-  Industry Ready Java Spring Boot, React & Gen AI — Live Course
+  Complete DevOps Bootcamp: Master DevOps in 12 Weeks
     <ExternalLink className="w-4 h-4" />
   </a></Banner>
         <RootProvider>{children}</RootProvider>

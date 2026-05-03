@@ -1,0 +1,151 @@
+---
+title: Using Uvicorn and Gunicorn
+---
+
+## Introduction
+
+FastAPI is an ASGI framework. To run it, you need an ASGI-compatible server. The two most commonly used servers for FastAPI are Uvicorn and Gunicorn. Understanding what each does and when to use them is important for both development and production.
+
+## Why This Matters
+
+FastAPI does not run on its own. It needs a server process that accepts HTTP connections and passes them to your application. Choosing the right server setup affects performance, reliability, and how the app behaves under load.
+
+## What Is Uvicorn
+
+Uvicorn is a fast ASGI server. It is the standard server used during development and is also suitable for production in many cases.
+
+ASGI stands for Asynchronous Server Gateway Interface. It is the interface that allows async-capable Python frameworks like FastAPI to handle requests efficiently.
+
+### Installing Uvicorn
+
+```bash
+pip install uvicorn
+```
+
+For WebSocket and HTTP/2 support, install the standard extras:
+
+```bash
+pip install "uvicorn[standard]"
+```
+
+### Running FastAPI with Uvicorn
+
+```bash
+uvicorn main:app --reload
+```
+
+| Part | Meaning |
+| ---- | ------- |
+| `main` | The Python file name without `.py` |
+| `app` | The FastAPI instance variable inside the file |
+| `--reload` | Restarts the server when code changes are detected |
+
+The `--reload` flag is for development only. Do not use it in production.
+
+### Specifying Host and Port
+
+By default Uvicorn runs on `127.0.0.1:8000`. You can change this:
+
+```bash
+uvicorn main:app --host 0.0.0.0 --port 8080
+```
+
+Using `0.0.0.0` makes the server accessible from outside the local machine, which is needed inside Docker containers or on a remote server.
+
+### Common Uvicorn Options
+
+| Option | Description |
+| ------ | ----------- |
+| `--reload` | Enable auto-reload on code changes |
+| `--host` | IP address to bind to |
+| `--port` | Port number to listen on |
+| `--workers` | Number of worker processes |
+| `--log-level` | Logging verbosity: debug, info, warning, error |
+
+## What Is Gunicorn
+
+Gunicorn is a production-grade WSGI server. While FastAPI is ASGI, Gunicorn can run it through a special Uvicorn worker class. The combination gives you Gunicorn's robust process management with Uvicorn's async handling.
+
+### Installing Gunicorn
+
+```bash
+pip install gunicorn
+```
+
+### Running FastAPI with Gunicorn and Uvicorn Workers
+
+```bash
+gunicorn main:app -w 4 -k uvicorn.workers.UvicornWorker
+```
+
+| Part | Meaning |
+| ---- | ------- |
+| `main:app` | Same as with uvicorn |
+| `-w 4` | Four worker processes |
+| `-k uvicorn.workers.UvicornWorker` | Use Uvicorn as the worker class |
+
+### Why Use Gunicorn in Production
+
+Gunicorn provides:
+- automatic worker process management
+- worker restart on crash
+- better handling of production traffic
+- integration with system process managers like systemd
+
+## Development vs Production
+
+| Setting | Development | Production |
+| ------- | ----------- | ---------- |
+| Server | Uvicorn with `--reload` | Gunicorn with UvicornWorker |
+| Workers | 1 | Multiple (typically 2 × CPU cores + 1) |
+| Reload | Enabled | Disabled |
+| Log level | debug or info | warning or error |
+
+## Choosing the Number of Workers
+
+A common starting rule is:
+
+```
+workers = (2 × number_of_CPU_cores) + 1
+```
+
+For a machine with 2 CPU cores, that is 5 workers. This is a guideline, not a strict rule. Adjust based on the nature of the workload.
+
+## Running with a Config File
+
+Gunicorn can read options from a config file instead of command-line arguments.
+
+Create `gunicorn_conf.py`:
+
+```python
+bind = "0.0.0.0:8000"
+workers = 4
+worker_class = "uvicorn.workers.UvicornWorker"
+loglevel = "info"
+accesslog = "-"
+errorlog = "-"
+```
+
+Run with the config:
+
+```bash
+gunicorn main:app -c gunicorn_conf.py
+```
+
+## Common Mistakes
+
+### Using `--reload` in production
+
+Auto-reload watches the filesystem and restarts the server on changes. This is a development tool that adds overhead and should never be used in a deployed environment.
+
+### Mixing Gunicorn's WSGI workers with async routes
+
+If you use Gunicorn without the UvicornWorker, async routes will still work but will not benefit from proper async concurrency. Always use `uvicorn.workers.UvicornWorker` for FastAPI.
+
+### Running with a single worker in production under load
+
+A single worker handles one request at a time (blocking any others while waiting on I/O even with async code). Use multiple workers in production for real concurrency.
+
+## Summary
+
+Uvicorn is the standard server for FastAPI in both development and production. In production, pairing Gunicorn with Uvicorn workers gives you better process management and scalability. Use `--reload` only during development, and configure the number of workers based on available CPU cores.
