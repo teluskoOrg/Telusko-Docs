@@ -4,6 +4,7 @@
         "getting-started.mdx",
         "introduction.mdx",
         "setup-and-configuration",
-        "ai-models-integration"
+        "ai-models-integration",
+        "spring-ai-2.0"
     ]
 } 

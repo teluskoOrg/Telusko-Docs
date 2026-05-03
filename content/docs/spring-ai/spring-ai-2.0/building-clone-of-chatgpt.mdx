@@ -1,0 +1,471 @@
+---
+title: Building Clone of ChatGPT
+---
+
+<Steps>
+<Video id="bHF2F8XcmSs" />
+
+---
+
+
+The application includes a REST API backend integrated with Large Language Models (LLM) and can be connected to a frontend UI for user interaction.
+
+
+## Project Architecture
+
+### Components
+
+1. **Backend**: Spring Boot application with REST API
+2. **AI Integration**: Spring AI with Anthropic Claude (or other providers)
+3. **Frontend**: React-based UI (optional, can be pulled from GitHub)
+4. **Memory Management**: Conversation context retention
+
+### Key Technologies
+
+- Spring Boot 2.4+
+- Spring AI 2.0.0
+- Anthropic Claude API
+- REST API endpoints
+- ChatClient abstraction layer
+
+
+---
+
+
+## Implementation Approaches
+
+### Approach 1: Using ChatModel (Basic)
+
+**Characteristics:**
+- Direct interaction with AI models
+- Supports multiple AI providers simultaneously
+- More flexible for multi-model applications
+- Requires explicit model configuration
+
+**Use Case:** When you need to work with multiple AI models in the same application (Anthropic, OpenAI, Gemini, Mistral).
+
+### Approach 2: Using ChatClient (Recommended)
+
+**Characteristics:**
+- Simpler setup for single model implementations
+- Built-in builder pattern for customization
+- Better abstraction and cleaner code
+- Easier to maintain and extend
+
+**Use Case:** Most single-model implementations and production applications.
+
+
+---
+
+
+## Step-by-Step Implementation
+
+### Step 1: Project Setup
+
+Create a Spring Boot project with the following dependencies:
+
+- Spring Web
+- Spring AI (Anthropic or your chosen provider)
+
+
+### Step 2: Configure application.properties file
+
+```properties
+spring.ai.anthropic.api-key=YOUR_API_KEY_HERE
+spring.ai.anthropic.chat.options.model=claude-sonnet-4-6
+```
+
+
+### Step 3: Basic REST Controller (ChatModel Approach)
+
+#### AIController.java (Initial Version)
+
+```java
+package com.telusko.springaidemo;
+
+import org.springframework.ai.anthropic.AnthropicChatModel;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+public class AIController {
+
+    private AnthropicChatModel chatModel;
+
+    public AIController(AnthropicChatModel chatModel) {
+        this.chatModel = chatModel;
+    }
+
+    @GetMapping("/api/{prompt}")
+    public String getResponse(@PathVariable String prompt) {
+        String response = chatModel.call(prompt);
+        return response;
+    }
+}
+```
+
+**Key Points:**
+- Constructor injection for the `AnthropicChatModel`
+- Simple GET endpoint accepting prompt as path variable
+- Direct call to the model and return response
+
+**Testing:**
+- URL: `http://localhost:8080/api/tell me a joke on Java`
+- The endpoint accepts any prompt and returns AI-generated response
+
+
+### Step 4: Enhanced Implementation with ChatClient
+
+#### AIController.java (ChatClient Version)
+
+```java
+package com.telusko.springaidemo;
+
+import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
+import org.springframework.ai.chat.memory.ChatMemory;
+import org.springframework.ai.chat.memory.MessageWindowChatMemory;
+import org.springframework.ai.chat.model.ChatResponse;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+public class AIController {
+
+    private ChatClient chatClient;
+    private ChatMemory chatMemory = MessageWindowChatMemory.builder().build();
+
+    public AIController(ChatClient.Builder builder) {
+        this.chatClient = builder
+                .defaultAdvisors(MessageChatMemoryAdvisor.builder(chatMemory).build())
+                .build();
+    }
+
+    @GetMapping("/api/question/{message}")
+    public String getResponse(@PathVariable String message) {
+        ChatResponse response = chatClient
+                .prompt(message)
+                .call()
+                .chatResponse();
+
+        // Extract metadata for token usage tracking
+        int metadata = response.getMetadata().getUsage().getTotalTokens();
+        System.out.println("Total tokens used: " + metadata);
+
+        // Extract the actual response text
+        String answer = response.getResult().getOutput().getText();
+
+        return answer;
+    }
+}
+```
+
+
+#### Understanding ChatClient Builder Pattern
+
+The `ChatClient.Builder` enables customization before object creation:
+
+```java
+ChatClient chatClient = builder
+    .defaultAdvisors(MessageChatMemoryAdvisor.builder(chatMemory).build())
+    .build();
+```
+
+**Why Use Builder?**
+- Decouples code from specific chat models
+- Allows adding advisors, interceptors, and customizations
+- Makes code more maintainable and testable
+- Follows Spring Framework best practices
+
+
+---
+
+
+## Response Object Structure
+
+### Understanding ChatResponse
+
+When you call the AI model, you receive a `ChatResponse` object with multiple layers:
+
+```java
+ChatResponse response = chatClient
+    .prompt(message)
+    .call()
+    .chatResponse();
+```
+
+### Response Hierarchy
+
+```
+ChatResponse
+├── getResult()
+│   └── getOutput()
+│       └── getText()        // Actual response text
+└── getMetadata()
+    └── getUsage()
+        ├── getTotalTokens()  // Total tokens consumed
+        ├── getPromptTokens() // Tokens in the prompt
+        └── getCompletionTokens() // Tokens in response
+```
+
+### Extracting Information
+
+```java
+// Get the response text
+String answer = response.getResult().getOutput().getText();
+
+// Get token usage
+int totalTokens = response.getMetadata().getUsage().getTotalTokens();
+
+// Get model information
+String model = response.getMetadata().getModel(); // e.g., "claude-sonnet-4-6"
+```
+
+
+---
+
+
+## Memory Management: Stateful Conversations
+
+### The Problem
+
+By default, AI models are **stateless**:
+- Each request is independent
+- No memory of previous interactions
+- Cannot maintain conversation context
+
+**Example:**
+```
+User: "Who is Telusko?"
+AI: "Telusko is an online learning platform..."
+
+User: "Where is its office located?"
+AI: "I don't have context about what 'its' refers to."  ❌
+```
+
+### The Solution: MessageChatMemoryAdvisor
+
+Add memory capability to enable contextual conversations:
+
+```java
+private ChatMemory chatMemory = MessageWindowChatMemory.builder().build();
+
+public AIController(ChatClient.Builder builder) {
+    this.chatClient = builder
+            .defaultAdvisors(MessageChatMemoryAdvisor.builder(chatMemory).build())
+            .build();
+}
+```
+
+### How It Works
+
+1. **MessageWindowChatMemory**: Stores conversation history
+2. **MessageChatMemoryAdvisor**: Injects previous messages into new prompts
+3. **Context Retention**: AI can reference earlier parts of the conversation
+
+**With Memory:**
+```
+User: "Who is Telusko?"
+AI: "Telusko is an online learning platform founded by Navin Reddy..."
+
+User: "Where is its office located?"
+AI: "Telusko is based in Bangalore, India."  ✓
+```
+
+
+---
+
+
+## Token Economics
+
+### What are Tokens?
+
+- **Definition**: Basic unit of text processing in LLMs
+- **Conversion**: 1 token ≈ 75% of a word (approximately 0.75 words)
+- **Billing**: All LLM providers charge based on tokens consumed
+
+### Token Types
+
+1. **Prompt Tokens**: Input text (your question)
+2. **Completion Tokens**: Output text (AI response)
+3. **Total Tokens**: Prompt + Completion
+
+### Why Track Tokens?
+
+```java
+int totalTokens = response.getMetadata().getUsage().getTotalTokens();
+System.out.println("Total tokens used: " + totalTokens);
+```
+
+**Reasons:**
+- **Cost Optimization**: Different models have different pricing
+- **Performance Monitoring**: Longer responses = more tokens = higher cost
+- **Budget Management**: Track usage to control expenses
+- **Efficiency Analysis**: Optimize prompts to reduce token consumption
+
+### Token Cost Examples
+
+| Model | Input Price | Output Price |
+|-------|-------------|--------------|
+| GPT-4 | $0.03/1K tokens | $0.06/1K tokens |
+| Claude Sonnet | $0.003/1K tokens | $0.015/1K tokens |
+| Gemini Pro | $0.0005/1K tokens | $0.0015/1K tokens |
+
+**Note**: Prices vary by provider and model. Always check current pricing.
+
+
+---
+
+
+## Integration with Frontend
+
+### Setup React Frontend
+
+1. **Clone the UI repository:**
+```bash
+git clone <repository-url>
+cd chatgpt-clone-ui
+```
+
+2. **Install dependencies:**
+```bash
+npm install
+```
+
+3. **Run development server:**
+```bash
+npm run dev
+```
+
+4. **Configure API endpoint:**
+Update the API base URL in your React app to point to `http://localhost:8080/api/question/`
+
+### Expected Behavior
+
+- User enters a question in the UI
+- React app sends GET request to Spring Boot backend
+- Backend processes with LLM
+- AI response returns to frontend
+- UI displays the answer
+
+
+---
+
+
+## Common Issues and Troubleshooting
+
+### Issue 1: 404 Error
+
+**Problem:** API endpoint not found
+
+**Solution:**
+- Verify controller mapping: `@GetMapping("/api/question/{message}")`
+- Check if Spring Boot application is running
+- Ensure proper URL structure
+
+### Issue 2: 500 Internal Server Error
+
+**Problem:** Model not specified or API key missing
+
+**Solution:**
+```properties
+# Ensure these are set in application.properties
+spring.ai.anthropic.api-key=YOUR_KEY
+spring.ai.anthropic.chat.options.model=claude-sonnet-4-6
+```
+
+### Issue 3: Long Response Time
+
+**Possible Causes:**
+- High demand on AI provider servers
+- Model availability issues
+- Large prompt or complex query
+
+**Solutions:**
+- Implement timeout handling
+- Add loading indicators in UI
+- Consider using faster models for simple queries
+
+### Issue 4: Context Not Maintained
+
+**Problem:** AI doesn't remember previous messages
+
+**Solution:** Ensure `MessageChatMemoryAdvisor` is properly configured:
+```java
+private ChatMemory chatMemory = MessageWindowChatMemory.builder().build();
+
+this.chatClient = builder
+    .defaultAdvisors(MessageChatMemoryAdvisor.builder(chatMemory).build())
+    .build();
+```
+
+
+---
+
+
+## Best Practices
+
+### 1. **Token Tracking**
+Always log token usage for cost monitoring:
+```java
+System.out.println("Total tokens used: " + metadata);
+```
+
+### 2. **Error Handling**
+Implement try-catch blocks for API failures:
+```java
+try {
+    ChatResponse response = chatClient.prompt(message).call().chatResponse();
+    // Process response
+} catch (Exception e) {
+    return "Error: Unable to process your request";
+}
+```
+
+### 3. **Response Optimization**
+Fetch response data once to avoid redundant calls:
+```java
+ChatResponse response = chatClient.prompt(message).call().chatResponse();
+String answer = response.getResult().getOutput().getText();
+int tokens = response.getMetadata().getUsage().getTotalTokens();
+```
+
+### 4. **Memory Management**
+For production, consider memory window size:
+```java
+MessageWindowChatMemory.builder()
+    .maxMessages(10)  // Limit stored messages
+    .build();
+```
+
+### 5. **API Design**
+Use clear, RESTful endpoint naming:
+- ❌ `/api/{prompt}` - Too generic
+- ✅ `/api/question/{message}` - Clear intent
+- ✅ `/api/chat?prompt={text}` - Query parameter for complex inputs
+
+
+---
+
+
+## Summary
+
+* Spring AI enables **seamless REST API integration**, allowing AI capabilities to be exposed via HTTP endpoints for easy frontend-backend communication.
+
+* **ChatClient provides a clean and flexible abstraction**, using a builder pattern to simplify code structure and improve maintainability over direct ChatModel usage.
+
+* **Stateful conversations** are supported through **memory management**, enabling context retention using components like `MessageChatMemoryAdvisor`.
+
+* **Token tracking** plays a crucial role in cost optimization, helping monitor usage and control expenses when working with AI models.
+
+* AI responses include both **content and metadata**, allowing developers to extract text, usage details, and other insights for advanced handling.
+
+* **Frontend integration (e.g., React + Spring Boot)** ensures a complete end-to-end AI application, connecting user input with intelligent backend processing.
+
+
+
+</Steps>
+
+Written By: <a href="https://www.linkedin.com/in/muskangarg03/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer"> Muskan Garg <ExternalLink className="w-4 h-4" /></a>
