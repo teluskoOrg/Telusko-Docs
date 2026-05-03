@@ -1,0 +1,196 @@
+---
+title: Nested Models and Lists
+---
+
+## Introduction
+
+Real APIs rarely deal with flat objects. An order has line items. A user has an address. A blog post has tags. Pydantic supports nested models and collections natively, so you can describe these shapes accurately without writing custom parsing code.
+
+## Why This Matters
+
+When you accept structured data, the structure itself is part of the contract. Declaring nested models makes that contract explicit, lets FastAPI validate every layer, and produces accurate Swagger documentation that mirrors the shape of your real payloads.
+
+## A Nested Model
+
+To embed one model inside another, use it as a field type:
+
+```python
+from pydantic import BaseModel
+
+class Address(BaseModel):
+    street: str
+    city: str
+    zip_code: str
+
+class User(BaseModel):
+    name: str
+    email: str
+    address: Address
+```
+
+The expected JSON body for a `User` is:
+
+```json
+{
+  "name": "Alice",
+  "email": "alice@example.com",
+  "address": {
+    "street": "1 Main St",
+    "city": "Pune",
+    "zip_code": "411001"
+  }
+}
+```
+
+FastAPI validates the outer object, then recurses into `address` and validates that as well.
+
+## Lists of Primitives
+
+A list field accepts a collection of values of the same type:
+
+```python
+class Post(BaseModel):
+    title: str
+    tags: list[str] = []
+```
+
+Sample body:
+
+```json
+{
+  "title": "FastAPI tips",
+  "tags": ["python", "fastapi", "web"]
+}
+```
+
+If any element in `tags` is not a string, FastAPI returns a 422 error pointing to the bad index.
+
+## Lists of Models
+
+You can nest a list of Pydantic models too:
+
+```python
+class Item(BaseModel):
+    name: str
+    price: float
+    quantity: int
+
+class Order(BaseModel):
+    customer: str
+    items: list[Item]
+```
+
+Body:
+
+```json
+{
+  "customer": "Alice",
+  "items": [
+    { "name": "Pen", "price": 1.5, "quantity": 2 },
+    { "name": "Notebook", "price": 4.0, "quantity": 1 }
+  ]
+}
+```
+
+Each item is validated against the `Item` model independently.
+
+## Sets and Tuples
+
+Pydantic also supports `set` and `tuple` types:
+
+```python
+class Article(BaseModel):
+    title: str
+    tags: set[str] = set()
+    coordinates: tuple[float, float] | None = None
+```
+
+`set[str]` automatically removes duplicates. `tuple[float, float]` enforces exactly two float values.
+
+## Dictionaries
+
+Use `dict[KeyType, ValueType]` when the keys are dynamic but the value structure is known:
+
+```python
+class Inventory(BaseModel):
+    name: str
+    stock: dict[str, int]
+```
+
+Body:
+
+```json
+{
+  "name": "warehouse-1",
+  "stock": { "pen": 10, "notebook": 5 }
+}
+```
+
+FastAPI validates that every key is a string and every value is an integer.
+
+## Deeply Nested Structures
+
+You can keep nesting as deep as the data requires:
+
+```python
+class Comment(BaseModel):
+    author: str
+    text: str
+
+class Post(BaseModel):
+    title: str
+    body: str
+    comments: list[Comment] = []
+
+class Blog(BaseModel):
+    name: str
+    posts: list[Post]
+```
+
+A request body containing a list of posts, each with a list of comments, is fully validated end to end.
+
+## Using Nested Models in a Route
+
+```python
+from fastapi import FastAPI
+
+app = FastAPI()
+
+@app.post("/orders")
+def create_order(order: Order):
+    total = sum(item.price * item.quantity for item in order.items)
+    return {"customer": order.customer, "total": total}
+```
+
+You can iterate over nested lists, access nested fields, and rely on every layer being already validated when the function runs.
+
+## Optional Nested Models
+
+Make a nested model optional by allowing `None`:
+
+```python
+class User(BaseModel):
+    name: str
+    email: str
+    address: Address | None = None
+```
+
+The field can be omitted or sent as `null`.
+
+## Common Mistakes
+
+### Treating nested objects as plain dicts
+
+Type the field with the model class, not `dict`. Otherwise you lose validation and autocompletion.
+
+### Forgetting a default for list fields
+
+Without a default like `= []`, the list becomes required. For most APIs, an empty list is a reasonable default.
+
+### Mutable default values
+
+Avoid `field: list[str] = []` with regular Python classes — it can cause shared-state bugs. Pydantic handles this safely, but in plain dataclasses you would use `field(default_factory=list)`.
+
+## Summary
+
+Nested models, lists, sets, tuples, and dictionaries let you describe complex JSON shapes precisely. FastAPI validates every layer using Pydantic, so deeply nested input arrives at your route function fully checked and ready to use.

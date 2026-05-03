@@ -1,0 +1,162 @@
+---
+title: Field Constraints and Custom Validation
+---
+
+## Introduction
+
+Type hints alone tell FastAPI what kind of data to expect. Constraints go further by setting rules like minimum length, allowed range, or required pattern. When the built-in constraints are not enough, custom validators let you express any rule in pure Python.
+
+## Why This Matters
+
+Real-world data has rules. Passwords need a minimum length. Ages must be positive. Email-like strings need to match a pattern. Putting these rules inside your Pydantic model keeps validation close to the data definition and removes scattered `if` checks from your route functions.
+
+## Using Field for Constraints
+
+Pydantic's `Field` adds metadata and constraints to model attributes:
+
+```python
+from pydantic import BaseModel, Field
+
+class Product(BaseModel):
+    name: str = Field(min_length=2, max_length=50)
+    price: float = Field(gt=0)
+    quantity: int = Field(ge=0, le=1000)
+    description: str | None = Field(default=None, max_length=300)
+```
+
+| Constraint | Applies to | Meaning |
+| ---------- | ---------- | ------- |
+| `min_length` / `max_length` | strings, lists | Length bounds |
+| `gt`, `ge`, `lt`, `le` | numbers | Greater/less than (or equal) |
+| `pattern` | strings | Regex the value must match |
+| `default` | any | Default value when omitted |
+
+If the input violates any constraint, FastAPI returns a 422 response with the failing field and reason.
+
+## Numeric Constraints
+
+```python
+class Order(BaseModel):
+    quantity: int = Field(gt=0, le=100)
+    discount: float = Field(ge=0.0, lt=1.0)
+```
+
+`quantity` must be between 1 and 100. `discount` must be 0 or higher and strictly less than 1.
+
+## String Constraints
+
+```python
+class User(BaseModel):
+    username: str = Field(min_length=3, max_length=20, pattern=r"^[a-zA-Z0-9_]+$")
+    bio: str = Field(default="", max_length=200)
+```
+
+`username` must be 3 to 20 characters and contain only letters, digits, and underscores.
+
+## Field Metadata for Documentation
+
+`Field` also accepts `title`, `description`, and `examples`. These show up in the generated Swagger UI:
+
+```python
+class Item(BaseModel):
+    name: str = Field(
+        title="Item name",
+        description="Display name shown in the catalog",
+        examples=["Pen", "Notebook"],
+        min_length=1,
+    )
+    price: float = Field(
+        description="Price in USD",
+        gt=0,
+    )
+```
+
+## Custom Validation with field_validator
+
+When a rule cannot be expressed with built-in constraints, use `field_validator` to write Python:
+
+```python
+from pydantic import BaseModel, field_validator
+
+class User(BaseModel):
+    username: str
+    email: str
+
+    @field_validator("username")
+    @classmethod
+    def username_must_not_have_spaces(cls, value: str) -> str:
+        if " " in value:
+            raise ValueError("username must not contain spaces")
+        return value
+
+    @field_validator("email")
+    @classmethod
+    def email_must_contain_at(cls, value: str) -> str:
+        if "@" not in value:
+            raise ValueError("email must contain '@'")
+        return value.lower()
+```
+
+A validator must:
+
+- Be a `classmethod`.
+- Accept the value being validated.
+- Return the value (possibly transformed) or raise `ValueError`.
+
+The returned value replaces the original, so you can normalize input — for example, lowercasing emails.
+
+## Validator Across Multiple Fields with model_validator
+
+To check rules that involve more than one field, use `model_validator`:
+
+```python
+from pydantic import BaseModel, model_validator
+
+class PasswordChange(BaseModel):
+    new_password: str
+    confirm_password: str
+
+    @model_validator(mode="after")
+    def passwords_match(self):
+        if self.new_password != self.confirm_password:
+            raise ValueError("passwords do not match")
+        return self
+```
+
+`mode="after"` runs the validator after individual fields are validated. Use this when a rule depends on the relationship between fields.
+
+## Reusing Validators with AnnotatedTypes
+
+For frequently used patterns, you can extract them into reusable annotated types:
+
+```python
+from typing import Annotated
+from pydantic import BaseModel, Field
+
+PositiveInt = Annotated[int, Field(gt=0)]
+ShortStr = Annotated[str, Field(min_length=1, max_length=50)]
+
+class Item(BaseModel):
+    name: ShortStr
+    quantity: PositiveInt
+```
+
+This keeps models clean and avoids repeating constraints across files.
+
+## Common Mistakes
+
+### Forgetting to return the value in a validator
+
+If a `field_validator` does not return the value, the field becomes `None`. Always return the validated (and possibly transformed) value.
+
+### Raising the wrong exception
+
+Validators must raise `ValueError`, not `TypeError` or generic `Exception`, for Pydantic to convert the failure into a clean 422 response.
+
+### Putting business logic in validators
+
+Validators should check format and basic rules. Cross-database checks like "is this email already taken" belong in your service or route layer, not in a Pydantic model.
+
+## Summary
+
+`Field` adds constraints and documentation to model attributes. `field_validator` and `model_validator` cover anything more complex, including cross-field rules and value transformation. Together they let you express most real-world validation rules directly inside your Pydantic models.
