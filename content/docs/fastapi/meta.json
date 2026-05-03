@@ -9,7 +9,7 @@
         "python-and-http-foundations",
         "project-structure-and-tooling",
         "routing-and-parameters",
-        "DISABLED-request-body-and-validation",
+        "request-body-and-validation",
         "DISABLED-response-handling-and-errors",
         "DISABLED-dependency-injection",
         "DISABLED-database-and-persistence",

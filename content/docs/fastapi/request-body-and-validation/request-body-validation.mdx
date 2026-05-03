@@ -1,0 +1,189 @@
+---
+title: Request Body Validation
+---
+
+## Introduction
+
+A request body is the data a client sends to the server, usually as JSON, when creating or updating a resource. FastAPI uses Pydantic models to read this JSON, validate it, and turn it into Python objects before your route function runs.
+
+## Why This Matters
+
+Most real APIs accept structured input through `POST`, `PUT`, and `PATCH` requests. Without validation, your code would have to defend against missing fields, wrong types, and malformed JSON on every request. FastAPI handles all of this automatically the moment you declare a Pydantic model parameter.
+
+## Declaring a Request Body
+
+To accept a request body, define a Pydantic model and use it as a function parameter:
+
+```python
+from fastapi import FastAPI
+from pydantic import BaseModel
+
+app = FastAPI()
+
+class Item(BaseModel):
+    name: str
+    price: float
+    in_stock: bool = True
+
+@app.post("/items")
+def create_item(item: Item):
+    return {"item": item}
+```
+
+A `POST` request to `/items` with the JSON body:
+
+```json
+{
+  "name": "Notebook",
+  "price": 4.99
+}
+```
+
+returns:
+
+```json
+{
+  "item": {
+    "name": "Notebook",
+    "price": 4.99,
+    "in_stock": true
+  }
+}
+```
+
+## Automatic Validation
+
+FastAPI runs every request body through the Pydantic model. If a field is missing or has the wrong type, FastAPI returns a 422 response automatically with a clear list of errors.
+
+For a body with `price` as a string:
+
+```json
+{ "name": "Notebook", "price": "free" }
+```
+
+The response includes:
+
+```json
+{
+  "detail": [
+    {
+      "loc": ["body", "price"],
+      "msg": "Input should be a valid number",
+      "type": "float_parsing"
+    }
+  ]
+}
+```
+
+You do not need to write any of this validation logic yourself.
+
+## Combining Path, Query, and Body
+
+A single route can mix path parameters, query parameters, and a request body at the same time:
+
+```python
+@app.put("/items/{item_id}")
+def update_item(item_id: int, item: Item, notify: bool = False):
+    return {"item_id": item_id, "item": item, "notify": notify}
+```
+
+FastAPI knows that:
+
+- `item_id` is a path parameter because it appears in the URL.
+- `item` is a request body because its type is a Pydantic model.
+- `notify` is a query parameter because it is a simple type with a default.
+
+## Accessing Body Fields
+
+Inside the function, the parsed model behaves like any Python object:
+
+```python
+@app.post("/items")
+def create_item(item: Item):
+    if item.price > 100:
+        return {"message": "expensive item", "name": item.name}
+    return {"message": "ok", "name": item.name}
+```
+
+You can also convert the model to a dictionary using `item.model_dump()` if you need to pass it to a database layer or another function.
+
+## Multiple Body Parameters
+
+You can declare more than one body parameter in the same route. FastAPI groups them under a single JSON object using each parameter name as a key:
+
+```python
+class User(BaseModel):
+    name: str
+    email: str
+
+class Item(BaseModel):
+    title: str
+    price: float
+
+@app.post("/orders")
+def create_order(user: User, item: Item):
+    return {"user": user, "item": item}
+```
+
+The expected request body:
+
+```json
+{
+  "user": { "name": "Alice", "email": "alice@example.com" },
+  "item": { "title": "Pen", "price": 1.5 }
+}
+```
+
+## Body Plus Singular Values
+
+To include a plain value at the top level alongside Pydantic models, use `Body`:
+
+```python
+from fastapi import Body
+
+@app.post("/orders")
+def create_order(user: User, item: Item, priority: int = Body()):
+    return {"user": user, "item": item, "priority": priority}
+```
+
+The request body becomes:
+
+```json
+{
+  "user": { "name": "Alice", "email": "alice@example.com" },
+  "item": { "title": "Pen", "price": 1.5 },
+  "priority": 2
+}
+```
+
+Without `Body`, FastAPI would treat `priority` as a query parameter.
+
+## Empty or Missing Bodies
+
+If the body is missing entirely on a route that requires it, FastAPI returns a 422 error. To accept an optional body, give the parameter a default of `None`:
+
+```python
+@app.post("/items")
+def create_item(item: Item | None = None):
+    if item is None:
+        return {"message": "no body sent"}
+    return {"item": item}
+```
+
+## Common Mistakes
+
+### Forgetting Content-Type: application/json
+
+Clients must send the header `Content-Type: application/json` for FastAPI to parse the body as JSON. Without it, the request may be rejected.
+
+### Sending body data with GET
+
+`GET` requests should not carry a body. Use `POST`, `PUT`, or `PATCH` for routes that accept a request body.
+
+### Confusing body parameters with query parameters
+
+Pydantic models become request bodies. Plain types like `int` or `str` without `Body()` become query parameters. Be intentional about which one you want.
+
+## Summary
+
+Request body validation in FastAPI happens through Pydantic models. Declare a model, use it as a function parameter, and FastAPI parses the JSON body, validates each field, and passes a typed object to your code. This keeps your route functions short and your API consistent.

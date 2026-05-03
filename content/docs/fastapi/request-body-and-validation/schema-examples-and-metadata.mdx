@@ -1,0 +1,182 @@
+---
+title: Schema Examples and Metadata
+---
+
+## Introduction
+
+FastAPI generates OpenAPI documentation from your Pydantic models automatically. By adding examples and metadata to your models and fields, you can make the generated Swagger UI more useful — showing realistic request bodies, descriptions, and titles that help anyone consuming your API.
+
+## Why This Matters
+
+Good API documentation is part of a good API. Examples turn abstract schemas into concrete payloads developers can copy and try. Descriptions explain what each field means. None of this requires a separate documentation tool — it lives next to your code.
+
+## Field-Level Examples
+
+Use `Field` to attach examples and descriptions to individual attributes:
+
+```python
+from pydantic import BaseModel, Field
+
+class Item(BaseModel):
+    name: str = Field(
+        description="Display name of the item",
+        examples=["Pen", "Notebook"],
+    )
+    price: float = Field(
+        description="Price in USD",
+        examples=[1.99, 4.50],
+        gt=0,
+    )
+    in_stock: bool = Field(
+        default=True,
+        description="Whether the item is currently available",
+    )
+```
+
+In Swagger UI, each field shows its description, an example value, and any constraints.
+
+## Model-Level Examples
+
+To provide a complete example payload, use `model_config` with `json_schema_extra`:
+
+```python
+from pydantic import BaseModel, ConfigDict
+
+class Item(BaseModel):
+    name: str
+    price: float
+    in_stock: bool = True
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "examples": [
+                {
+                    "name": "Notebook",
+                    "price": 4.5,
+                    "in_stock": True,
+                }
+            ]
+        }
+    )
+```
+
+Swagger UI displays this object as the default request body when a developer clicks "Try it out".
+
+## Multiple Examples
+
+You can list more than one example to show different scenarios:
+
+```python
+class Item(BaseModel):
+    name: str
+    price: float
+    in_stock: bool = True
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "examples": [
+                {"name": "Pen", "price": 1.5, "in_stock": True},
+                {"name": "Out-of-stock book", "price": 12.0, "in_stock": False},
+            ]
+        }
+    )
+```
+
+## Examples in Body Parameters
+
+You can also pass examples directly to the `Body` function from FastAPI:
+
+```python
+from fastapi import FastAPI, Body
+from pydantic import BaseModel
+
+app = FastAPI()
+
+class Item(BaseModel):
+    name: str
+    price: float
+
+@app.post("/items")
+def create_item(
+    item: Item = Body(
+        examples=[
+            {"name": "Pen", "price": 1.5},
+            {"name": "Notebook", "price": 4.5},
+        ]
+    )
+):
+    return item
+```
+
+These examples appear in the route's documentation rather than the model's schema.
+
+## Title and Description on Fields
+
+`Field` accepts `title` and `description`:
+
+```python
+class User(BaseModel):
+    username: str = Field(
+        title="Username",
+        description="Unique identifier shown to other users",
+        min_length=3,
+    )
+    email: str = Field(
+        title="Email address",
+        description="Used for notifications and password resets",
+    )
+```
+
+These show up alongside each property in the Swagger UI schema viewer.
+
+## Documenting Routes Themselves
+
+Route metadata complements model metadata. Use `summary`, `description`, and `response_description` on the path operation:
+
+```python
+@app.post(
+    "/items",
+    summary="Create a new item",
+    description="Adds an item to the catalog. Returns the stored item.",
+    response_description="The newly created item",
+)
+def create_item(item: Item):
+    return item
+```
+
+For longer descriptions, you can also use the function's docstring; FastAPI picks it up automatically.
+
+## Customizing the OpenAPI Schema
+
+For advanced cases, you can modify the generated OpenAPI schema directly:
+
+```python
+def custom_openapi():
+    if app.openapi_schema:
+        return app.openapi_schema
+    schema = app.openapi_schema = app.openapi()
+    schema["info"]["x-logo"] = {"url": "https://example.com/logo.png"}
+    return schema
+
+app.openapi = custom_openapi
+```
+
+This level of customization is rarely needed; field- and model-level metadata covers most cases.
+
+## Common Mistakes
+
+### Putting examples in code comments
+
+Comments do not appear in Swagger UI. Use `Field(examples=[...])` or `json_schema_extra` so examples are visible to API consumers.
+
+### Mixing real data with examples
+
+Examples are public. Avoid putting personal data, secrets, or production identifiers in them.
+
+### Outdated examples
+
+When you change a model, update its examples too. Stale examples mislead API consumers and erode trust in the documentation.
+
+## Summary
+
+`Field` adds descriptions, titles, and examples to individual attributes. `model_config` with `json_schema_extra` provides full payload examples. `Body` lets you attach examples to a route. All of these flow into the generated OpenAPI schema, giving consumers a clear, accurate, and helpful view of your API.

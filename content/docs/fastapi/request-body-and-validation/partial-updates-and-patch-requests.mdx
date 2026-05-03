@@ -1,0 +1,148 @@
+---
+title: Partial Updates and PATCH Requests
+---
+
+## Introduction
+
+A `PUT` request usually replaces a resource entirely — the client sends every field. A `PATCH` request updates only the fields included in the body. To support `PATCH` properly, you need a way to tell which fields the client actually sent versus which fields are simply at their default.
+
+## Why This Matters
+
+If you treat a `PATCH` body the same as a `PUT` body, missing fields will overwrite existing values with defaults or `None`. That is a data-loss bug. FastAPI gives you the tools to support partial updates safely with very little code.
+
+## Optional Fields for PATCH
+
+The first step is to make every field optional in the update model. A separate model is the cleanest approach:
+
+```python
+from pydantic import BaseModel
+
+class Item(BaseModel):
+    name: str
+    price: float
+    in_stock: bool = True
+
+class ItemUpdate(BaseModel):
+    name: str | None = None
+    price: float | None = None
+    in_stock: bool | None = None
+```
+
+`Item` is used for full reads and creates. `ItemUpdate` is used for `PATCH` and accepts any subset of fields.
+
+## Detecting Sent Fields with exclude_unset
+
+Pydantic tracks which fields were explicitly provided. `model_dump(exclude_unset=True)` returns only those fields:
+
+```python
+from fastapi import FastAPI
+
+app = FastAPI()
+
+items = {
+    1: {"name": "Pen", "price": 1.5, "in_stock": True},
+}
+
+@app.patch("/items/{item_id}")
+def update_item(item_id: int, update: ItemUpdate):
+    stored = items[item_id]
+    update_data = update.model_dump(exclude_unset=True)
+    stored.update(update_data)
+    items[item_id] = stored
+    return stored
+```
+
+If the request body is:
+
+```json
+{ "price": 2.0 }
+```
+
+then `update_data` is `{"price": 2.0}`. The `name` and `in_stock` fields are left untouched.
+
+## Combining with a Full Model
+
+A common pattern is to load the full model, apply the update on top, and write it back:
+
+```python
+@app.patch("/items/{item_id}")
+def update_item(item_id: int, update: ItemUpdate):
+    stored = Item(**items[item_id])
+    update_data = update.model_dump(exclude_unset=True)
+    updated = stored.model_copy(update=update_data)
+    items[item_id] = updated.model_dump()
+    return updated
+```
+
+`model_copy(update=...)` returns a new model with the listed fields replaced. The rest stay as they were.
+
+## PUT for Full Replacement
+
+For `PUT`, use the full model so every field is required:
+
+```python
+@app.put("/items/{item_id}")
+def replace_item(item_id: int, item: Item):
+    items[item_id] = item.model_dump()
+    return item
+```
+
+This makes the contract explicit: `PUT` replaces, `PATCH` partially updates.
+
+## Excluding None vs Excluding Unset
+
+The two options sound similar but differ in meaning:
+
+| Option | Includes |
+| ------ | -------- |
+| `exclude_unset=True` | Only fields the client explicitly sent |
+| `exclude_none=True` | Fields whose value is not `None`, regardless of whether the client sent them |
+| `exclude_defaults=True` | Fields whose value differs from the model's default |
+
+For `PATCH`, `exclude_unset=True` is almost always what you want. `None` may be a valid value the client wants to set.
+
+## Validating Updates
+
+Constraints from `Field` still apply on partial updates. A `PATCH` body that violates a constraint returns a 422 just like a `POST`:
+
+```python
+class ItemUpdate(BaseModel):
+    name: str | None = Field(default=None, min_length=1, max_length=50)
+    price: float | None = Field(default=None, gt=0)
+```
+
+If the client sends `{"price": -1}`, FastAPI rejects it.
+
+## Returning the Updated Resource
+
+Returning the full updated resource is helpful so the client does not have to fetch it again:
+
+```python
+@app.patch("/items/{item_id}", response_model=Item)
+def update_item(item_id: int, update: ItemUpdate):
+    stored = Item(**items[item_id])
+    update_data = update.model_dump(exclude_unset=True)
+    updated = stored.model_copy(update=update_data)
+    items[item_id] = updated.model_dump()
+    return updated
+```
+
+`response_model=Item` ensures the response always matches the documented shape.
+
+## Common Mistakes
+
+### Reusing the create model for PATCH
+
+The create model has required fields. Using it for `PATCH` forces the client to send every field, defeating the purpose of partial updates.
+
+### Forgetting exclude_unset
+
+Without `exclude_unset=True`, optional fields default to `None`, and `update.model_dump()` overwrites stored values with `None`. This silently destroys data.
+
+### Mixing PATCH and PUT semantics
+
+Pick one: `PUT` for full replacement, `PATCH` for partial updates. Document the choice and stick to it.
+
+## Summary
+
+Partial updates need an update model where every field is optional, plus `model_dump(exclude_unset=True)` to preserve fields the client did not send. Combined with `model_copy(update=...)`, this pattern produces safe, predictable `PATCH` endpoints with very little code.

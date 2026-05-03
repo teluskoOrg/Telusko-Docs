@@ -1,0 +1,152 @@
+---
+title: Pydantic Models Basics
+---
+
+## Introduction
+
+Pydantic is the data validation library that powers FastAPI. A Pydantic model is a Python class that describes the shape of your data, the type of each field, and the rules each field must follow. FastAPI uses these models to parse incoming JSON, validate it, and convert it into Python objects automatically.
+
+## Why This Matters
+
+Without a model, you would have to manually read JSON, check that each field is present, verify types, and return errors when something is wrong. Pydantic does all of this in a single class definition. The same model also generates the OpenAPI schema visible in Swagger UI, so your documentation and validation stay in sync.
+
+## Defining a Model
+
+A Pydantic model inherits from `BaseModel` and uses Python type hints to describe each field:
+
+```python
+from pydantic import BaseModel
+
+class User(BaseModel):
+    id: int
+    name: str
+    email: str
+    is_active: bool = True
+```
+
+Each attribute becomes a field. Fields without a default value are required. Fields with a default value are optional.
+
+## Creating Model Instances
+
+You can create a model instance the same way you create any Python object:
+
+```python
+user = User(id=1, name="Alice", email="alice@example.com")
+print(user.name)         # Alice
+print(user.is_active)    # True
+```
+
+If a required field is missing or a value has the wrong type, Pydantic raises a `ValidationError`.
+
+## Automatic Type Conversion
+
+Pydantic tries to coerce values to the declared type when the conversion is safe:
+
+```python
+user = User(id="42", name="Bob", email="bob@example.com")
+print(user.id)           # 42  (converted from string)
+print(type(user.id))     # <class 'int'>
+```
+
+Strings that cannot be converted, like `"hello"` for an integer field, raise an error instead.
+
+## Optional Fields
+
+Use `Optional` or the `| None` syntax to mark a field as optional:
+
+```python
+from typing import Optional
+
+class Product(BaseModel):
+    name: str
+    description: Optional[str] = None
+    price: float
+```
+
+Or with Python 3.10 and above:
+
+```python
+class Product(BaseModel):
+    name: str
+    description: str | None = None
+    price: float
+```
+
+A field with a default of `None` is optional and may be omitted from the input.
+
+## Default Values
+
+Default values make fields optional and provide fallback data:
+
+```python
+class Settings(BaseModel):
+    theme: str = "light"
+    notifications: bool = True
+    page_size: int = 20
+```
+
+If the input does not include `theme`, the model uses `"light"` automatically.
+
+## Converting to and from Dict and JSON
+
+Pydantic models can be converted to dictionaries and JSON strings:
+
+```python
+user = User(id=1, name="Alice", email="alice@example.com")
+
+user.model_dump()        # {'id': 1, 'name': 'Alice', 'email': 'alice@example.com', 'is_active': True}
+user.model_dump_json()   # '{"id":1,"name":"Alice","email":"alice@example.com","is_active":true}'
+```
+
+You can also build a model from a dictionary:
+
+```python
+data = {"id": 2, "name": "Bob", "email": "bob@example.com"}
+user = User(**data)
+```
+
+## Using Models in FastAPI
+
+Once you declare a model parameter in a route function, FastAPI reads the request body, validates it against the model, and passes the parsed object to your function:
+
+```python
+from fastapi import FastAPI
+from pydantic import BaseModel
+
+app = FastAPI()
+
+class Item(BaseModel):
+    name: str
+    price: float
+    in_stock: bool = True
+
+@app.post("/items")
+def create_item(item: Item):
+    return {"received": item}
+```
+
+A request body like:
+
+```json
+{ "name": "Pen", "price": 1.5 }
+```
+
+is parsed into an `Item` instance before your function runs. If validation fails, FastAPI returns a 422 response automatically.
+
+## Common Mistakes
+
+### Forgetting to inherit from BaseModel
+
+A regular Python class does not give you validation. Always extend `BaseModel`.
+
+### Mixing required and optional fields incorrectly
+
+Once you give a field a default value, every field after it should also be optional or have a default. This avoids confusion when constructing instances positionally.
+
+### Using `dict` instead of a model
+
+Type-hinting a body parameter as `dict` skips validation entirely. Always prefer a Pydantic model so FastAPI can validate the request.
+
+## Summary
+
+Pydantic models describe the structure and types of your data using ordinary Python classes. FastAPI uses these models to validate request bodies, generate documentation, and convert input into typed Python objects. They are the foundation of how FastAPI handles structured input and output.
