@@ -6,6 +6,8 @@ import { Banner } from 'fumadocs-ui/components/banner';
 import { ExternalLink } from 'lucide-react';
 const inter = Inter({
   subsets: ['latin'],
+  display: 'swap',
+  fallback: ['system-ui', 'arial'],
 });
 
 export const metadata: Metadata = {

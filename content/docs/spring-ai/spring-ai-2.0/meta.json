@@ -1,0 +1,8 @@
+{   "title":"Spring AI 2.0",
+    "pages":[
+        "gen-ai.mdx",
+        "building-clone-of-chatgpt.mdx",
+        "prompt-template.mdx",
+        "vector-embeddings.mdx"
+    ]
+} 

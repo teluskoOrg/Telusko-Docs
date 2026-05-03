@@ -23,6 +23,9 @@ export const docs = defineDocs({
 export default defineConfig({
   lastModifiedTime:'git',
   mdxOptions: {
-    // MDX options
+    remarkImageOptions: {
+      // Skip fetching dimensions for remote images to avoid timeout issues
+      staticImage: false,
+    },
   },
 });
