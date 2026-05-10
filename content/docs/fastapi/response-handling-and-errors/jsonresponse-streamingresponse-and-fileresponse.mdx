@@ -1,0 +1,167 @@
+---
+title: JSONResponse, StreamingResponse, and FileResponse
+---
+
+## Introduction
+
+By default, FastAPI converts any value you return into a JSON response. For special cases — custom headers, large data streams, or file downloads — FastAPI provides response classes you can return directly: `JSONResponse`, `StreamingResponse`, and `FileResponse`.
+
+## Why This Matters
+
+Not every endpoint returns a small JSON object. You might serve images, generate CSVs on the fly, or stream logs. Using the right response class avoids loading huge payloads into memory and lets you control headers, status codes, and content types precisely.
+
+## The Default Response
+
+When you return a Pydantic model, dict, or list, FastAPI wraps it in a `JSONResponse` automatically:
+
+```python
+from fastapi import FastAPI
+
+app = FastAPI()
+
+@app.get("/items")
+def list_items():
+    return [{"name": "Pen"}, {"name": "Notebook"}]
+```
+
+You only need to use a response class explicitly when you want to override defaults.
+
+## Using JSONResponse Directly
+
+Return a `JSONResponse` when you need to customize headers, status codes, or the body in a way that does not match the response model:
+
+```python
+from fastapi import FastAPI
+from fastapi.responses import JSONResponse
+
+app = FastAPI()
+
+@app.get("/items/{item_id}")
+def get_item(item_id: int):
+    if item_id == 0:
+        return JSONResponse(
+            status_code=404,
+            content={"message": "Item not found"},
+            headers={"X-Error": "missing-item"},
+        )
+    return {"item_id": item_id}
+```
+
+`content` is serialized to JSON. `headers` is merged with FastAPI's default headers.
+
+## StreamingResponse for Large or Live Data
+
+`StreamingResponse` sends data in chunks so you do not have to hold the entire payload in memory. This is useful for large files, generated reports, or live feeds:
+
+```python
+from fastapi import FastAPI
+from fastapi.responses import StreamingResponse
+
+app = FastAPI()
+
+def number_generator():
+    for i in range(1, 1000):
+        yield f"line {i}\n"
+
+@app.get("/numbers")
+def stream_numbers():
+    return StreamingResponse(number_generator(), media_type="text/plain")
+```
+
+The first byte reaches the client almost immediately; the rest streams as the generator yields.
+
+## Streaming a Real-Time Feed
+
+A common pattern is server-sent events for log tails or progress updates:
+
+```python
+import asyncio
+from fastapi.responses import StreamingResponse
+
+async def event_stream():
+    for i in range(10):
+        yield f"data: tick {i}\n\n"
+        await asyncio.sleep(1)
+
+@app.get("/events")
+async def events():
+    return StreamingResponse(event_stream(), media_type="text/event-stream")
+```
+
+Async generators work the same way as sync ones; the framework iterates them under the hood.
+
+## FileResponse for Sending Files
+
+`FileResponse` sends a file from disk efficiently without reading it into memory:
+
+```python
+from fastapi import FastAPI
+from fastapi.responses import FileResponse
+
+app = FastAPI()
+
+@app.get("/download")
+def download_file():
+    return FileResponse(
+        path="reports/summary.pdf",
+        filename="summary.pdf",
+        media_type="application/pdf",
+    )
+```
+
+| Argument | Purpose |
+| -------- | ------- |
+| `path` | Location of the file on disk |
+| `filename` | Suggested filename for the browser save dialog |
+| `media_type` | Content-Type header value |
+
+`FileResponse` automatically sets `Content-Length` and supports range requests for resumable downloads.
+
+## Returning HTML or Plain Text
+
+Two more response classes cover non-JSON content types:
+
+```python
+from fastapi.responses import HTMLResponse, PlainTextResponse
+
+@app.get("/page", response_class=HTMLResponse)
+def page():
+    return "<h1>Hello</h1>"
+
+@app.get("/robots.txt", response_class=PlainTextResponse)
+def robots():
+    return "User-agent: *\nDisallow:\n"
+```
+
+Setting `response_class` makes Swagger UI document the correct content type.
+
+## Setting the Default Response Class
+
+If most routes in your app return HTML or some other content type, change the default once:
+
+```python
+from fastapi import FastAPI
+from fastapi.responses import ORJSONResponse
+
+app = FastAPI(default_response_class=ORJSONResponse)
+```
+
+`ORJSONResponse` uses the `orjson` library for faster serialization on JSON-heavy APIs.
+
+## Common Mistakes
+
+### Loading large files into memory
+
+Reading a 1 GB file into a string before returning it will crash your process. Use `FileResponse` for files on disk or `StreamingResponse` for generated content.
+
+### Forgetting media_type on streams
+
+Without `media_type`, the client may guess the content type incorrectly. Set it explicitly for any streaming or binary response.
+
+### Returning raw bytes by accident
+
+Returning `b"..."` from a JSON route confuses serializers. Wrap it in the appropriate response class with the correct media type.
+
+## Summary
+
+`JSONResponse` gives you control over headers and status codes. `StreamingResponse` is for chunked or live data. `FileResponse` serves files from disk efficiently. Use the right class for the content you are sending, and set `response_class` or `default_response_class` to keep the documentation accurate.

@@ -1,0 +1,202 @@
+---
+title: Custom Error Response Design
+---
+
+## Introduction
+
+A consistent error response shape is one of the simplest ways to make an API pleasant to use. Clients always know where to look for the error code, the human message, and any extra context. FastAPI does not enforce a particular shape, so it is up to you to design it and apply it everywhere.
+
+## Why This Matters
+
+When errors look different on every endpoint, clients write fragile parsing code or treat all errors as opaque strings. A well-designed error shape feeds into automated retries, user-facing messages, monitoring dashboards, and documentation. A few minutes of design pays off across the lifetime of the API.
+
+## A Reusable Error Shape
+
+A common, practical shape includes a stable code, a message, and optional details:
+
+```json
+{
+  "error": {
+    "code": "item_not_found",
+    "message": "Item 99 does not exist",
+    "details": [
+      { "field": "item_id", "reason": "no such id" }
+    ]
+  }
+}
+```
+
+| Field | Purpose |
+| ----- | ------- |
+| `code` | Stable machine-readable identifier — clients switch on this |
+| `message` | Human-readable description — safe to show to end users |
+| `details` | Optional list of structured sub-errors |
+
+## Modeling Errors With Pydantic
+
+Define the error shape as a Pydantic model so it is documented in OpenAPI:
+
+```python
+from pydantic import BaseModel
+
+class ErrorDetail(BaseModel):
+    field: str
+    reason: str
+
+class ErrorBody(BaseModel):
+    code: str
+    message: str
+    details: list[ErrorDetail] = []
+
+class ErrorResponse(BaseModel):
+    error: ErrorBody
+```
+
+Now the schema for an error is just as concrete as the schema for a successful response.
+
+## A Domain Exception Hierarchy
+
+Define your own exceptions instead of raising `HTTPException` everywhere. The mapping from exception to status code lives in one place:
+
+```python
+class AppError(Exception):
+    code: str = "app_error"
+    status_code: int = 500
+    message: str = "Something went wrong"
+
+class NotFound(AppError):
+    code = "not_found"
+    status_code = 404
+
+class Conflict(AppError):
+    code = "conflict"
+    status_code = 409
+
+class Forbidden(AppError):
+    code = "forbidden"
+    status_code = 403
+```
+
+Routes raise meaningful exceptions:
+
+```python
+from fastapi import FastAPI
+
+app = FastAPI()
+
+@app.get("/items/{item_id}")
+def get_item(item_id: int):
+    if item_id != 1:
+        raise NotFound(f"Item {item_id} does not exist")
+    return {"item_id": item_id, "name": "Pen"}
+
+class NotFound(AppError):
+    code = "not_found"
+    status_code = 404
+
+    def __init__(self, message: str):
+        super().__init__(message)
+        self.message = message
+```
+
+## A Single Handler for the Hierarchy
+
+Map every `AppError` to your standard error shape with one handler:
+
+```python
+from fastapi import Request
+from fastapi.responses import JSONResponse
+
+@app.exception_handler(AppError)
+async def app_error_handler(request: Request, exc: AppError):
+    body = ErrorResponse(
+        error=ErrorBody(code=exc.code, message=exc.message)
+    )
+    return JSONResponse(status_code=exc.status_code, content=body.model_dump())
+```
+
+Adding a new error type later is one class, no handler changes.
+
+## Handling Validation Errors Uniformly
+
+Convert FastAPI's default validation error into the same shape:
+
+```python
+from fastapi.exceptions import RequestValidationError
+
+@app.exception_handler(RequestValidationError)
+async def validation_handler(request: Request, exc: RequestValidationError):
+    details = [
+        ErrorDetail(
+            field=".".join(str(p) for p in err["loc"][1:]),
+            reason=err["msg"],
+        )
+        for err in exc.errors()
+    ]
+    body = ErrorResponse(
+        error=ErrorBody(
+            code="validation_error",
+            message="Request validation failed",
+            details=details,
+        )
+    )
+    return JSONResponse(status_code=422, content=body.model_dump())
+```
+
+Now `404`, `409`, and `422` responses all look the same.
+
+## Documenting Errors in OpenAPI
+
+Tell FastAPI which responses each route can produce so Swagger UI shows them:
+
+```python
+@app.get(
+    "/items/{item_id}",
+    responses={
+        404: {"model": ErrorResponse, "description": "Item not found"},
+        500: {"model": ErrorResponse, "description": "Server error"},
+    },
+)
+def get_item(item_id: int):
+    ...
+```
+
+This adds a documented schema for each error code right next to the success response.
+
+## Including Request Context
+
+For debugging in production, including a request ID or path can be invaluable. Add it to a middleware and read it in the handler:
+
+```python
+@app.exception_handler(AppError)
+async def app_error_handler(request: Request, exc: AppError):
+    body = {
+        "error": {
+            "code": exc.code,
+            "message": exc.message,
+            "request_id": request.headers.get("X-Request-Id"),
+            "path": request.url.path,
+        }
+    }
+    return JSONResponse(status_code=exc.status_code, content=body)
+```
+
+The same request ID can be logged on the server, which makes correlating client reports with logs straightforward.
+
+## Common Mistakes
+
+### Inventing a new shape per endpoint
+
+Inconsistency is the most common error-design mistake. Pick one shape and use it everywhere, including for validation errors.
+
+### Putting sensitive data in messages
+
+Internal SQL errors, stack traces, and user emails should not appear in error responses. Log them server-side and return a generic message to the client.
+
+### Letting status codes drift away from codes
+
+A `code` of `not_found` should never come back with a 200. Keep the mapping consistent so clients can trust either field.
+
+## Summary
+
+A custom error response design is a small upfront investment with a big payoff. Define a Pydantic model for errors, build a domain exception hierarchy, register a single handler for all of them, and document the shape in OpenAPI. Clients, monitoring tools, and your future self will all benefit.

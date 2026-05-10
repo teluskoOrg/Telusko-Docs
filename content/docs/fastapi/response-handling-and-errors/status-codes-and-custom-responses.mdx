@@ -1,0 +1,165 @@
+---
+title: Status Codes and Custom Responses
+---
+
+## Introduction
+
+HTTP status codes tell the client what happened: success, redirect, client error, or server error. FastAPI returns 200 OK by default, but you can change the default code per route, return a different code dynamically, and customize headers and bodies.
+
+## Why This Matters
+
+Status codes are part of the API contract. A `POST` that creates a resource should return 201, not 200. A successful delete with no body should return 204. Using the right code helps clients, monitoring tools, and caches behave correctly.
+
+## Setting a Default Status Code
+
+Pass `status_code` to the path operation decorator:
+
+```python
+from fastapi import FastAPI
+
+app = FastAPI()
+
+@app.post("/items", status_code=201)
+def create_item(name: str):
+    return {"name": name}
+```
+
+Every successful response from this route uses 201 Created.
+
+## Using the status Module for Readability
+
+Magic numbers are hard to read. The `status` module exposes named constants:
+
+```python
+from fastapi import FastAPI, status
+
+app = FastAPI()
+
+@app.post("/items", status_code=status.HTTP_201_CREATED)
+def create_item(name: str):
+    return {"name": name}
+
+@app.delete("/items/{item_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_item(item_id: int):
+    return None
+```
+
+`HTTP_204_NO_CONTENT` is more descriptive than `204` and resolves to the same value.
+
+## Common Status Codes
+
+| Code | Name | Use case |
+| ---- | ---- | -------- |
+| 200 | OK | Successful GET, PUT, or PATCH |
+| 201 | Created | Successful POST that creates a resource |
+| 202 | Accepted | Async work has been queued |
+| 204 | No Content | Successful request with no response body |
+| 400 | Bad Request | Generic client error |
+| 401 | Unauthorized | Missing or invalid credentials |
+| 403 | Forbidden | Authenticated but not allowed |
+| 404 | Not Found | Resource does not exist |
+| 409 | Conflict | State conflict, e.g., duplicate key |
+| 422 | Unprocessable Entity | Validation failed (FastAPI's default) |
+| 500 | Internal Server Error | Unhandled exception on the server |
+
+## Changing Status Code at Runtime
+
+To set the status code conditionally, use the `Response` parameter:
+
+```python
+from fastapi import FastAPI, Response, status
+
+app = FastAPI()
+
+items = {1: "Pen"}
+
+@app.put("/items/{item_id}")
+def upsert_item(item_id: int, name: str, response: Response):
+    if item_id in items:
+        items[item_id] = name
+        response.status_code = status.HTTP_200_OK
+        return {"updated": item_id}
+    items[item_id] = name
+    response.status_code = status.HTTP_201_CREATED
+    return {"created": item_id}
+```
+
+The same route returns 200 when updating and 201 when creating.
+
+## Adding Custom Headers
+
+Add headers either through the `Response` parameter or by returning a response object directly:
+
+```python
+@app.get("/items/{item_id}")
+def get_item(item_id: int, response: Response):
+    response.headers["X-Cache"] = "MISS"
+    return {"item_id": item_id}
+```
+
+Or with `JSONResponse`:
+
+```python
+from fastapi.responses import JSONResponse
+
+@app.get("/items/{item_id}")
+def get_item(item_id: int):
+    return JSONResponse(
+        content={"item_id": item_id},
+        headers={"X-Cache": "MISS"},
+    )
+```
+
+## Empty Responses
+
+For 204 No Content, return `None` and let FastAPI omit the body:
+
+```python
+from fastapi import status
+from fastapi.responses import Response
+
+@app.delete("/items/{item_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_item(item_id: int):
+    # delete from storage
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+```
+
+A 204 response should never include a body. Returning a non-empty value violates the spec.
+
+## Customizing Status Codes Per Operation
+
+Each path operation can have its own default status code. Use the appropriate one for the action:
+
+```python
+@app.get("/items/{item_id}")                              # 200
+def get_item(item_id: int): ...
+
+@app.post("/items", status_code=201)                       # 201
+def create_item(name: str): ...
+
+@app.put("/items/{item_id}", status_code=200)              # 200
+def replace_item(item_id: int, name: str): ...
+
+@app.delete("/items/{item_id}", status_code=204)           # 204
+def delete_item(item_id: int): ...
+```
+
+This consistency makes your API predictable.
+
+## Common Mistakes
+
+### Returning 200 from a POST that creates
+
+A creation endpoint should return 201 with a `Location` header pointing to the new resource when possible.
+
+### Returning a body with 204
+
+204 means "no body". Some clients tolerate it, others fail. Be explicit and return nothing.
+
+### Using 200 for client errors
+
+Returning 200 with `{"error": "..."}` defeats every tool that relies on status codes — monitoring, retries, caching. Use the right error code instead.
+
+## Summary
+
+Use `status_code` to set a sensible default per route. Use `status` constants for clarity. Inject `Response` when the code depends on what happened. Match status codes to the action so clients and tools can rely on them.

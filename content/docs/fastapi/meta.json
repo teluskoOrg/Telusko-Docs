@@ -10,7 +10,7 @@
         "project-structure-and-tooling",
         "routing-and-parameters",
         "request-body-and-validation",
-        "DISABLED-response-handling-and-errors",
+        "response-handling-and-errors",
         "DISABLED-dependency-injection",
         "DISABLED-database-and-persistence",
         "DISABLED-authentication-and-authorization",

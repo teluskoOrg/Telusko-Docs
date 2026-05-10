@@ -1,0 +1,157 @@
+---
+title: Raising HTTPException
+---
+
+## Introduction
+
+`HTTPException` is FastAPI's built-in way to return an error response from anywhere in your code. Raising it stops the current request, sets the appropriate status code, and sends a JSON body describing the problem.
+
+## Why This Matters
+
+Errors should be explicit and easy to produce. Without `HTTPException`, you would either build error responses by hand in every route or let exceptions bubble up as 500s. `HTTPException` keeps error logic short, consistent, and well-documented.
+
+## Basic Usage
+
+Import `HTTPException` and raise it with a status code and detail message:
+
+```python
+from fastapi import FastAPI, HTTPException
+
+app = FastAPI()
+
+items = {1: "Pen", 2: "Notebook"}
+
+@app.get("/items/{item_id}")
+def get_item(item_id: int):
+    if item_id not in items:
+        raise HTTPException(status_code=404, detail="Item not found")
+    return {"item_id": item_id, "name": items[item_id]}
+```
+
+A request to `/items/99` returns:
+
+```json
+{
+  "detail": "Item not found"
+}
+```
+
+with status code 404.
+
+## Using Status Constants
+
+For readability, pair `HTTPException` with the `status` module:
+
+```python
+from fastapi import HTTPException, status
+
+raise HTTPException(
+    status_code=status.HTTP_404_NOT_FOUND,
+    detail="Item not found",
+)
+```
+
+## Structured Detail
+
+The `detail` field can be a dict or list, not just a string:
+
+```python
+@app.post("/orders")
+def create_order(quantity: int):
+    if quantity <= 0:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "code": "invalid_quantity",
+                "message": "Quantity must be positive",
+                "field": "quantity",
+            },
+        )
+    return {"quantity": quantity}
+```
+
+Structured details help clients react programmatically rather than parsing strings.
+
+## Adding Custom Headers
+
+Some error responses need headers. The most common case is `WWW-Authenticate` for 401s:
+
+```python
+@app.get("/secret")
+def get_secret(token: str | None = None):
+    if token != "valid":
+        raise HTTPException(
+            status_code=401,
+            detail="Not authenticated",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    return {"secret": "FastAPI rocks"}
+```
+
+The header is included in the response alongside the body.
+
+## Raising From Helper Functions
+
+`HTTPException` works from anywhere in the call stack — services, repositories, dependencies — not just route functions:
+
+```python
+def find_item(item_id: int):
+    if item_id not in items:
+        raise HTTPException(status_code=404, detail="Item not found")
+    return items[item_id]
+
+@app.get("/items/{item_id}")
+def get_item(item_id: int):
+    return {"item_id": item_id, "name": find_item(item_id)}
+```
+
+The exception bubbles up through the framework, which converts it into the proper HTTP response.
+
+## Choosing the Right Status Code
+
+| Situation | Status code |
+| --------- | ----------- |
+| Resource does not exist | 404 |
+| Authentication required or failed | 401 |
+| Authenticated but not allowed | 403 |
+| Invalid input that schema validation cannot catch | 400 or 422 |
+| State conflict, like a duplicate | 409 |
+| Rate limited | 429 |
+| Service is down or dependency failed | 503 |
+
+Use the most specific code that applies. Reserve 500 for unexpected server-side bugs.
+
+## Combining With Validation
+
+Pydantic handles request shape and type errors automatically with 422. Use `HTTPException` for business rules that go beyond validation:
+
+```python
+@app.post("/transfers")
+def transfer_money(from_id: int, to_id: int, amount: float):
+    if amount <= 0:
+        raise HTTPException(status_code=422, detail="Amount must be positive")
+    if from_id == to_id:
+        raise HTTPException(status_code=400, detail="Cannot transfer to self")
+    # do the transfer
+    return {"status": "ok"}
+```
+
+Both layers can coexist on the same endpoint.
+
+## Common Mistakes
+
+### Returning errors instead of raising them
+
+Returning `{"error": "..."}` with a 200 status hides failures from the client. Always raise `HTTPException` so the status code reflects the result.
+
+### Using 500 for client errors
+
+500 means "we crashed". Bad input, missing resources, and forbidden actions are not 500s. Pick the proper 4xx code.
+
+### Leaking internal information
+
+Avoid putting stack traces, SQL errors, or internal IDs in the `detail` field. They expose implementation details and may help attackers.
+
+## Summary
+
+Raise `HTTPException` with a status code and detail to send a clean error response from anywhere in your code. Use structured details for machine-readable errors and add headers when the protocol requires them. Match status codes to what really happened so clients and tools can react correctly.

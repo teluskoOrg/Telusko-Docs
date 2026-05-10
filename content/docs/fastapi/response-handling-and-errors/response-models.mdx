@@ -1,0 +1,162 @@
+---
+title: Response Models
+---
+
+## Introduction
+
+A response model defines the shape of the data your API sends back to the client. By declaring a Pydantic model for the response, FastAPI validates outgoing data, filters out fields you do not want to expose, and documents the response shape in Swagger UI.
+
+## Why This Matters
+
+The data stored in your database is not always the data you want to send to clients. Internal IDs, password hashes, and timestamps for audit logging usually stay on the server. A response model is a contract that guarantees only safe, documented fields leave your API.
+
+## Declaring a Response Model
+
+Pass a Pydantic model to the `response_model` parameter of the path operation decorator:
+
+```python
+from fastapi import FastAPI
+from pydantic import BaseModel
+
+app = FastAPI()
+
+class Item(BaseModel):
+    name: str
+    price: float
+    in_stock: bool = True
+
+@app.post("/items", response_model=Item)
+def create_item(item: Item):
+    return item
+```
+
+FastAPI validates the returned value against `Item` before serializing it to JSON. Any unexpected field is dropped silently.
+
+## Different Models for Input and Output
+
+Often the request and response shapes differ. The classic example is user creation: the client sends a password, but the server must never echo it back.
+
+```python
+class UserIn(BaseModel):
+    username: str
+    email: str
+    password: str
+
+class UserOut(BaseModel):
+    username: str
+    email: str
+
+@app.post("/users", response_model=UserOut)
+def create_user(user: UserIn):
+    # imagine we hashed and stored the password here
+    return user
+```
+
+Even though the function returns the full `UserIn`, FastAPI strips out the `password` field because `UserOut` does not include it.
+
+## Returning a Database Object
+
+The same pattern applies when you return an object from a database layer:
+
+```python
+class ItemDB(BaseModel):
+    id: int
+    name: str
+    price: float
+    internal_notes: str = ""
+
+class ItemPublic(BaseModel):
+    id: int
+    name: str
+    price: float
+
+@app.get("/items/{item_id}", response_model=ItemPublic)
+def get_item(item_id: int):
+    db_item = ItemDB(id=item_id, name="Pen", price=1.5, internal_notes="restock")
+    return db_item
+```
+
+`internal_notes` never reaches the client.
+
+## Lists of Models
+
+To return a list of models, wrap the response model in `list[...]`:
+
+```python
+@app.get("/items", response_model=list[ItemPublic])
+def list_items():
+    return [
+        ItemDB(id=1, name="Pen", price=1.5),
+        ItemDB(id=2, name="Notebook", price=4.0),
+    ]
+```
+
+Each item in the list is filtered against `ItemPublic`.
+
+## Excluding Defaults and Unset Fields
+
+Sometimes you want to omit fields that are at their default value to keep responses small:
+
+```python
+@app.get(
+    "/items/{item_id}",
+    response_model=Item,
+    response_model_exclude_unset=True,
+)
+def get_item(item_id: int):
+    return Item(name="Pen", price=1.5)
+```
+
+Because `in_stock` was not explicitly set, it is dropped from the response. Other useful flags:
+
+| Flag | Effect |
+| ---- | ------ |
+| `response_model_exclude_unset` | Drop fields that were not explicitly set |
+| `response_model_exclude_defaults` | Drop fields whose value equals the default |
+| `response_model_exclude_none` | Drop fields whose value is `None` |
+
+## Including or Excluding Specific Fields
+
+You can also pick fields explicitly per route:
+
+```python
+@app.get(
+    "/items/{item_id}",
+    response_model=Item,
+    response_model_include={"name", "price"},
+)
+def get_item(item_id: int):
+    return Item(name="Pen", price=1.5)
+```
+
+`response_model_exclude` works the same way for the opposite direction.
+
+## Type Annotation as Response Model
+
+You can also declare the response type as the function return annotation:
+
+```python
+@app.get("/items/{item_id}")
+def get_item(item_id: int) -> ItemPublic:
+    return ItemDB(id=item_id, name="Pen", price=1.5)
+```
+
+FastAPI treats this exactly like `response_model=ItemPublic`. The decorator argument takes priority if both are present.
+
+## Common Mistakes
+
+### Returning the input model directly
+
+If you return the create model from a `POST`, you may leak fields like `password`. Always declare a separate output model.
+
+### Mismatched types between function and response_model
+
+If the returned value cannot be coerced into the response model, FastAPI raises an error at runtime. Keep the database model and response model in sync.
+
+### Skipping the response model for "internal" routes
+
+Internal routes still benefit from a clear contract. The response model also drives documentation, which makes future debugging easier.
+
+## Summary
+
+`response_model` validates and filters outgoing data. Use separate input and output models to keep sensitive fields private, return lists by wrapping the model in `list[...]`, and use the `response_model_exclude_*` flags to trim payloads. The result is a safer, more predictable API.
