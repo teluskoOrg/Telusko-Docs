@@ -1,0 +1,181 @@
+---
+title: Introduction
+description: A comprehensive introduction to  System Designs
+---
+
+
+<Video id="d83w7E2sBrk" />
+
+
+---
+
+
+**System Design** is the process of defining the architecture, components, and interactions of a system to satisfy specified requirements. At its core:
+
+> **System = Components + Common Goal**
+
+All components within a system work together to achieve a unified objective — whether it's handling user requests, processing data, or delivering services reliably at scale.
+
+
+---
+
+
+## Understanding System Design Through a Real-World Analogy
+
+Consider a bank called **AlienBank** with a simple cash counter.
+
+### Basic Banking Flow
+**Components in the System**
+* Customer
+* Cash Counter
+* Cashier
+* Receipt System
+* Database
+  
+**Customer Flow Cycle**
+1. Customer comes to the counter
+2. Customer requests withdrawal/deposit
+3. Cashier processes the request
+4. Receipt is generated
+5. Transaction completed
+
+Initially, the system works fine when the number of customers is small.
+
+But as usage increases, different problems start appearing.
+
+
+---
+
+
+## Problems and Solutions — Mapping to System Design Concepts
+
+### Issue 1: Process is Slow
+
+**Problem:** Each customer takes ~10 minutes due to:
+- Understanding requirements
+- Counting cash manually
+- Preparing the receipt
+
+**Solution:** Optimize the process to reduce time to ~5 minutes per customer.
+- Train the cashier to count faster
+- Train the cashier to type faster
+
+**System Design Mapping:**
+
+| Analogy | System Concept |
+|---------|---------------|
+| Faster cashier | Improved code quality |
+| Optimization | Low-Level Design (LLD) |
+
+
+
+### Issue 2: Customer Count is Increasing
+
+**Problem:** A single counter cannot handle growing demand.
+
+**Solution:** Upgrade the counter's capacity.
+- Increase desk size
+- Introduce a cash counting machine
+- Pre-fill forms before reaching the counter
+- Reduced time to ~3 minutes per customer
+
+**System Design Mapping:**
+
+| Analogy | System Concept |
+|---------|---------------|
+| Bigger desk / better tools | Vertical Scaling |
+| Upgrading existing resources | Adding more CPU, RAM, or storage to a single server |
+
+
+
+### Issue 3: Customer Waiting Time is High
+
+**Problem:** Even with optimizations, a single counter creates a bottleneck during peak hours.
+
+**Solution:** Add more cashiers and more counters.
+
+**System Design Mapping:**
+
+| Analogy | System Concept |
+|---------|---------------|
+| Multiple counters | Horizontal Scaling |
+| Adding more cashiers | Adding more server instances |
+
+
+
+### Issue 4: Data Discrepancy
+
+**Problem:** Counter 1 and Counter 2 each maintain their own data. If they are not in sync, inconsistencies arise (e.g., incorrect account balances).
+
+**Solution:** Introduce a **centralized database** that all counters read from and write to, ensuring a single source of truth.
+
+**System Design Mapping:**
+
+| Analogy | System Concept |
+|---------|---------------|
+| Shared records | Centralized Database |
+| Data consistency across counters | Database synchronization |
+
+
+
+### Issue 5: Underutilized Counters
+
+**Problem:** Some counters are overloaded while others sit idle — leading to uneven resource usage.
+
+**Solution:** Introduce a **middleman** who checks the load on each counter and directs customers accordingly.
+
+**System Design Mapping:**
+
+| Analogy | System Concept |
+|---------|---------------|
+| Middleman | Load Balancer |
+| Directing customers | Distributing incoming requests |
+
+
+---
+
+
+## Complete Analogy-to-System Mapping
+
+| Banking Analogy    | Software Design Component |
+| ------------------ | -------------------------- |
+| Customer           | User/Client                |
+| Customer Requests  | API Requests               |
+| Queue of Customers | Traffic                    |
+| Cash Counter       | Server                     |
+| Cashier            | Application Code           |
+| Middleman          | Load Balancer              |
+| Database           | Centralized Database       |
+
+
+---
+
+
+## Key Takeaways of  System Design Concepts
+
+| Issue                | Solution             | System Design Concept  |
+| -------------------- | -------------------- | ---------------------- |
+| Slow processing      | Optimize process     | Low-Level Design (LLD) |
+| Increasing customers | Upgrade machine      | Vertical Scaling       |
+| High waiting time    | Add more counters    | Horizontal Scaling     |
+| Data inconsistency   | Shared database      | Centralized Database   |
+| Uneven traffic       | Traffic distribution | Load Balancing         |
+
+
+---
+
+
+## Summary
+
+* System Design focuses on building scalable and efficient systems capable of handling increasing traffic, complexity, and performance demands as the user base grows.
+
+* Scalability is achieved through two primary approaches: **Vertical Scaling** (increasing server capacity) and **Horizontal Scaling** (adding more servers to distribute workload).
+
+* In distributed systems, maintaining **data consistency and synchronization** across multiple servers is critical to avoid data discrepancies and ensure reliable operations.
+
+* **Load Balancers** play a vital role in distributing requests efficiently, preventing server overload, improving performance, and optimizing resource utilization.
+
+* A well-designed system should be **scalable, reliable, efficient, maintainable, and fault-tolerant** to support long-term growth and operational stability.
+
+
+Written By: <a href="https://www.linkedin.com/in/muskangarg03/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer"> Muskan Garg <ExternalLink className="w-4 h-4" /></a>

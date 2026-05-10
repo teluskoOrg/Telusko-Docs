@@ -1,0 +1,174 @@
+---
+title: Functional and Non-Functional requirements
+---
+
+<Steps>
+<Video id="MG69I2dPTVo" />
+
+---
+
+
+Every system is built around two fundamental types of requirements:
+
+- **Functional Requirements** — Define **what** the system does (features)
+- **Non-Functional Requirements** — Define **how well** the system performs (quality attributes)
+
+Both are equally critical. A system that has all features but crashes under load is just as unusable as a system that performs well but lacks essential functionality.
+
+
+
+## Functional Requirements
+
+Functional requirements describe the **specific features and capabilities** an application must provide. They define what actions users can perform and what the system should do in response.
+
+![Functional_Characteristics](https://dyz1pdcuffwr5.cloudfront.net/System-designs/functional_characteristics.png)
+
+### Example — E-Commerce Application
+
+| # | Functional Requirement |
+|---|------------------------|
+| 1 | User can register an account |
+| 2 | User can login |
+| 3 | User can browse products |
+| 4 | User can search for products |
+| 5 | User can filter products |
+| 6 | User can add products to cart |
+| 7 | User can apply coupon codes |
+| 8 | User can place an order |
+| 9 | User can make a payment |
+| 10 | User can track the order |
+
+> Every feature that a user interacts with in an application is a functional requirement.
+
+### Why Functional Requirements are Important?
+
+They help developers understand:
+  * what to build,
+  * which APIs are needed,
+  * what database operations are required,
+* and how users will interact with the system.
+
+
+---
+
+
+## Non-Functional Requirements
+
+Non-functional requirements define **how the application performs** under various conditions. They specify the quality attributes, constraints, and benchmarks that the system must meet.
+
+![Non-Functional_Characteristics](https://dyz1pdcuffwr5.cloudfront.net/System-designs/nonfunctional_characteristics.png)
+
+### Example — E-Commerce Application
+
+| # | Non-Functional Requirement |
+|---|----------------------------|
+| 1 | Should handle 1 million concurrent users |
+| 2 | Response time < 200ms |
+| 3 | 99.9% availability |
+| 4 | Data must be encrypted |
+| 5 | Scalable up to 10x traffic |
+| 6 | System must be fault-tolerant |
+
+
+---
+
+
+## Key Non-Functional Attributes in System Design
+
+### 1. Scalability
+
+The system's ability to handle **increasing load** without degradation.
+
+- **Vertical Scaling** — Upgrading existing server resources (CPU, RAM, storage)
+- **Horizontal Scaling** — Adding more server instances to distribute load
+
+
+### 2. Availability
+
+The percentage of time the system remains **operational and accessible**.
+
+- Measured through **SLA** (Service Level Agreement) and **SLO** (Service Level Objective)
+- Expressed as uptime percentage (e.g., 99.9% = ~8.7 hours downtime/year)
+
+| Availability | Downtime per Year |
+|--------------|-------------------|
+| 99% | ~3.65 days |
+| 99.9% | ~8.76 hours |
+| 99.99% | ~52.6 minutes |
+| 99.999% | ~5.26 minutes |
+
+
+### 3. Reliability
+
+Ensures **no data loss** — the system consistently produces correct results and preserves data integrity even during failures.
+
+
+### 4. Performance (Latency)
+
+How fast the system responds to user requests. Measured using **percentile-based metrics**:
+
+| Metric | Meaning |
+|--------|---------|
+| **P90** | 90% of requests complete within this time |
+| **P95** | 95% of requests complete within this time |
+| **P99** | 99% of requests complete within this time |
+
+> P99 captures the worst-case experience for the majority of users and is critical for identifying tail latency issues.
+
+
+### 5. Security
+
+Protecting the system and its data from unauthorized access and breaches.
+
+| Aspect | Purpose |
+|--------|---------|
+| **Authentication** | Verify who the user is (e.g., login credentials) |
+| **Authorization** | Verify what the user is allowed to do (e.g., role-based access) |
+| **Encryption** | Protect data in transit and at rest from interception |
+
+
+### 6. Maintainability
+
+How easily the system can be **modified, updated, and extended** over time.
+
+- Achieved through **code modularity** — clean separation of concerns
+- Well-structured code reduces bugs and simplifies onboarding of new developers
+
+
+### 7. Observability
+
+The ability to **monitor and understand** the internal state of a system from its external outputs.
+
+- **Monitoring** — Real-time tracking of system health and metrics
+- **Logging** — Recording events, errors, and transactions for debugging and auditing
+
+
+---
+
+
+## Functional vs Non-Functional 
+
+| Functional Requirements         | Non-Functional Requirements          |
+| ------------------------------- | ------------------------------------ |
+| Define what the system does     | Define how the system performs       |
+| Feature-oriented                | Quality-oriented                     |
+| User actions and business logic | Performance and operational behavior |
+| Visible to users                | Mostly internal/system-level         |
+| Example: Add to cart            | Example: Response time < 200ms       |
+
+
+---
+
+
+## Summary
+
+* **Functional requirements** define the core features and business operations of a system, such as login, payments, messaging, search, and ordering.
+* **Non-functional requirements** define the system’s quality attributes, including scalability, performance, security, availability, reliability, and maintainability.
+* A successful system must balance both functionality and performance to deliver a reliable and efficient user experience.
+* Non-functional requirements are critical for building **scalable and production-ready systems** capable of handling real-world traffic and operational challenges.
+* Understanding and clearly defining both requirement types is the foundation of effective System Design and scalable software architecture.
+
+
+</Steps>
+
+Written By: <a href="https://www.linkedin.com/in/muskangarg03/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer"> Muskan Garg <ExternalLink className="w-4 h-4" /></a>

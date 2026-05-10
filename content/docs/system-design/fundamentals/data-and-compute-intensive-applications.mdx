@@ -1,0 +1,195 @@
+---
+title: Data Intensive and Compute Intensive Applications
+---
+
+<Steps>
+<Video id="T2iHwUT4hec" />
+
+---
+
+
+Applications can be broadly classified into two categories based on where the primary bottleneck lies — **data movement** or **computation**. Understanding this distinction is crucial for making the right architectural decisions.
+
+
+## What is Latency?
+
+Latency is the time taken by a system to respond to a request.
+
+It represents:
+
+* response delay,
+* waiting time,
+* or processing delay
+
+**Example**
+
+When a user clicks:
+
+* “Open Instagram Feed”
+* “Play YouTube Video”
+* “Send WhatsApp Message”
+
+the time taken before the response appears is called latency.
+
+
+---
+
+
+## Data-Intensive Applications
+
+Data-intensive applications are systems where:
+
+> The major challenge is handling large amounts of data efficiently.
+
+The focus is on:
+
+* storing data,
+* retrieving data,
+* transferring data,
+* updating data,
+* synchronizing data,
+* and serving data quickly to users.
+
+![Data_intensive_characteristics](https://dyz1pdcuffwr5.cloudfront.net/System-designs/data_intensive_characteristics.png)
+
+### Common Examples
+
+| Application | Why It's Data-Intensive |
+|-------------|------------------------|
+| Instagram Feed | Millions of posts served to millions of users simultaneously |
+| WhatsApp Messages | Constant read/write of messages across devices |
+| Banking Transactions | High volume of transactional reads and writes |
+| Analytics Dashboard | Aggregating and displaying large datasets in real time |
+| Log Processing System | Ingesting, storing, and querying massive log files |
+
+### Common Performance Issues
+
+1. **Slow database response** — Queries take too long to return results
+2. **Bulky network calls** — Large amounts of data travel across networks that need optimization
+3. **Low server configuration** — Server hardware not capable of serving data at required speed
+
+### Key Concerns
+
+- How fast can we **read** the data?
+- How safely are we going to **store** the data?
+- How many users can access it **simultaneously**?
+- What if a **server dies**?
+- What if a **network call breaks**?
+
+### Solutions & Techniques
+
+| Technique | Purpose |
+|-----------|---------|
+| **Caching** | Store frequently accessed data closer to the user for faster reads |
+| **Sharding** | Split data across multiple databases to distribute load |
+| **Replication** | Maintain copies of data across servers for fault tolerance |
+| **Consistency Models** | Ensure data accuracy across distributed systems |
+| **Database Optimization** | Indexing, query tuning, and choosing the right database type |
+
+
+---
+
+
+## Compute-Intensive Applications
+
+In compute-intensive applications, the primary bottleneck is **processing power** (CPU/GPU). The amount of data fetched from the database may be small, but the computation required to process, transform, or generate output from that data is heavy.
+
+![Compute_intensive_characteristics](https://dyz1pdcuffwr5.cloudfront.net/System-designs/compute_intensive_characteristics.png)
+
+### Common Examples
+
+| Application | Why It's Compute-Intensive |
+|-------------|---------------------------|
+| Image Processing | Pixel-level transformations, filters, resizing |
+| Video Rendering | Frame-by-frame encoding and decoding |
+| ML Model Training | Iterative mathematical computations over large parameter spaces |
+| Simulations | Physics, weather, or financial modeling |
+| Cryptography | Complex encryption/decryption algorithms |
+
+### Key Concerns
+
+- How fast can we **compute**?
+- Can we **parallelize** the work across multiple cores or machines?
+- How can we **reduce** computational complexity?
+- Can we use **GPU instead of CPU** for better throughput?
+
+
+---
+
+
+## Data-Intensive vs Compute-Intensive 
+
+| Aspect | Data-Intensive | Compute-Intensive |
+|--------|---------------|-------------------|
+| **Bottleneck** | Data movement & storage | Processing power |
+| **Focus** | Fast data retrieval & delivery | Fast computation |
+| **Hardware concern** | Disk I/O, Network, Memory | CPU / GPU |
+| **Data volume** | Very high | Relatively low |
+| **Processing complexity** | Low to moderate | Very high |
+| **Solutions** | Caching, sharding, replication | Parallelism, GPU acceleration, algorithm optimization |
+
+
+---
+
+
+## Modern Applications Use Both Types
+
+Most modern applications are a combination of:
+
+* data-intensive behavior,
+* and compute-intensive behavior.
+  
+### Example: YouTube
+**Data-Intensive**
+Serving videos:
+ * storage,
+ * streaming,
+ * retrieval,
+ * delivery.
+
+**Compute-Intensive**
+Recommendation engine:
+  * AI models,
+  * analytics,
+  * personalization algorithms.
+
+### Example: Instagram
+**Data-Intensive**
+ * Feed loading
+ * Messages
+ * Media delivery
+
+**Compute-Intensive**
+ * Image filters
+ * AI recommendations
+ * Face detection
+
+
+---
+
+
+## Simple Rule of Thumb
+
+> If time is lost in **data movement** → Data-Intensive Application
+
+> If time is lost in **computation** → Compute-Intensive Application
+
+
+---
+
+
+## Summary
+* Modern applications rely on both **efficient data management** and **high-performance computation** to deliver scalable and responsive systems.
+
+* **Data-intensive applications** primarily focus on fast data storage, retrieval, consistency, and network-efficient data movement.
+
+* **Compute-intensive applications** focus on heavy processing tasks that require optimized CPU/GPU utilization and parallel computation.
+
+* Most large-scale systems combine both approaches, where different features may be either data-bound or compute-bound.
+
+* Identifying whether the bottleneck lies in **data movement** or **data processing** is essential for selecting the right architecture, scaling strategy, and optimization techniques.
+
+</Steps>
+
+
+Written By: <a href="https://www.linkedin.com/in/muskangarg03/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer"> Muskan Garg <ExternalLink className="w-4 h-4" /></a>

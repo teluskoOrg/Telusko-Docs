@@ -5,6 +5,7 @@
         "java",
         "python",
         "fastapi",
-        "spring-ai"
+        "spring-ai",
+        "system-design"
     ]
 }

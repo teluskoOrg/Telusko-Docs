@@ -1,0 +1,8 @@
+{   "title":"System Design",
+    "icon":"CodeXml",
+    "pages":[
+        "getting-started.mdx",
+        "introduction.mdx",
+        "fundamentals"
+    ]
+} 
