@@ -1,0 +1,163 @@
+---
+title: Understanding Depends
+---
+
+## Introduction
+
+`Depends` is FastAPI's dependency injection primitive. You point a route parameter at a callable, and FastAPI runs that callable before the route function and passes its return value as the argument. It is the foundation of how FastAPI shares logic, manages resources, and wires authentication.
+
+## Why This Matters
+
+Most non-trivial routes need supporting values: a database session, a logged-in user, a parsed configuration object. Without `Depends`, you would either build these inside every route or pass them through manually. `Depends` keeps the wiring out of your route bodies and centralizes shared behavior in one callable per concern.
+
+## A Minimal Dependency
+
+A dependency is just a function. FastAPI calls it for you and injects its return value:
+
+```python
+from fastapi import FastAPI, Depends
+
+app = FastAPI()
+
+def common_params(skip: int = 0, limit: int = 10):
+    return {"skip": skip, "limit": limit}
+
+@app.get("/items")
+def list_items(params: dict = Depends(common_params)):
+    return params
+```
+
+A request to `/items?skip=20&limit=5` runs `common_params(skip=20, limit=5)`, captures the dict, and passes it to `list_items` as `params`.
+
+## How FastAPI Sees the Dependency
+
+When FastAPI inspects the dependency function, it treats its parameters exactly like a route's parameters:
+
+- `skip` and `limit` are simple types with defaults, so they become query parameters in the OpenAPI schema.
+- A Pydantic model parameter would become a request body.
+- A `Path` or `Query` annotation would behave the same as on a route.
+
+The injected dict is just the return value of `common_params`.
+
+## Sharing One Dependency Across Routes
+
+The point of dependencies is reuse. Once defined, the same callable can serve many routes:
+
+```python
+@app.get("/items")
+def list_items(params: dict = Depends(common_params)):
+    return params
+
+@app.get("/users")
+def list_users(params: dict = Depends(common_params)):
+    return params
+
+@app.get("/orders")
+def list_orders(params: dict = Depends(common_params)):
+    return params
+```
+
+Each route gets parsed pagination parameters without restating them.
+
+## Async Dependencies
+
+Dependencies can be async if they need to await something:
+
+```python
+import asyncio
+
+async def slow_lookup(item_id: int) -> str:
+    await asyncio.sleep(0.1)
+    return f"item-{item_id}"
+
+@app.get("/items/{item_id}")
+async def get_item(name: str = Depends(slow_lookup)):
+    return {"name": name}
+```
+
+FastAPI handles sync and async dependencies transparently.
+
+## Dependencies That Depend on Other Dependencies
+
+Dependencies can themselves take `Depends` parameters:
+
+```python
+def get_token(token: str | None = None) -> str:
+    if token is None:
+        return "anonymous"
+    return token
+
+def get_user(token: str = Depends(get_token)) -> str:
+    return f"user-from-{token}"
+
+@app.get("/me")
+def me(user: str = Depends(get_user)):
+    return {"user": user}
+```
+
+FastAPI resolves the chain top-down: `get_token` runs first, its result feeds into `get_user`, and `get_user`'s result reaches the route.
+
+## Caching Within a Request
+
+By default, if the same dependency is used multiple times in the same request, FastAPI calls it once and reuses the result. This is important for things like database sessions, where you want all parts of a request to share the same connection:
+
+```python
+def get_settings():
+    return {"theme": "dark"}
+
+def get_theme(settings: dict = Depends(get_settings)) -> str:
+    return settings["theme"]
+
+@app.get("/")
+def root(
+    settings: dict = Depends(get_settings),
+    theme: str = Depends(get_theme),
+):
+    return {"settings": settings, "theme": theme}
+```
+
+`get_settings` runs once even though it appears twice in the dependency graph.
+
+To disable caching, pass `use_cache=False`:
+
+```python
+@app.get("/")
+def root(value: int = Depends(make_value, use_cache=False)):
+    return {"value": value}
+```
+
+## Dependencies Without a Return Value
+
+A dependency can perform work without injecting anything — it might validate a header or log a metric. Declare it in the route's `dependencies` list:
+
+```python
+from fastapi import Header, HTTPException
+
+def verify_api_key(x_api_key: str = Header()):
+    if x_api_key != "secret":
+        raise HTTPException(status_code=401, detail="Invalid API key")
+
+@app.get("/items", dependencies=[Depends(verify_api_key)])
+def list_items():
+    return [{"name": "Pen"}]
+```
+
+The dependency runs, may raise, but does not contribute a parameter.
+
+## Common Mistakes
+
+### Forgetting to call Depends
+
+`def f(x: dict = common_params)` is just a default value, not a dependency. Wrap the callable in `Depends(common_params)`.
+
+### Doing heavy work inside the route
+
+If the same logic appears at the top of every route, it belongs in a dependency. The route body should describe what the endpoint *does*, not how the inputs are prepared.
+
+### Importing the wrong Depends
+
+`Depends` lives in `fastapi`, not `pydantic` or `starlette`. Always `from fastapi import Depends`.
+
+## Summary
+
+`Depends` runs a callable before your route and passes its return value as a parameter. Dependencies can take their own dependencies, are cached within a request by default, and can be plain side-effect-only checks. Mastering this one tool unlocks most of FastAPI's structuring power.

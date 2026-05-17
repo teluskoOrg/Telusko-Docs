@@ -11,7 +11,7 @@
         "routing-and-parameters",
         "request-body-and-validation",
         "response-handling-and-errors",
-        "DISABLED-dependency-injection",
+        "dependency-injection",
         "DISABLED-database-and-persistence",
         "DISABLED-authentication-and-authorization",
         "DISABLED-middleware-security-and-cors",

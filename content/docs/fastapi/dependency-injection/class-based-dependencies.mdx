@@ -1,0 +1,180 @@
+---
+title: Class-Based Dependencies
+---
+
+## Introduction
+
+Any callable can be a FastAPI dependency, including a class. When you pass a class to `Depends`, FastAPI inspects its `__init__` signature, treats those parameters like normal route parameters, and creates an instance for you.
+
+## Why This Matters
+
+Class-based dependencies are useful when a dependency has multiple related fields, configurable behavior, or methods you want to call from the route. They give you a typed object, full IDE autocompletion, and a clean home for parameter-related logic.
+
+## A Basic Class Dependency
+
+Define a class with `__init__` parameters that look like query or path parameters, then inject it:
+
+```python
+from fastapi import FastAPI, Depends
+
+app = FastAPI()
+
+class Pagination:
+    def __init__(self, skip: int = 0, limit: int = 10):
+        self.skip = skip
+        self.limit = limit
+
+@app.get("/items")
+def list_items(page: Pagination = Depends(Pagination)):
+    return {"skip": page.skip, "limit": page.limit}
+```
+
+A request to `/items?skip=20&limit=5` constructs `Pagination(skip=20, limit=5)` and passes it in.
+
+## Shorthand Form
+
+When the dependency *is* the class itself, you can omit the second argument:
+
+```python
+@app.get("/items")
+def list_items(page: Pagination = Depends()):
+    return {"skip": page.skip, "limit": page.limit}
+```
+
+FastAPI uses the type annotation to figure out which class to instantiate. This is a small but pleasant ergonomic win.
+
+## Adding Methods
+
+A class dependency can carry behavior, not just data:
+
+```python
+class Pagination:
+    def __init__(self, skip: int = 0, limit: int = 10):
+        self.skip = skip
+        self.limit = limit
+
+    def slice(self, items: list) -> list:
+        return items[self.skip : self.skip + self.limit]
+
+@app.get("/items")
+def list_items(page: Pagination = Depends()):
+    items = ["Pen", "Notebook", "Eraser", "Marker", "Stapler"]
+    return page.slice(items)
+```
+
+The route delegates the actual paging logic to the dependency.
+
+## Constructor with Validation
+
+Use FastAPI's annotations inside `__init__` exactly like in a function:
+
+```python
+from fastapi import Query
+
+class Filters:
+    def __init__(
+        self,
+        q: str | None = Query(default=None, min_length=1, max_length=100),
+        active: bool = True,
+        sort: str = Query(default="name", pattern="^(name|date|price)$"),
+    ):
+        self.q = q
+        self.active = active
+        self.sort = sort
+```
+
+All the rules live with the class, and Swagger UI documents them automatically.
+
+## Class Dependencies That Use Other Dependencies
+
+A class can take dependencies in its constructor:
+
+```python
+class Settings:
+    def __init__(self):
+        self.theme = "dark"
+
+class CurrentTheme:
+    def __init__(self, settings: Settings = Depends()):
+        self.theme = settings.theme
+
+@app.get("/")
+def root(theme: CurrentTheme = Depends()):
+    return {"theme": theme.theme}
+```
+
+The dependency graph resolves the chain just like with function dependencies.
+
+## Stateful Helpers Across Requests
+
+Sometimes you want a single instance that handles multiple requests, configured once at startup. Construct it outside the request, then return it from a dependency:
+
+```python
+class RateLimiter:
+    def __init__(self, max_calls: int):
+        self.max_calls = max_calls
+        self.counters: dict[str, int] = {}
+
+    def check(self, key: str) -> bool:
+        self.counters[key] = self.counters.get(key, 0) + 1
+        return self.counters[key] <= self.max_calls
+
+limiter = RateLimiter(max_calls=100)
+
+def get_limiter() -> RateLimiter:
+    return limiter
+
+@app.get("/items")
+def list_items(rl: RateLimiter = Depends(get_limiter)):
+    if not rl.check("items"):
+        raise HTTPException(status_code=429, detail="Too many requests")
+    return [{"name": "Pen"}]
+```
+
+`get_limiter` returns the same singleton each request — a nice fit for caches, clients, and connection pools.
+
+## Class with Callable Behavior
+
+A class with `__call__` can be used as a dependency factory configurable at construction time:
+
+```python
+class RoleChecker:
+    def __init__(self, required_role: str):
+        self.required_role = required_role
+
+    def __call__(self, user: User = Depends(get_current_user)) -> User:
+        if user.role != self.required_role:
+            raise HTTPException(status_code=403, detail="Forbidden")
+        return user
+
+require_admin = RoleChecker("admin")
+require_editor = RoleChecker("editor")
+
+@app.delete("/items/{item_id}", dependencies=[Depends(require_admin)])
+def delete_item(item_id: int):
+    return {"deleted": item_id}
+
+@app.put("/articles/{article_id}", dependencies=[Depends(require_editor)])
+def update_article(article_id: int):
+    return {"updated": article_id}
+```
+
+The class instance becomes a configurable, reusable dependency.
+
+## Common Mistakes
+
+### Storing request data on the class
+
+A class dependency is instantiated per request. Storing state on `self` is fine for that request — but never share class-level mutable state across requests unless that is exactly what you want.
+
+### Forgetting `Depends()`
+
+`page: Pagination` is just a type annotation; FastAPI will not inject anything. You still need `= Depends()` (or `= Depends(Pagination)`).
+
+### Putting heavy work in `__init__`
+
+`__init__` runs on every request the dependency is used in. Keep it light. Defer expensive work to lifespan events or singleton helpers.
+
+## Summary
+
+Class-based dependencies group related parameters, attach behavior, and produce typed objects. Use them for parsed parameter sets, helper objects with methods, and configurable role checkers via `__call__`. The pattern keeps routes short and the dependency layer expressive.

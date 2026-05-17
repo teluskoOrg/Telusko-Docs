@@ -1,0 +1,180 @@
+---
+title: Shared Logic with Dependencies
+---
+
+## Introduction
+
+Dependencies shine when several routes need the same setup. Pagination, search filters, current user, request context — anything that gets repeated across routes can be lifted into a dependency and reused without copy-pasting.
+
+## Why This Matters
+
+Duplicated route code drifts. One copy gets a fix, the others stay broken. Pulling shared logic into a dependency gives you one place to change behavior, one place to test it, and routes that read like their actual purpose.
+
+## Pagination as a Dependency
+
+A reusable pagination dependency packages the boilerplate into one callable:
+
+```python
+from fastapi import FastAPI, Depends, Query
+from pydantic import BaseModel
+
+app = FastAPI()
+
+class Pagination(BaseModel):
+    skip: int = 0
+    limit: int = 10
+
+def pagination(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(10, ge=1, le=100),
+) -> Pagination:
+    return Pagination(skip=skip, limit=limit)
+
+@app.get("/items")
+def list_items(page: Pagination = Depends(pagination)):
+    return {"skip": page.skip, "limit": page.limit}
+
+@app.get("/users")
+def list_users(page: Pagination = Depends(pagination)):
+    return {"skip": page.skip, "limit": page.limit}
+```
+
+Constraints, defaults, and the parsed object all live in one place.
+
+## Search Filters as a Dependency
+
+The same pattern works for filters:
+
+```python
+class Filters(BaseModel):
+    q: str | None = None
+    category: str | None = None
+    active: bool = True
+
+def filters(
+    q: str | None = None,
+    category: str | None = None,
+    active: bool = True,
+) -> Filters:
+    return Filters(q=q, category=category, active=active)
+
+@app.get("/products")
+def list_products(
+    filters: Filters = Depends(filters),
+    page: Pagination = Depends(pagination),
+):
+    return {"filters": filters, "page": page}
+```
+
+The route body says exactly what is happening: query, filter, paginate.
+
+## Composing Dependencies
+
+You can stack dependencies that depend on other dependencies:
+
+```python
+class ListContext(BaseModel):
+    filters: Filters
+    page: Pagination
+
+def list_context(
+    filters: Filters = Depends(filters),
+    page: Pagination = Depends(pagination),
+) -> ListContext:
+    return ListContext(filters=filters, page=page)
+
+@app.get("/products")
+def list_products(ctx: ListContext = Depends(list_context)):
+    return ctx
+```
+
+Routes get a single object, but the building blocks remain independently testable.
+
+## Route-Level Dependencies for Side Effects
+
+Sometimes you want shared *behavior* without injecting anything. Use the `dependencies` argument on the route or router:
+
+```python
+import logging
+
+logger = logging.getLogger("api")
+
+def log_request(request_id: str | None = None):
+    logger.info("incoming request", extra={"request_id": request_id})
+
+@app.get("/items", dependencies=[Depends(log_request)])
+def list_items():
+    return [{"name": "Pen"}]
+```
+
+The dependency runs but does not appear as a parameter.
+
+## Router-Level Dependencies
+
+To apply a dependency to every route in a router, attach it once at the router level:
+
+```python
+from fastapi import APIRouter, Depends
+
+admin_router = APIRouter(
+    prefix="/admin",
+    dependencies=[Depends(verify_admin)],
+)
+
+@admin_router.get("/stats")
+def stats():
+    return {"users": 100}
+
+@admin_router.get("/audit")
+def audit():
+    return {"events": []}
+```
+
+`verify_admin` runs before every admin route automatically.
+
+## App-Level Dependencies
+
+The same idea scales to the whole app:
+
+```python
+app = FastAPI(dependencies=[Depends(log_request)])
+```
+
+Use this sparingly — anything truly global is often better as middleware.
+
+## Reading Headers in a Shared Way
+
+A dependency is also a great place to centralize header parsing:
+
+```python
+from fastapi import Header, HTTPException
+
+def get_request_id(x_request_id: str | None = Header(default=None)) -> str:
+    if not x_request_id:
+        raise HTTPException(status_code=400, detail="X-Request-Id header is required")
+    return x_request_id
+
+@app.get("/items")
+def list_items(request_id: str = Depends(get_request_id)):
+    return {"request_id": request_id}
+```
+
+Every route gets the same enforcement and the same parsed value.
+
+## Common Mistakes
+
+### Dependencies that hide too much
+
+A dependency that secretly does everything makes routes hard to read. Name dependencies after the value they produce, not after the work they do.
+
+### Putting business logic in dependencies
+
+Dependencies should produce inputs and resources. Domain operations like "create order" or "process payment" belong in services your route calls explicitly.
+
+### Forgetting to add the type hint
+
+`page = Depends(pagination)` works but the IDE will not autocomplete. Type the parameter (`page: Pagination`) so editor support stays useful.
+
+## Summary
+
+Use dependencies to lift shared logic out of routes. Combine smaller dependencies into bigger ones, attach side-effect-only dependencies via the `dependencies` argument, and apply them at the router or app level when they should run everywhere. Routes stay short and the shared logic gets one home.

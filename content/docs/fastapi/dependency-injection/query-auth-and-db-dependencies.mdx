@@ -1,0 +1,187 @@
+---
+title: Query, Auth, and DB Dependencies
+---
+
+## Introduction
+
+Three of the most common dependency patterns in FastAPI are query-parameter parsing, authentication, and database session management. Each pattern is a small dependency function that other routes use to stay focused on their core logic.
+
+## Why This Matters
+
+Every API endpoint touches at least one of these concerns. By treating them as dependencies, you get consistent behavior across routes, automatic documentation in Swagger UI, and a single place to apply changes when requirements evolve.
+
+## Query Dependencies
+
+Query dependencies parse and validate URL query parameters into structured objects:
+
+```python
+from fastapi import FastAPI, Depends, Query
+from pydantic import BaseModel
+
+app = FastAPI()
+
+class SearchParams(BaseModel):
+    q: str | None = None
+    sort: str = "name"
+    page: int = 1
+    page_size: int = 20
+
+def search_params(
+    q: str | None = Query(default=None, max_length=100),
+    sort: str = Query(default="name", pattern="^(name|date|price)$"),
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=20, ge=1, le=100),
+) -> SearchParams:
+    return SearchParams(q=q, sort=sort, page=page, page_size=page_size)
+
+@app.get("/items")
+def list_items(params: SearchParams = Depends(search_params)):
+    return {"params": params}
+```
+
+Validation rules live in the dependency. Routes get a clean object.
+
+## Authentication Dependencies
+
+A typical auth dependency reads a header or token, validates it, and returns the current user:
+
+```python
+from fastapi import Header, HTTPException, status
+
+class User(BaseModel):
+    id: int
+    username: str
+    is_admin: bool = False
+
+fake_users = {
+    "token-alice": User(id=1, username="alice"),
+    "token-bob": User(id=2, username="bob", is_admin=True),
+}
+
+def get_current_user(authorization: str | None = Header(default=None)) -> User:
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Missing or invalid Authorization header",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    token = authorization.removeprefix("Bearer ")
+    user = fake_users.get(token)
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token",
+        )
+    return user
+```
+
+A protected route just declares the dependency:
+
+```python
+@app.get("/me")
+def me(user: User = Depends(get_current_user)):
+    return {"username": user.username, "is_admin": user.is_admin}
+```
+
+## Layered Auth Dependencies
+
+Build admin checks on top of the basic auth dependency:
+
+```python
+def require_admin(user: User = Depends(get_current_user)) -> User:
+    if not user.is_admin:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    return user
+
+@app.delete("/items/{item_id}")
+def delete_item(item_id: int, _: User = Depends(require_admin)):
+    return {"deleted": item_id}
+```
+
+`require_admin` reuses `get_current_user`. The dependency graph composes cleanly.
+
+## Database Session Dependencies
+
+A database dependency creates a session for the request and closes it after the response:
+
+```python
+from fastapi import Depends
+from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy import create_engine
+
+engine = create_engine("sqlite:///./app.db")
+SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
+
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+```
+
+A `yield` dependency provides a value, lets the route run, and then executes the cleanup code in `finally`. The route uses it like any other dependency:
+
+```python
+@app.get("/items")
+def list_items(db: Session = Depends(get_db)):
+    return db.execute("SELECT * FROM items").fetchall()
+```
+
+If the route raises, FastAPI still runs the cleanup, so the session is always closed.
+
+## Combining Auth and DB
+
+Most real routes use both:
+
+```python
+@app.post("/items")
+def create_item(
+    name: str,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    db.execute(
+        "INSERT INTO items (name, owner_id) VALUES (:n, :o)",
+        {"n": name, "o": user.id},
+    )
+    db.commit()
+    return {"name": name, "owner": user.username}
+```
+
+The route reads as a single sentence: authenticated user creates an item using the database.
+
+## Async Database Sessions
+
+If you use an async ORM like SQLAlchemy 2.x async or `asyncpg`, the dependency uses async generators:
+
+```python
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+
+engine = create_async_engine("postgresql+asyncpg://user:pass@host/db")
+AsyncSessionLocal = async_sessionmaker(engine, expire_on_commit=False)
+
+async def get_db():
+    async with AsyncSessionLocal() as session:
+        yield session
+```
+
+The route function then becomes `async def` and uses `await db.execute(...)`.
+
+## Common Mistakes
+
+### Returning the session without try/finally
+
+If you do not use `try/finally` (or `with`), an exception in the route can leave the session open. Always wrap the yield.
+
+### Doing auth in middleware *and* a dependency
+
+Pick one. Middleware is fine for global concerns; dependencies are fine for per-route control. Doing both leads to inconsistent behavior and surprising 401s.
+
+### Sharing a single global session
+
+Sharing one `Session` across requests breaks transactions and concurrency. Always create a session per request inside the dependency.
+
+## Summary
+
+Query dependencies parse URL parameters into models. Auth dependencies validate credentials and return the current user, with admin variants layered on top. DB dependencies use `yield` to provide a per-request session that always closes. Combine them, and your routes describe behavior — not setup.

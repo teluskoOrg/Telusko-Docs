@@ -1,0 +1,184 @@
+---
+title: Lifespan Events and Resource Management
+---
+
+## Introduction
+
+Some resources should be created once when the app starts and torn down when it stops — database engines, HTTP clients, machine-learning models, message-queue connections. FastAPI's lifespan API lets you control this lifecycle cleanly using a single async context manager.
+
+## Why This Matters
+
+Creating a database engine on every request would be slow and exhaust connection limits. Loading a model into memory inside a route would freeze the first user. The lifespan hook runs your setup before the app accepts traffic and your teardown after it stops, so each resource is created exactly once and released exactly once.
+
+## The Lifespan Context Manager
+
+Define an `asynccontextmanager` that performs setup, yields, and then performs teardown:
+
+```python
+from contextlib import asynccontextmanager
+from fastapi import FastAPI
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup: runs once before the app accepts requests
+    print("starting up")
+    yield
+    # Shutdown: runs once when the app stops
+    print("shutting down")
+
+app = FastAPI(lifespan=lifespan)
+```
+
+The code before `yield` runs at startup. The code after `yield` runs at shutdown.
+
+## Sharing Resources via app.state
+
+Attach resources to `app.state` so they are reachable from routes:
+
+```python
+import httpx
+from contextlib import asynccontextmanager
+from fastapi import FastAPI, Request
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    app.state.http = httpx.AsyncClient(timeout=10)
+    yield
+    await app.state.http.aclose()
+
+app = FastAPI(lifespan=lifespan)
+
+@app.get("/weather")
+async def weather(request: Request):
+    response = await request.app.state.http.get("https://api.example.com/weather")
+    return response.json()
+```
+
+A single `httpx.AsyncClient` is reused across requests, avoiding repeated connection setup.
+
+## Combining With a Dependency
+
+A dependency wraps `app.state` access in a typed function so routes do not touch `request.app.state` directly:
+
+```python
+import httpx
+from fastapi import Depends, Request
+
+def get_http(request: Request) -> httpx.AsyncClient:
+    return request.app.state.http
+
+@app.get("/weather")
+async def weather(client: httpx.AsyncClient = Depends(get_http)):
+    response = await client.get("https://api.example.com/weather")
+    return response.json()
+```
+
+The route depends on a clean, typed value rather than a generic state bag.
+
+## Database Engine Setup
+
+A typical database lifespan creates the engine once and disposes it on shutdown:
+
+```python
+from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    app.state.engine = create_async_engine("postgresql+asyncpg://user:pass@host/db")
+    app.state.SessionLocal = async_sessionmaker(app.state.engine, expire_on_commit=False)
+    yield
+    await app.state.engine.dispose()
+
+app = FastAPI(lifespan=lifespan)
+```
+
+Per-request sessions are created inside a regular dependency that uses `app.state.SessionLocal`.
+
+## Loading Models or Caches
+
+Lifespan is the right place for one-time, expensive work:
+
+```python
+import joblib
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    app.state.model = joblib.load("model.pkl")
+    yield
+    # No teardown needed for in-memory model
+
+@app.post("/predict")
+def predict(features: list[float], request: Request):
+    prediction = request.app.state.model.predict([features])
+    return {"prediction": prediction.tolist()}
+```
+
+The model loads once at startup; predictions reuse it.
+
+## Multiple Resources
+
+Use `AsyncExitStack` when you have several resources and want clean ordered teardown:
+
+```python
+from contextlib import AsyncExitStack, asynccontextmanager
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    async with AsyncExitStack() as stack:
+        app.state.http = await stack.enter_async_context(httpx.AsyncClient())
+        engine = create_async_engine("...")
+        stack.push_async_callback(engine.dispose)
+        app.state.engine = engine
+        yield
+        # All resources released in reverse order automatically
+```
+
+This pattern guarantees that even if startup fails partway through, anything already initialized gets cleaned up.
+
+## Lifespan vs Startup Code at Import Time
+
+Putting expensive code at module top level runs it the moment the file is imported — including during test collection or tooling. Lifespan runs only when the app actually starts, which is what you want.
+
+```python
+# Avoid: runs on import
+model = joblib.load("model.pkl")
+
+# Prefer: runs on startup
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    app.state.model = joblib.load("model.pkl")
+    yield
+```
+
+## Lifespan vs Per-Request Dependencies
+
+Lifespan and request-scoped dependencies cover different scopes:
+
+| Concern | Lifespan | Per-request dependency |
+| ------- | -------- | ---------------------- |
+| Database engine, connection pool | Yes | No |
+| HTTP client | Yes | No |
+| ML model in memory | Yes | No |
+| Database session | No | Yes |
+| Current user | No | Yes |
+| Request ID parsing | No | Yes |
+
+Use lifespan for things that are expensive to create and safe to share. Use dependencies for things that should be fresh per request.
+
+## Common Mistakes
+
+### Forgetting to clean up resources
+
+If you skip `aclose()` on a client or `dispose()` on a database engine, the app leaks connections in development and may exhaust pools in production.
+
+### Doing slow work inside `__init__` of a dependency
+
+If something is expensive, set it up in lifespan. Per-request dependencies should be cheap.
+
+### Using `@app.on_event("startup")`
+
+The older `on_event` API still works but is deprecated. Prefer the lifespan context manager — it is cleaner and supports clean teardown ordering.
+
+## Summary
+
+The lifespan context manager gives you a single place for one-time startup and shutdown. Store shared resources on `app.state`, expose them through small dependencies, and use `AsyncExitStack` when several resources need ordered teardown. The result is a fast, leak-free app where each resource is created and released exactly once.

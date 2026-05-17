@@ -1,0 +1,175 @@
+---
+title: Dependency Overrides for Testing
+---
+
+## Introduction
+
+FastAPI lets you replace any dependency with a test double via `app.dependency_overrides`. The override applies only to your tests, leaves your application code untouched, and disappears when you clear it.
+
+## Why This Matters
+
+Tests should run fast, repeatable, and without depending on real databases, external services, or live credentials. Dependency overrides let you swap the real dependency for an in-memory, deterministic fake without changing route code or introducing test-only `if` branches.
+
+## How Overrides Work
+
+`app.dependency_overrides` is a dictionary that maps the original dependency callable to a replacement callable. When FastAPI sees a `Depends(original)` and `original` is in the dictionary, it calls the replacement instead.
+
+```python
+from fastapi import FastAPI, Depends
+from fastapi.testclient import TestClient
+
+app = FastAPI()
+
+def get_settings():
+    return {"env": "production", "debug": False}
+
+@app.get("/config")
+def config(settings: dict = Depends(get_settings)):
+    return settings
+
+def fake_settings():
+    return {"env": "test", "debug": True}
+
+app.dependency_overrides[get_settings] = fake_settings
+
+client = TestClient(app)
+response = client.get("/config")
+assert response.json() == {"env": "test", "debug": True}
+```
+
+The route did not change. Only the dependency target was swapped.
+
+## Using Overrides in pytest
+
+In a real test suite, set the override in a fixture so each test gets a clean state:
+
+```python
+import pytest
+from fastapi.testclient import TestClient
+from myapp.main import app, get_settings
+
+@pytest.fixture
+def client():
+    def fake_settings():
+        return {"env": "test", "debug": True}
+
+    app.dependency_overrides[get_settings] = fake_settings
+    yield TestClient(app)
+    app.dependency_overrides.clear()
+```
+
+The `yield` lets the test run with the override; the cleanup runs afterward, no matter how the test ends.
+
+## Overriding a Database Dependency
+
+The most common use case is swapping a real database for an in-memory one:
+
+```python
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker, Session
+from myapp.main import app, get_db
+
+test_engine = create_engine("sqlite:///:memory:")
+TestSessionLocal = sessionmaker(bind=test_engine)
+
+def override_get_db():
+    db = TestSessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+@pytest.fixture
+def client():
+    app.dependency_overrides[get_db] = override_get_db
+    yield TestClient(app)
+    app.dependency_overrides.clear()
+```
+
+Tests run against an in-memory SQLite database, isolated and fast.
+
+## Overriding the Current User
+
+Authentication is another typical override target:
+
+```python
+from myapp.auth import get_current_user
+from myapp.models import User
+
+def fake_admin_user():
+    return User(id=1, username="admin", is_admin=True)
+
+@pytest.fixture
+def admin_client():
+    app.dependency_overrides[get_current_user] = fake_admin_user
+    yield TestClient(app)
+    app.dependency_overrides.clear()
+```
+
+You can write tests against admin-only routes without dealing with login flows.
+
+## Different Overrides per Test
+
+Set the override inside the test itself when behavior varies:
+
+```python
+def test_unauthorized_user_is_rejected():
+    def fake_unauth():
+        raise HTTPException(status_code=401, detail="Not authenticated")
+
+    app.dependency_overrides[get_current_user] = fake_unauth
+    client = TestClient(app)
+    response = client.get("/me")
+    assert response.status_code == 401
+    app.dependency_overrides.clear()
+```
+
+For more complex scenarios, parametrize the fixture so the override is configured by the test.
+
+## Overriding Sub-Dependencies
+
+You can override any dependency in the chain, not just top-level ones:
+
+```python
+def get_token() -> str:
+    return "real-token"
+
+def get_user(token: str = Depends(get_token)) -> str:
+    return f"user-from-{token}"
+
+# Override only the inner dependency
+app.dependency_overrides[get_token] = lambda: "test-token"
+```
+
+The downstream `get_user` runs unchanged but receives the fake token.
+
+## Clearing Overrides
+
+Always clear overrides between tests. The cleanest pattern is fixture-scoped:
+
+```python
+@pytest.fixture(autouse=True)
+def clean_overrides():
+    yield
+    app.dependency_overrides.clear()
+```
+
+`autouse=True` runs the fixture for every test automatically, preventing one test's override from leaking into another.
+
+## Common Mistakes
+
+### Not clearing overrides between tests
+
+A leftover override silently changes the behavior of unrelated tests. Always clear it, ideally in a fixture.
+
+### Putting test logic inside production code
+
+If you find yourself writing `if testing: ...` in a dependency, the right answer is an override, not a flag.
+
+### Overriding too late
+
+Set the override before the request runs. Inside an async test, that means before calling the client.
+
+## Summary
+
+`app.dependency_overrides` swaps any dependency with a replacement, scoped to your tests. Use it for databases, authentication, configuration, and any external client. Clear the overrides between tests, and your suite stays fast, deterministic, and free of test-only branches in production code.
