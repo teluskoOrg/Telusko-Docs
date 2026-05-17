@@ -1,0 +1,7 @@
+{   "title":"API communication",
+    "pages":[
+        "what-is-an-api.mdx",
+        "rest-api-requests.mdx",
+        "rest-api-response.mdx"
+    ]
+}

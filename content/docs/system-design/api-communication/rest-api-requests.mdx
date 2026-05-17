@@ -1,0 +1,234 @@
+---
+title: REST API Requests
+---
+
+<Steps>
+
+
+**REST** (Representational State Transfer) is a standard format for transferring data between a client and a server. It uses **JSON** (JavaScript Object Notation) as the data exchange format.
+
+
+## JSON — The Data Format
+
+JSON structures data as **key-value pairs** using objects and arrays.
+
+### Supported Value Types
+
+| Type | Example |
+|------|---------|
+| String | `"name": "Akshay"` |
+| Number | `"age": 29` |
+| Boolean | `"active": true` |
+| Null | `"address": null` |
+| Nested Object | `"profile": { "city": "Delhi" }` |
+| Array | `"skills": ["Java", "Python"]` |
+
+### Example JSON Object
+
+```json
+{
+  "id": 1,
+  "name": "Muskan",
+  "username": "muskan",
+  "age": 20
+}
+```
+
+![Usage_of_JSON](https://dyz1pdcuffwr5.cloudfront.net/System-designs/json_benefits.png)
+
+
+---
+
+
+## Anatomy of a REST Endpoint
+An endpoint is the location where an API can be accessed.
+
+Every endpoint consists of two parts:
+
+> **Endpoint = HTTP Method + Path**
+
+- **Method** — Defines the operation (GET, POST, PUT, PATCH, DELETE)
+- **Path** — The URL through which data is accessed or submitted
+
+### Endpoint Structure:
+
+```
+METHOD /path
+```
+
+Example:
+```
+GET /users
+```
+
+
+---
+
+
+## Understanding Request Components
+
+### 1. HTTP Method
+
+The method defines:
+
+> What action should be performed on the resource.
+
+**Common HTTP Methods**
+
+| Method | Path | Purpose |
+|--------|------|---------|
+| `GET` | `/users` | Retrieve all users |
+| `GET` | `/users/{id}` | Retrieve a specific user by ID |
+| `POST` | `/users` | Create a new user (data sent in body) |
+| `PUT` | `/users/{id}` | Replace the entire user record |
+| `PATCH` | `/users/{id}` | Partially update specific fields |
+| `DELETE` | `/users/{id}` | Delete a user |
+
+
+### 2. Path (URL)
+
+The path identifies:
+
+> Which resource the API should access.
+
+Example:
+
+```text id="ivw5i8"
+/users
+/products
+/orders
+```
+
+
+### 3. Headers
+
+Headers contain:
+
+> Metadata about the request.
+
+Example:
+
+```text id="9u7jlwm"
+Content-Type: application/json
+```
+
+This tells the server:
+
+* the request body contains JSON data.
+
+
+### 4. Request Body
+
+The body contains:
+
+* actual data being sent to the server.
+
+Usually used with:
+
+* POST
+* PUT
+* PATCH
+
+
+---
+
+
+## Difference between PUT vs PATCH
+
+### PUT (Full Replacement)
+
+Replaces the **entire resource**. Any field not included in the request body will be set to its default or null value.
+
+```json
+// Original
+{ "id": 1, "name": "Muskan", "username": "muskan", "age": 20 }
+
+// PUT request body (only sending username)
+{ "username": "muskan_new" }
+
+// Result — other fields lost
+{ "id": 1, "name": null, "username": "muskan_new", "age": null }
+```
+
+### PATCH (Partial Update)
+
+Updates **only the specified fields**. All other fields remain unchanged.
+
+```json
+// PATCH request body
+{ "username": "muskan_new" }
+
+// Result — only username changes
+{ "id": 1, "name": "Muskan", "username": "muskan_new", "age": 20 }
+```
+
+> Use **PUT** when replacing an entire resource. Use **PATCH** when modifying specific fields.
+
+
+---
+
+
+## Nested APIs
+
+When entities have relationships (e.g., users, blogs, comments), APIs can be structured using **nesting** to express those relationships clearly.
+
+### Example — Blog Application
+
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/users` | GET, POST | List or create users |
+| `/users/{id}` | GET, PUT, PATCH, DELETE | Operate on a specific user |
+| `/blogs/{id}/comments` | GET | Get all comments on a specific blog |
+| `/users/{id}/comments` | GET | Get all comments by a specific user |
+| `/comments/{id}` | PATCH, DELETE | Update or delete a specific comment |
+
+
+### Nesting vs Filtering
+
+| Approach | When to Use | Example |
+|----------|-------------|---------|
+| **Nesting** | Clear, direct relationship between two entities | `/blogs/{id}/comments` |
+| **Filtering** | Complex relationships, pagination, or multi-criteria lookups | `/comments?post_id=123` |
+
+Filtering uses **query parameters** to narrow down results based on conditions.
+
+
+---
+
+
+## How to Pass Data to an Endpoint
+
+There are three ways to send data in a REST API request:
+
+| Method | Use Case | Visibility | Example |
+|--------|----------|------------|---------|
+| **Path Parameter** | Pass IDs, slugs, or unique identifiers | Exposed in URL | `/users/42` |
+| **Query Parameter** | Filtering, sorting, pagination | Exposed in URL | `/users?age=20&sort=name` |
+| **Request Body** | Sensitive or complex data (credentials, payloads) | Hidden from URL | `{ "username": "muskan", "password": "***" }` |
+
+### Security Note
+
+> Path parameters and query parameters are **visible in the URL**. Never pass sensitive information (passwords, tokens) through them. Always use the **request body** for sensitive data.
+
+
+---
+
+
+## Summary
+
+* REST APIs enable standardized communication between systems using **HTTP methods**, resource-based URLs, and lightweight JSON data exchange.
+
+* **JSON** is the preferred data format in REST APIs because it is lightweight, human-readable, and easy to parse across different platforms and programming languages.
+
+* HTTP methods such as **GET, POST, PUT, PATCH, and DELETE** are used to perform CRUD operations on resources in a structured and scalable manner.
+
+* Understanding the difference between **PUT** (complete replacement) and **PATCH** (partial update) is essential to prevent unintended data loss and optimize request payloads.
+
+* **Nested routes** improve clarity when representing parent-child relationships, while **query parameters** are ideal for filtering, sorting, searching, and pagination.
+
+* Sensitive information should never be exposed through URLs or query parameters; instead, secure data should always be transmitted through the **request body**.
+
+</Steps>
+
+
+Written By: <a href="https://www.linkedin.com/in/muskangarg03/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer"> Muskan Garg <ExternalLink className="w-4 h-4" /></a>

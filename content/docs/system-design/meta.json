@@ -3,6 +3,7 @@
     "pages":[
         "getting-started.mdx",
         "introduction.mdx",
-        "fundamentals"
+        "fundamentals",
+        "api-communication"
     ]
 } 
