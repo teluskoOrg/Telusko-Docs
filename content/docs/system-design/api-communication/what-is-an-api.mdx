@@ -1,0 +1,176 @@
+---
+title: What is an API
+---
+
+<Steps>
+
+
+**API** stands for **Application Programming Interface**. It is a set of endpoints exposed by an application that allows other applications (or frontends) to communicate with it, access its data, and perform operations without needing direct access to the underlying database.
+![API_Flow](https://dyz1pdcuffwr5.cloudfront.net/System-designs/api_flow.png)
+
+## Why Do We Need APIs?
+
+### The Problem Without APIs
+
+- If a new application needs data from an existing application, giving **direct database access** is dangerous.
+- Direct access requires handling complex database queries.
+- Critical data might accidentally get deleted, affecting all applications using the same database.
+- Each new consumer would need to understand the internal database schema.
+
+### The Solution — APIs
+
+- The existing application exposes **endpoints** that provide controlled access to its data.
+- New applications call these endpoints to **read, write, or modify** data safely.
+- The API acts as a **protective layer** between external consumers and the database.
+
+
+### Real-World Analogy
+Consider a restaurant.
+  - Customer → Places order
+  - Waiter → Takes request to kitchen
+  - Kitchen → Prepares food
+  - Waiter → Returns response
+
+Here:
+| Real World | Software World          |
+| ---------- | ----------------------- |
+| Customer   | Client Application      |
+| Waiter     | API                     |
+| Kitchen    | Backend Server/Database |
+
+The customer never directly enters the kitchen.
+
+Similarly:
+ - frontend applications do not directly access databases,
+ - they communicate through APIs.
+
+## Common Use Cases of APIs
+
+| Use Case | Description |
+|----------|-------------|
+| **Inter-application communication** | One application accesses data from another through APIs instead of duplicating databases |
+| **Frontend-Backend communication** | Backend exposes APIs that web and mobile frontends consume to display data |
+
+> A single backend can serve multiple frontends (web, mobile, desktop) through the same set of APIs.
+
+![API_Example](https://dyz1pdcuffwr5.cloudfront.net/System-designs/api_example.png)
+
+
+---
+
+
+## Types of APIs
+
+<Step>
+### REST API
+
+**REST** — Representational State Transfer
+
+| Aspect | Detail |
+|--------|--------|
+| **Data Format** | JSON (JavaScript Object Notation) |
+| **Why Popular** | Simple structure, easy to use, lightweight, handles large data with low volume |
+| **Usage** | Most widely used in modern applications |
+
+- REST organizes endpoints around **resources** (e.g., `/users`, `/products`, `/orders`)
+- Uses standard HTTP methods: `GET`, `POST`, `PUT`, `DELETE`
+- JSON is lightweight and human-readable, making it the preferred data exchange format
+
+</Step>
+
+<Step>
+### SOAP
+
+**SOAP** — Simple Object Access Protocol
+
+| Aspect | Detail |
+|--------|--------|
+| **Data Format** | XML |
+| **Use Case** | Cross-platform communication, legacy systems |
+| **Drawback** | XML is bulky, attributes and tags must be repeated for every object and array |
+
+- Primarily found in **legacy/enterprise applications**
+- Largely replaced by REST in modern systems due to XML's verbosity
+
+</Step>
+
+<Step>
+### GraphQL
+
+**GraphQL** — Graph Query Language
+
+| Aspect | Detail |
+|--------|--------|
+| **Data Format** | JSON |
+| **Key Feature** | Single endpoint for all queries |
+| **Query Style** | Client specifies exactly what data it needs using a query language (similar to SQL) |
+
+- Instead of hitting multiple REST endpoints, the frontend sends a **single query** describing exactly what data it needs.
+- Reduces over-fetching (getting more data than needed) and under-fetching (needing multiple calls).
+- Ideal when frontends have **varying data requirements** from the same backend.
+
+</Step>
+
+<Step>
+### gRPC
+
+**gRPC** — Google Remote Procedure Call
+
+| Aspect | Detail |
+|--------|--------|
+| **Data Format** | Protocol Buffers (Protobuf) |
+| **Created By** | Google |
+| **Key Feature** | Extremely small payload size and fast data transfer |
+
+- Protocol Buffers are significantly **smaller and faster** than both JSON and XML.
+- Ideal for **microservice-to-microservice communication** where low latency is critical.
+- In microservice architectures, multiple sub-applications communicate frequently — gRPC enables this internal communication to be fast and efficient.
+
+</Step>
+
+<Step>
+### WebSockets
+
+**WebSockets** — Persistent bidirectional communication channel
+
+| Aspect | Detail |
+|--------|--------|
+| **Key Feature** | Real-time, two-way communication between client and server |
+| **Use Cases** | Chat applications, live notifications, real-time updates |
+
+#### How WebSockets Work:
+
+1. Frontend initiates a request → a **persistent channel** is established.
+2. Once the channel is open, **both sides can send data** at any time.
+3. The backend can **push** notifications, messages, or updates to the frontend without being asked.
+
+#### Why WebSockets Matter:
+
+| Without WebSockets | With WebSockets |
+|--------------------|-----------------|
+| Frontend must constantly **poll** the backend asking "Any new data?" | Backend **pushes** data to frontend whenever something new arrives |
+| Wasteful network calls | Efficient, event-driven communication |
+| Higher latency for real-time features | Instant delivery of messages and notifications |
+
+</Step>
+
+
+![API_Comparison](https://dyz1pdcuffwr5.cloudfront.net/System-designs/api_comparison.png)
+
+  
+---
+
+
+## Summary
+
+- APIs provide **controlled, secure access** to application data without exposing the database directly.
+- **REST** is the most widely used API type due to its simplicity and JSON-based communication.
+- **SOAP** is legacy and uses verbose XML — mostly found in older enterprise systems.
+- **GraphQL** solves over-fetching and under-fetching by letting clients request exactly what they need through a single endpoint.
+- **gRPC** uses Protocol Buffers for ultra-fast, lightweight communication — ideal for internal microservice calls.
+- **WebSockets** enable real-time, bidirectional communication — essential for chat, notifications, and live updates.
+
+</Steps>
+
+
+Written By: <a href="https://www.linkedin.com/in/muskangarg03/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer"> Muskan Garg <ExternalLink className="w-4 h-4" /></a>

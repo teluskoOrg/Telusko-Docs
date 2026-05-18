@@ -1,0 +1,8 @@
+{   "title":"Fundamentals of System Designs",
+    "pages":[
+        "system-design-components.mdx",
+        "data-and-compute-intensive-applications.mdx",
+        "functional-and-non-functional-requirements.mdx",
+        "dns.mdx"
+    ]
+}
