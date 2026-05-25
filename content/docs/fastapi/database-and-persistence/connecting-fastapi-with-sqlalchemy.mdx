@@ -1,0 +1,226 @@
+---
+title: Connecting FastAPI with SQLAlchemy
+---
+
+## Introduction
+
+SQLAlchemy is one of the most popular Python libraries for working with relational databases. It can run SQL queries directly, and it also provides an ORM that maps database tables to Python classes.
+
+## Why This Matters
+
+FastAPI does not include a built-in database layer. That is a good thing because you can choose the database tool that fits your project. SQLAlchemy is a strong default because it is mature, flexible, and works well with SQLite, PostgreSQL, MySQL, and many other databases.
+
+## Installing SQLAlchemy
+
+For a simple SQLite example, install SQLAlchemy:
+
+```bash
+pip install sqlalchemy
+```
+
+If you use PostgreSQL later, you also need a database driver:
+
+```bash
+pip install psycopg[binary]
+```
+
+## Creating the Database Engine
+
+The engine manages the database connection details:
+
+```python
+from sqlalchemy import create_engine
+
+DATABASE_URL = "sqlite:///./app.db"
+
+engine = create_engine(
+    DATABASE_URL,
+    connect_args={"check_same_thread": False},
+)
+```
+
+For SQLite, `check_same_thread=False` is commonly used with FastAPI because requests may be handled in different threads.
+
+## Creating a Session Factory
+
+A session is the main object you use to talk to the database:
+
+```python
+from sqlalchemy.orm import sessionmaker
+
+SessionLocal = sessionmaker(
+    autocommit=False,
+    autoflush=False,
+    bind=engine,
+)
+```
+
+`SessionLocal` is a factory. It creates a new database session when a request needs one.
+
+## Creating the Base Class
+
+SQLAlchemy models inherit from a base class:
+
+```python
+from sqlalchemy.orm import DeclarativeBase
+
+class Base(DeclarativeBase):
+    pass
+```
+
+Every model class that inherits from `Base` becomes part of the metadata SQLAlchemy uses to create tables.
+
+## Defining a Model
+
+A model class represents a table:
+
+```python
+from sqlalchemy import Integer, String
+from sqlalchemy.orm import Mapped, mapped_column
+
+class User(Base):
+    __tablename__ = "users"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    name: Mapped[str] = mapped_column(String(100))
+    email: Mapped[str] = mapped_column(String(255), unique=True, index=True)
+```
+
+`__tablename__` is the database table name. Each `mapped_column` becomes a database column.
+
+## Creating Tables
+
+For small learning projects, you can create tables at startup:
+
+```python
+Base.metadata.create_all(bind=engine)
+```
+
+A complete minimal example:
+
+```python
+from fastapi import FastAPI
+from sqlalchemy import Integer, String, create_engine
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, sessionmaker
+
+DATABASE_URL = "sqlite:///./app.db"
+
+engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+class Base(DeclarativeBase):
+    pass
+
+class User(Base):
+    __tablename__ = "users"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    name: Mapped[str] = mapped_column(String(100))
+    email: Mapped[str] = mapped_column(String(255), unique=True, index=True)
+
+Base.metadata.create_all(bind=engine)
+
+app = FastAPI()
+```
+
+For production projects, use Alembic migrations instead of calling `create_all` every time.
+
+## Database Session Dependency
+
+FastAPI dependencies are a good way to create one database session per request:
+
+```python
+from typing import Generator
+from fastapi import Depends
+from sqlalchemy.orm import Session
+
+def get_db() -> Generator[Session, None, None]:
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+```
+
+Use the dependency in a route:
+
+```python
+@app.get("/users")
+def list_users(db: Session = Depends(get_db)):
+    return db.query(User).all()
+```
+
+FastAPI opens the session before the route runs and closes it after the response is complete.
+
+## Suggested File Structure
+
+A cleaner project often separates database setup and models:
+
+```text
+app/
+- main.py
+- database.py
+- models.py
+```
+
+`database.py`:
+
+```python
+from sqlalchemy import create_engine
+from sqlalchemy.orm import DeclarativeBase, sessionmaker
+
+DATABASE_URL = "sqlite:///./app.db"
+
+engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+class Base(DeclarativeBase):
+    pass
+```
+
+`models.py`:
+
+```python
+from sqlalchemy import Integer, String
+from sqlalchemy.orm import Mapped, mapped_column
+from .database import Base
+
+class User(Base):
+    __tablename__ = "users"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    name: Mapped[str] = mapped_column(String(100))
+    email: Mapped[str] = mapped_column(String(255), unique=True)
+```
+
+`main.py`:
+
+```python
+from fastapi import FastAPI
+from .database import Base, engine
+from . import models
+
+Base.metadata.create_all(bind=engine)
+
+app = FastAPI()
+```
+
+Importing `models` ensures SQLAlchemy knows about the model classes before creating tables.
+
+## Common Mistakes
+
+### Creating one global session
+
+Do not create a single `Session` object and share it across all requests. Create a fresh session per request.
+
+### Forgetting to close the session
+
+Always close the session using a dependency with `try/finally` or a context manager.
+
+### Confusing Pydantic models and SQLAlchemy models
+
+Pydantic models validate API input and output. SQLAlchemy models represent database tables. In real projects, you usually need both.
+
+## Summary
+
+SQLAlchemy connects FastAPI to relational databases. The engine knows how to connect, the session performs database operations, the base class tracks models, and FastAPI dependencies create one session per request. This gives your API a clean and reusable database setup.

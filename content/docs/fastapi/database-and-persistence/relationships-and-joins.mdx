@@ -1,0 +1,219 @@
+---
+title: Relationships and Joins
+---
+
+## Introduction
+
+Real applications rarely store everything in one table. Users have posts, orders have items, products belong to categories, and students enroll in courses. Relationships describe how tables connect to each other.
+
+## Why This Matters
+
+Without relationships, your database becomes duplicated and hard to update. With relationships, each table stores one type of data clearly, and foreign keys connect related records.
+
+## One-to-Many Relationship
+
+A common relationship is one user having many posts:
+
+```text
+users
+- id
+- name
+
+posts
+- id
+- title
+- content
+- owner_id
+```
+
+`posts.owner_id` stores the `id` of the user who owns the post.
+
+## SQLAlchemy Models
+
+In SQLAlchemy, use `ForeignKey` and `relationship`:
+
+```python
+from sqlalchemy import ForeignKey, Integer, String, Text
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+from .database import Base
+
+class User(Base):
+    __tablename__ = "users"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    name: Mapped[str] = mapped_column(String(100))
+
+    posts: Mapped[list["Post"]] = relationship(
+        back_populates="owner",
+        cascade="all, delete-orphan",
+    )
+
+class Post(Base):
+    __tablename__ = "posts"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    title: Mapped[str] = mapped_column(String(200))
+    content: Mapped[str] = mapped_column(Text)
+    owner_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
+
+    owner: Mapped[User] = relationship(back_populates="posts")
+```
+
+`ForeignKey("users.id")` creates the database-level connection. `relationship()` creates a convenient Python-level connection.
+
+## Creating Related Records
+
+To create a post for a user, first check that the user exists:
+
+```python
+from fastapi import Depends, FastAPI, HTTPException, status
+from sqlalchemy.orm import Session
+from .database import get_db
+
+app = FastAPI()
+
+@app.post("/users/{user_id}/posts", status_code=status.HTTP_201_CREATED)
+def create_post_for_user(
+    user_id: int,
+    title: str,
+    content: str,
+    db: Session = Depends(get_db),
+):
+    user = db.get(User, user_id)
+    if user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    post = Post(title=title, content=content, owner_id=user.id)
+    db.add(post)
+    db.commit()
+    db.refresh(post)
+    return post
+```
+
+The route receives the parent resource id in the URL and stores it as the foreign key.
+
+## Reading Related Records
+
+You can read all posts for a user:
+
+```python
+@app.get("/users/{user_id}/posts")
+def list_posts_for_user(user_id: int, db: Session = Depends(get_db)):
+    user = db.get(User, user_id)
+    if user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    return user.posts
+```
+
+This is simple, but it may trigger an additional query when `user.posts` is accessed.
+
+## Joins
+
+A join fetches data from related tables in one query:
+
+```python
+@app.get("/posts-with-owners")
+def list_posts_with_owners(db: Session = Depends(get_db)):
+    rows = (
+        db.query(Post, User)
+        .join(User, Post.owner_id == User.id)
+        .all()
+    )
+
+    return [
+        {
+            "post_id": post.id,
+            "title": post.title,
+            "owner": user.name,
+        }
+        for post, user in rows
+    ]
+```
+
+This is useful when the response needs fields from both tables.
+
+## Eager Loading
+
+Eager loading tells SQLAlchemy to load related data up front:
+
+```python
+from sqlalchemy.orm import joinedload
+
+@app.get("/users-with-posts")
+def list_users_with_posts(db: Session = Depends(get_db)):
+    return db.query(User).options(joinedload(User.posts)).all()
+```
+
+This helps avoid the N+1 query problem, where one query loads users and then one extra query runs for each user's posts.
+
+## Many-to-Many Relationship
+
+A many-to-many relationship needs a third table. For example, students can enroll in many courses, and courses can have many students:
+
+```text
+students
+- id
+- name
+
+courses
+- id
+- title
+
+enrollments
+- student_id
+- course_id
+```
+
+The `enrollments` table connects the two sides.
+
+## Nested Response Models
+
+Pydantic can return nested data:
+
+```python
+from pydantic import BaseModel, ConfigDict, Field
+
+class PostOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    title: str
+    content: str
+
+class UserWithPostsOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    name: str
+    posts: list[PostOut] = Field(default_factory=list)
+```
+
+Then use it as the response model:
+
+```python
+@app.get("/users/{user_id}", response_model=UserWithPostsOut)
+def get_user(user_id: int, db: Session = Depends(get_db)):
+    user = db.get(User, user_id)
+    if user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+    return user
+```
+
+## Common Mistakes
+
+### Putting repeated data in every table
+
+Do not copy the user's name into every post just to know who owns it. Store `owner_id` and join when needed.
+
+### Forgetting foreign keys
+
+A relationship without a foreign key is only a convention in your code. A foreign key lets the database enforce the connection.
+
+### Ignoring query count
+
+Nested relationships can accidentally run many queries. Use joins or eager loading when a response needs related data.
+
+## Summary
+
+Relationships connect tables using foreign keys. SQLAlchemy's `relationship()` gives you convenient Python access, while joins and eager loading help fetch related data efficiently. Use one-to-many for parent-child data, and use a join table for many-to-many data.

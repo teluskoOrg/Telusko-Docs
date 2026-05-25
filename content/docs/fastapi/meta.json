@@ -12,7 +12,7 @@
         "request-body-and-validation",
         "response-handling-and-errors",
         "dependency-injection",
-        "DISABLED-database-and-persistence",
+        "database-and-persistence",
         "DISABLED-authentication-and-authorization",
         "DISABLED-middleware-security-and-cors",
         "DISABLED-files-forms-and-background-tasks",

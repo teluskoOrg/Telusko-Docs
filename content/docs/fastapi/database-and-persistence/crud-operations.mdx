@@ -1,0 +1,186 @@
+---
+title: CRUD Operations
+---
+
+## Introduction
+
+CRUD stands for Create, Read, Update, and Delete. These four operations cover most of the database behavior in a typical API.
+
+## Why This Matters
+
+Once your FastAPI app is connected to a database, routes should be able to insert records, fetch records, change records, and remove records. A clear CRUD pattern makes your API easier to read, test, and maintain.
+
+## Example Model
+
+Assume we have this SQLAlchemy model:
+
+```python
+from sqlalchemy import Boolean, Float, Integer, String
+from sqlalchemy.orm import Mapped, mapped_column
+from .database import Base
+
+class Product(Base):
+    __tablename__ = "products"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    name: Mapped[str] = mapped_column(String(100), index=True)
+    price: Mapped[float] = mapped_column(Float)
+    in_stock: Mapped[bool] = mapped_column(Boolean, default=True)
+```
+
+We also need Pydantic schemas for request and response data:
+
+```python
+from pydantic import BaseModel, ConfigDict
+
+class ProductCreate(BaseModel):
+    name: str
+    price: float
+    in_stock: bool = True
+
+class ProductUpdate(BaseModel):
+    name: str | None = None
+    price: float | None = None
+    in_stock: bool | None = None
+
+class ProductOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    name: str
+    price: float
+    in_stock: bool
+```
+
+`from_attributes=True` lets Pydantic build a response model from a SQLAlchemy object.
+
+## Create
+
+Creating a record means building a model object, adding it to the session, and committing:
+
+```python
+from fastapi import Depends, FastAPI, status
+from sqlalchemy.orm import Session
+from .database import get_db
+
+app = FastAPI()
+
+@app.post("/products", response_model=ProductOut, status_code=status.HTTP_201_CREATED)
+def create_product(product: ProductCreate, db: Session = Depends(get_db)):
+    db_product = Product(**product.model_dump())
+    db.add(db_product)
+    db.commit()
+    db.refresh(db_product)
+    return db_product
+```
+
+`commit()` saves the change. `refresh()` loads generated values like the new `id`.
+
+## Read Many
+
+Reading many records usually includes pagination:
+
+```python
+@app.get("/products", response_model=list[ProductOut])
+def list_products(
+    skip: int = 0,
+    limit: int = 20,
+    db: Session = Depends(get_db),
+):
+    return db.query(Product).offset(skip).limit(limit).all()
+```
+
+`skip` controls how many records to ignore. `limit` controls how many records to return.
+
+## Read One
+
+Reading one record usually uses a path parameter:
+
+```python
+from fastapi import HTTPException
+
+@app.get("/products/{product_id}", response_model=ProductOut)
+def get_product(product_id: int, db: Session = Depends(get_db)):
+    product = db.get(Product, product_id)
+    if product is None:
+        raise HTTPException(status_code=404, detail="Product not found")
+    return product
+```
+
+`db.get(Product, product_id)` fetches by primary key.
+
+## Update
+
+For partial updates, only change fields that were actually provided:
+
+```python
+@app.patch("/products/{product_id}", response_model=ProductOut)
+def update_product(
+    product_id: int,
+    product_update: ProductUpdate,
+    db: Session = Depends(get_db),
+):
+    product = db.get(Product, product_id)
+    if product is None:
+        raise HTTPException(status_code=404, detail="Product not found")
+
+    update_data = product_update.model_dump(exclude_unset=True)
+    for field, value in update_data.items():
+        setattr(product, field, value)
+
+    db.commit()
+    db.refresh(product)
+    return product
+```
+
+`exclude_unset=True` prevents missing fields from overwriting existing values with `None`.
+
+## Delete
+
+Deleting a record means fetching it first, then removing it:
+
+```python
+from fastapi import Response, status
+
+@app.delete("/products/{product_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_product(product_id: int, db: Session = Depends(get_db)):
+    product = db.get(Product, product_id)
+    if product is None:
+        raise HTTPException(status_code=404, detail="Product not found")
+
+    db.delete(product)
+    db.commit()
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+```
+
+A `204 No Content` response should not include a response body.
+
+## Handling Duplicate Data
+
+If a column is unique, such as `email`, duplicate inserts can fail. You can check first:
+
+```python
+existing = db.query(User).filter(User.email == user.email).first()
+if existing:
+    raise HTTPException(status_code=400, detail="Email already registered")
+```
+
+In production, also handle database integrity errors because two requests can arrive at the same time.
+
+## Common Mistakes
+
+### Returning raw dictionaries for everything
+
+Use response models so the API output is predictable and documented.
+
+### Forgetting db.refresh after create
+
+Without `refresh`, generated fields like `id` may not be loaded on the Python object.
+
+### Updating every field blindly
+
+For PATCH requests, use `exclude_unset=True` so clients can update only the fields they send.
+
+## Summary
+
+CRUD routes let your API create, read, update, and delete database records. A good pattern uses SQLAlchemy models for tables, Pydantic schemas for request and response validation, database sessions from dependencies, and clear HTTP status codes for each operation.

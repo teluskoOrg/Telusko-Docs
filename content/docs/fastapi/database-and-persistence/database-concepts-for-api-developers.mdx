@@ -1,0 +1,169 @@
+---
+title: Database Concepts for API Developers
+---
+
+## Introduction
+
+Most APIs do not just receive data and return it immediately. They need to store users, products, orders, posts, payments, logs, and many other records. Persistence means saving data somewhere permanent so it is still available after the request finishes or the server restarts.
+
+## Why This Matters
+
+FastAPI handles HTTP very well, but it does not store data by itself. You usually connect it to a database. To build real backend applications, you need to understand how API routes, database tables, records, queries, and transactions work together.
+
+## What Is a Database?
+
+A database is a system used to store and retrieve data. In backend development, the most common type is a relational database such as PostgreSQL, MySQL, or SQLite.
+
+Relational databases store data in tables:
+
+```text
+users
++----+--------+-------------------+
+| id | name   | email             |
++----+--------+-------------------+
+| 1  | Alice  | alice@example.com |
+| 2  | Bob    | bob@example.com   |
++----+--------+-------------------+
+```
+
+A table is like a structured spreadsheet. Each row is one record. Each column has a name and a data type.
+
+## Tables, Rows, and Columns
+
+A table represents one kind of data:
+
+```text
+products
+- id
+- name
+- price
+- in_stock
+```
+
+A row represents one product:
+
+```text
+id: 1
+name: Keyboard
+price: 49.99
+in_stock: true
+```
+
+A column describes one field for every row. For example, every product has a `name` column and a `price` column.
+
+## Primary Keys
+
+A primary key uniquely identifies one row in a table. Most tables use an integer `id`:
+
+```text
+users
+- id        primary key
+- name
+- email
+```
+
+If two users have the same name, the database can still tell them apart because their `id` values are different.
+
+## Foreign Keys
+
+A foreign key connects one table to another. For example, an order belongs to a user:
+
+```text
+orders
+- id
+- total
+- user_id   foreign key to users.id
+```
+
+This means each order stores the `id` of the user who created it. Relationships like one-to-many and many-to-many are built using foreign keys.
+
+## CRUD Operations
+
+Most API database work fits into CRUD:
+
+```text
+Create   insert a new record
+Read     fetch one or more records
+Update   change an existing record
+Delete   remove a record
+```
+
+API routes often map directly to these operations:
+
+```text
+POST /users        create a user
+GET /users         read users
+GET /users/{id}    read one user
+PUT /users/{id}    update a user
+DELETE /users/{id} delete a user
+```
+
+## SQL and ORMs
+
+SQL is the language used to communicate with relational databases:
+
+```sql
+SELECT id, name, email FROM users WHERE id = 1;
+```
+
+An ORM, or Object Relational Mapper, lets you work with database tables using Python classes instead of writing raw SQL for every operation.
+
+With SQLAlchemy, a table can be represented as a Python class:
+
+```python
+class User(Base):
+    __tablename__ = "users"
+
+    id = mapped_column(Integer, primary_key=True)
+    name = mapped_column(String)
+    email = mapped_column(String)
+```
+
+The class represents the table. An object of the class represents one row.
+
+## Transactions
+
+A transaction is a group of database changes that should succeed or fail together. For example, placing an order might:
+
+```text
+1. Create an order
+2. Create order items
+3. Reduce product stock
+```
+
+If step 3 fails, the database should not keep steps 1 and 2. A transaction lets you commit all changes when everything succeeds, or roll them back when something goes wrong.
+
+## SQLite, PostgreSQL, and MySQL
+
+SQLite stores data in a local file and is easy for learning and small projects:
+
+```text
+sqlite:///./app.db
+```
+
+PostgreSQL and MySQL run as database servers and are common in production:
+
+```text
+postgresql://user:password@localhost/app_db
+mysql://user:password@localhost/app_db
+```
+
+For serious production APIs, PostgreSQL is a very common choice because it is powerful, reliable, and well supported.
+
+## Common Mistakes
+
+### Storing important data in variables
+
+Python variables disappear when the process restarts. Use a database for data that must survive.
+
+### Skipping primary keys
+
+Every table should have a reliable primary key. It makes fetching, updating, deleting, and relating records much easier.
+
+### Treating the database like JSON storage only
+
+Relational databases are strongest when tables, types, keys, and relationships are designed clearly.
+
+## Summary
+
+Databases give your API permanent storage. Tables hold rows, primary keys identify rows, foreign keys connect tables, and CRUD operations describe most API behavior. FastAPI works with databases through Python libraries such as SQLAlchemy, which help you write clean persistence code.

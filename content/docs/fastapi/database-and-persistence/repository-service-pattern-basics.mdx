@@ -1,0 +1,212 @@
+---
+title: Repository Service Pattern Basics
+---
+
+## Introduction
+
+As a FastAPI project grows, route functions can become crowded with validation, database queries, business rules, and response logic. The repository service pattern separates these responsibilities into smaller layers.
+
+## Why This Matters
+
+Small projects can keep database code directly inside routes. Larger projects are easier to maintain when routes handle HTTP, repositories handle database access, and services handle business rules.
+
+## The Three Layers
+
+A common structure is:
+
+```text
+Route        HTTP input and output
+Service      business rules
+Repository   database queries
+```
+
+Each layer has a clear job.
+
+## Without Layers
+
+A route can quickly become busy:
+
+```python
+@app.post("/products")
+def create_product(product: ProductCreate, db: Session = Depends(get_db)):
+    existing = db.query(Product).filter(Product.name == product.name).first()
+    if existing:
+        raise HTTPException(status_code=400, detail="Product already exists")
+
+    if product.price <= 0:
+        raise HTTPException(status_code=400, detail="Price must be positive")
+
+    db_product = Product(**product.model_dump())
+    db.add(db_product)
+    db.commit()
+    db.refresh(db_product)
+    return db_product
+```
+
+This works, but the route now knows too much about business rules and database queries.
+
+## Repository Layer
+
+A repository contains database operations for one area of the app:
+
+```python
+from sqlalchemy.orm import Session
+
+class ProductRepository:
+    def __init__(self, db: Session):
+        self.db = db
+
+    def get_by_id(self, product_id: int) -> Product | None:
+        return self.db.get(Product, product_id)
+
+    def get_by_name(self, name: str) -> Product | None:
+        return self.db.query(Product).filter(Product.name == name).first()
+
+    def create(self, product_data: ProductCreate) -> Product:
+        product = Product(**product_data.model_dump())
+        self.db.add(product)
+        self.db.commit()
+        self.db.refresh(product)
+        return product
+```
+
+The repository knows how to query and save products.
+
+## Service Layer
+
+A service contains business rules:
+
+```python
+from fastapi import HTTPException
+
+class ProductService:
+    def __init__(self, repository: ProductRepository):
+        self.repository = repository
+
+    def create_product(self, product_data: ProductCreate) -> Product:
+        if product_data.price <= 0:
+            raise HTTPException(status_code=400, detail="Price must be positive")
+
+        existing = self.repository.get_by_name(product_data.name)
+        if existing:
+            raise HTTPException(status_code=400, detail="Product already exists")
+
+        return self.repository.create(product_data)
+```
+
+The service decides whether an operation is allowed. It delegates database details to the repository.
+
+## Route Layer
+
+The route becomes small:
+
+```python
+from fastapi import Depends, FastAPI
+from sqlalchemy.orm import Session
+from .database import get_db
+
+app = FastAPI()
+
+@app.post("/products", response_model=ProductOut)
+def create_product(product: ProductCreate, db: Session = Depends(get_db)):
+    repository = ProductRepository(db)
+    service = ProductService(repository)
+    return service.create_product(product)
+```
+
+The route receives HTTP input, creates the needed objects, and returns the response.
+
+## Using Dependencies for Services
+
+You can use FastAPI dependencies to build repositories and services:
+
+```python
+def get_product_repository(db: Session = Depends(get_db)) -> ProductRepository:
+    return ProductRepository(db)
+
+def get_product_service(
+    repository: ProductRepository = Depends(get_product_repository),
+) -> ProductService:
+    return ProductService(repository)
+
+@app.post("/products", response_model=ProductOut)
+def create_product(
+    product: ProductCreate,
+    service: ProductService = Depends(get_product_service),
+):
+    return service.create_product(product)
+```
+
+Now the route does not need to manually construct the service.
+
+## Suggested File Structure
+
+A simple structure:
+
+```text
+app/
+- main.py
+- database.py
+- models.py
+- schemas.py
+- repositories/
+  - product_repository.py
+- services/
+  - product_service.py
+- routers/
+  - products.py
+```
+
+This keeps each part discoverable without making the project too abstract.
+
+## Testing Benefits
+
+Services are easier to test when business logic is not buried inside route functions. You can provide a fake repository:
+
+```python
+class FakeProductRepository:
+    def __init__(self):
+        self.products = []
+
+    def get_by_name(self, name: str):
+        return None
+
+    def create(self, product_data: ProductCreate):
+        product = Product(id=1, **product_data.model_dump())
+        self.products.append(product)
+        return product
+```
+
+Then test the service directly:
+
+```python
+def test_create_product_requires_positive_price():
+    service = ProductService(FakeProductRepository())
+
+    with pytest.raises(HTTPException):
+        service.create_product(ProductCreate(name="Pen", price=0))
+```
+
+The test does not need to start a web server.
+
+## When Not to Use This Pattern
+
+Do not force layers into every tiny project. If your app has only a few simple routes, direct database code in the route may be fine. Add repositories and services when the route logic starts becoming hard to read or reuse.
+
+## Common Mistakes
+
+### Making empty pass-through layers
+
+If a service only calls a repository method with no extra logic, it may not be useful yet.
+
+### Putting HTTP details everywhere
+
+Repositories should not know about path parameters, request headers, or response models. Keep HTTP concerns in the route layer.
+
+### Overengineering too early
+
+Start simple. Introduce layers when they reduce confusion, duplication, or testing pain.
+
+## Summary
+
+The repository service pattern separates HTTP handling, business rules, and database access. Routes stay small, services hold decisions, and repositories handle queries. Use this pattern when your FastAPI project grows beyond simple CRUD routes.
