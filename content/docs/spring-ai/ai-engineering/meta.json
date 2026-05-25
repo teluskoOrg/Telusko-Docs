@@ -1,0 +1,8 @@
+{   "title":"AI Engineering",
+    "pages":[
+        "what-is-ai-engineering.mdx",
+        "ai-basics-for-ai-engineering.mdx",
+        "prompt-engineering.mdx",
+        "getting-structured-output-in-json.mdx"
+    ]
+}
