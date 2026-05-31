@@ -3,6 +3,9 @@
         "what-is-ai-engineering.mdx",
         "ai-basics-for-ai-engineering.mdx",
         "prompt-engineering.mdx",
-        "getting-structured-output-in-json.mdx"
+        "getting-structured-output-in-json.mdx",
+        "openai-model-call-using-java.mdx",
+        "openai-python-sdk-usage.mdx",
+        "vector-embeddings-and-tokens.mdx"
     ]
 }

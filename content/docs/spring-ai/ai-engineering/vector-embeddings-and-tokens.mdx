@@ -1,0 +1,327 @@
+---
+title: Vector Embeddings and Tokens
+---
+
+
+<Steps>
+<Video id="9rYOLzoDNrM" />
+
+---
+
+
+AI models can only process numerical representations, they cannot understand text, images, or audio directly. To bridge this gap, input text is first broken into **tokens**, then converted into **vector embeddings** (numerical representations) that capture meaning, context, and relationships between words.
+
+
+## What Are Vector Embeddings?
+
+Vector embeddings are a way to represent words (or text) as numerical values in a **high-dimensional space**. They allow AI models to understand relationships, context, and semantic meaning between words.
+
+**Core Idea:** Words with similar meanings are mapped close together in vector space, while dissimilar words remain far apart.
+
+### Example
+
+- "cat", "kitty", "feline" → clustered close together
+- "cat" and "automobile" → far apart in vector space
+
+This enables searching for "kitty" and finding results about "cat" even without an exact text match.
+
+
+---
+
+
+## How AI Processes Text
+
+The pipeline from text input to AI response:
+
+![Text_Processing_Sequence](https://dyz1pdcuffwr5.cloudfront.net/SpringAI/AI-Engineering/text_processing_sequence.png)
+
+1. **Tokenization** - Text is broken into tokens (subword units)
+2. **Embedding** - Each token is converted into a numerical vector
+3. **Processing** - The model operates on these vectors to generate output
+
+
+---
+
+
+## Tokenization
+
+### What Are Tokens?
+
+A token is the smallest unit of text processed by an AI model.
+
+A token is not always a complete word.
+
+Depending on the tokenizer, a token can be:
+
+ * A word
+ * Part of a word
+ * A character
+ * A punctuation symbol
+
+
+### Understanding Tokenization
+Tokenization is the process of breaking text into smaller units called tokens.
+
+**Example:**
+```
+Artificial Intelligence
+```
+
+May be tokenized as:
+```
+["Artificial", "Intelligence"]
+```
+
+or
+```
+["Art", "ificial", "Intelligence"]
+```
+
+**Example:**
+```
+googling
+```
+May become:
+```
+["go", "ogling"]
+```
+
+
+### Key Facts
+
+| Aspect | Detail |
+|--------|--------|
+| Token-to-word ratio | 1 token ≈ 3/4 of a word |
+| 100 tokens | ≈ 75 words on average |
+| Word vs token count | A 7-word sentence can produce ~11 tokens |
+| Cost implication | More tokens = higher API cost |
+
+### How Tokenization Works
+
+- Common words may be a single token (e.g., "hello" → 1 token)
+- Unfamiliar or compound words are split into parts (e.g., "googling" → "go" + "ogling")
+- Different models (e.g., GPT-4) use different tokenization algorithms, producing varying token counts from the same text
+
+### Why It Matters
+
+- **Cost:** OpenAI charges per token (both input and output)
+- **Context limits:** Models have maximum token limits per request
+- **Optimization:** Understanding tokenization helps optimize prompts for efficiency
+
+
+---
+
+
+## Vector Embeddings
+
+### Why Not Single Numbers?
+
+Representing each word as a single number is insufficient because:
+- Vocabularies are massive (hundreds of thousands of words)
+- Multiple languages exist
+- Words have nuanced relationships that a single dimension cannot capture
+
+**Solution:** Use multi-dimensional vectors (e.g., 1536 or 3072 dimensions) to represent each token, capturing rich semantic relationships.
+
+### Dimensionality
+
+The number of dimensions determines how much nuance and context the embedding can capture.
+
+| Model | Dimensions | Use Case |
+|-------|-----------|----------|
+| OpenAI text-embedding-small | 1536 | Cost-effective, general purpose |
+| OpenAI text-embedding-large | 3072 | Higher accuracy, more detail |
+| Other models (e.g., some open-source) | 1024 | Varies by provider |
+
+Higher dimensionality = more accuracy but increased cost and computation.
+
+### Dimensionality Reduction
+
+High-dimensional embeddings can be reduced to lower dimensions (e.g., 2D or 3D) for visualization and analysis purposes, though some information is lost.
+
+
+---
+
+
+## Semantic Understanding with Embeddings
+
+### Context-Aware Relationships
+
+Embeddings capture that words can have different meanings based on context:
+- "Python" (programming language) vs "Python" (snake) → different vector positions based on surrounding context
+
+### Word Grouping
+Words with similar meanings appear closer together.
+
+Words with different meanings appear farther apart.
+
+**Example**
+Animals, cluster together.:
+```
+Dog
+Cat
+Lion
+Tiger
+```
+
+Technology terms, form different clusters:
+```
+Software
+Code
+Programming
+Algorithm
+```
+
+**Search Example**
+
+User searches:
+
+```
+kitty
+```
+
+Document contains:
+
+```
+cat
+```
+
+Traditional search:
+
+```
+No match
+```
+
+Embedding-based search:
+
+```
+Match found
+```
+
+because the vectors are semantically similar.
+
+
+### Analogical Reasoning
+
+Vector embeddings enable mathematical operations on word meanings:
+
+```
+king - man + woman = queen
+```
+
+This demonstrates that embeddings capture gender relationships, hierarchies, and other semantic patterns through arithmetic operations on vectors.
+
+
+---
+
+
+## Applications of Embeddings
+
+| Application | Description |
+|-------------|-------------|
+| **Search** | Rank results by semantic relevance to a query |
+| **Clustering** | Group text strings by similarity |
+| **Recommendations** | Suggest items with related text content |
+| **Anomaly Detection** | Identify outliers with low relatedness |
+| **Diversity Measurement** | Analyze similarity distributions |
+| **Classification** | Classify text by most similar label |
+
+
+---
+
+
+## Creating Embeddings via API
+
+You can generate embeddings using API clients (curl, Insomnia, Postman) or programmatically (Python, Java, JavaScript).
+
+### API Request Structure
+
+```json
+{
+  "input": "Your text here",
+  "model": "text-embedding-3-large"
+}
+```
+
+### Required Components
+
+| Component     | Purpose           |
+| ------------- | ----------------- |
+| Endpoint      | Embedding API URL |
+| Authorization | API Key           |
+| Input Text    | Text to convert   |
+| Model         | Embedding model   |
+
+
+### Response
+
+The API returns a vector (array of floating-point numbers) representing the input text in the specified dimensional space.
+
+```
+{
+  "embedding": [
+    0.123,
+    -0.456,
+    0.789,
+    ...
+  ]
+}
+```
+
+The array may contain:
+
+ - 1536 numbers
+- 3072 numbers
+
+depending on the selected model.
+
+
+---
+
+
+![Embeddings_in_System_Design](https://dyz1pdcuffwr5.cloudfront.net/SpringAI/AI-Engineering/embeddings_in_system_design.png)
+
+
+---
+
+
+## Tokens vs Embeddings
+
+| Aspect   | Tokens                  | Embeddings                    |
+| -------- | ----------------------- | ----------------------------- |
+| Purpose  | Break text into units   | Represent meaning numerically |
+| Output   | Text fragments          | Numerical vectors             |
+| Used For | Model input processing  | Semantic understanding        |
+| Example  | "Artificial"            | [0.23, -0.41, 0.88, ...]      |
+| Impact   | Cost and context limits | Search and reasoning quality  |
+
+
+---
+
+
+## Summary
+
+* AI models cannot process raw text directly; text must first be converted into numerical representations.
+
+* Tokenization breaks text into smaller units called tokens, which are the fundamental inputs consumed by language models.
+
+* Token count affects API cost, processing time, and context window limitations.
+
+* Vector embeddings convert tokens, words, or entire documents into high-dimensional numerical vectors that capture semantic meaning.
+
+* Similar concepts are positioned close together in vector space, enabling semantic search and intelligent retrieval.
+
+* Higher-dimensional embeddings generally provide richer semantic understanding but require additional storage and computation.
+
+* Embeddings power critical AI capabilities such as semantic search, recommendations, clustering, anomaly detection, and Retrieval-Augmented Generation (RAG).
+
+* Understanding tokens and embeddings is fundamental for designing efficient, scalable, and intelligent AI-powered systems.
+
+
+
+> **Official Document Reference:** [OpenAI Embeddings Guide](https://developers.openai.com/api/docs/guides/embeddings)
+
+
+</Steps>
+
+Written By: <a href="https://www.linkedin.com/in/muskangarg03/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer"> Muskan Garg <ExternalLink className="w-4 h-4" /></a>
