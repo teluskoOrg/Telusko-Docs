@@ -1,0 +1,177 @@
+---
+title: Role Based Access Control
+---
+
+Once you know *who* a user is, the next question is *what they're allowed to do*. RBAC — role based access control — is a small, sensible answer to that question. You group permissions into roles, you give users one or more roles, and routes check the role instead of the individual user.
+
+It is not the only model out there. ABAC (attribute-based) and PBAC (policy-based) get fancier when you need them. But for most applications, RBAC is the right starting point because it stays understandable as the team and the codebase grow.
+
+## Roles, permissions, and users
+
+Three concepts to keep straight.
+
+```text
+   user                role                  permission
+  ┌──────┐  has   ┌───────────┐  grants  ┌──────────────┐
+  │alice │──────►│ editor     │─────────►│ post:create │
+  │      │       │            │─────────►│ post:edit   │
+  └──────┘       └───────────┘           └──────────────┘
+
+  ┌──────┐       ┌───────────┐           ┌──────────────┐
+  │  bob │──────►│ admin      │─────────►│ * (all)      │
+  └──────┘       └───────────┘           └──────────────┘
+```
+
+A small system might only have two or three roles. A larger one might pull out a separate permissions table so a role's powers can change without changing code.
+
+## The simplest possible RBAC
+
+If your roles are short and stable, an enum is enough.
+
+```python
+from enum import Enum
+
+class Role(str, Enum):
+    USER = "user"
+    EDITOR = "editor"
+    ADMIN = "admin"
+```
+
+Store it as a column on the user table:
+
+```python
+from sqlalchemy import Enum as SQLEnum
+from sqlalchemy.orm import Mapped, mapped_column
+
+class User(Base):
+    __tablename__ = "users"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    email: Mapped[str] = mapped_column(unique=True, index=True)
+    hashed_password: Mapped[str]
+    role: Mapped[Role] = mapped_column(SQLEnum(Role), default=Role.USER)
+```
+
+A user is created as `USER`. Promotion to `EDITOR` or `ADMIN` is an explicit, deliberate action — usually behind an admin-only route.
+
+## A role-checking dependency
+
+Rather than littering routes with `if user.role != "admin": raise ...`, build a small factory. It takes the role you require and gives back a dependency.
+
+```python
+from fastapi import Depends, HTTPException, status
+
+def require_role(*allowed: Role):
+    def checker(current: User = Depends(get_current_user)) -> User:
+        if current.role not in allowed:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You do not have permission to perform this action",
+            )
+        return current
+    return checker
+```
+
+Use it like this:
+
+```python
+@app.delete("/posts/{post_id}")
+def delete_post(
+    post_id: int,
+    _user: User = Depends(require_role(Role.EDITOR, Role.ADMIN)),
+):
+    ...
+
+@app.get("/admin/users")
+def list_all_users(
+    _admin: User = Depends(require_role(Role.ADMIN)),
+):
+    ...
+```
+
+The route reads like a sentence — "delete a post, requires editor or admin." That clarity is the whole point of the pattern.
+
+## Going one step further: permissions, not just roles
+
+Roles are convenient, but they hide *why* someone can do something. As the app grows you end up wanting "can edit posts" rather than "is an editor", because the answers might diverge — maybe a `moderator` role can also edit posts, and now you're listing roles in seven different places.
+
+Move to a permission-centric model:
+
+```python
+ROLE_PERMISSIONS: dict[Role, set[str]] = {
+    Role.USER:   {"post:read"},
+    Role.EDITOR: {"post:read", "post:create", "post:edit"},
+    Role.ADMIN:  {"post:read", "post:create", "post:edit", "post:delete",
+                  "user:read", "user:promote"},
+}
+
+def has_permission(user: User, permission: str) -> bool:
+    return permission in ROLE_PERMISSIONS.get(user.role, set())
+
+def require_permission(permission: str):
+    def checker(current: User = Depends(get_current_user)) -> User:
+        if not has_permission(current, permission):
+            raise HTTPException(403, f"Missing permission: {permission}")
+        return current
+    return checker
+```
+
+Routes now declare exactly what they need:
+
+```python
+@app.delete("/posts/{post_id}")
+def delete_post(
+    post_id: int,
+    _user: User = Depends(require_permission("post:delete")),
+):
+    ...
+```
+
+The table of `ROLE_PERMISSIONS` becomes the single place where you change who can do what. Adding a `moderator` role is a one-line entry, not a tour of the codebase.
+
+## Ownership is not a role
+
+Plenty of "permission denied" decisions have nothing to do with roles. *"You can edit this post if you wrote it."* That is ownership, and roles cannot express it cleanly.
+
+Handle it inside the route:
+
+```python
+@app.patch("/posts/{post_id}")
+def edit_post(
+    post_id: int,
+    body: PostUpdate,
+    current: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    post = db.get(Post, post_id)
+    if post is None:
+        raise HTTPException(404, "Post not found")
+
+    is_owner = post.author_id == current.id
+    can_moderate = has_permission(current, "post:edit_any")
+
+    if not (is_owner or can_moderate):
+        raise HTTPException(403, "Not your post")
+
+    # ...apply update
+```
+
+A neat way to think about this: roles answer *"is this user allowed in principle?"* and ownership answers *"is this user allowed for this specific record?"* The first check belongs in a dependency, the second belongs in the route.
+
+## A common gotcha: the order of dependencies
+
+Dependencies that raise authentication errors should come *before* role checks, otherwise an unauthenticated request gets a confusing `403` instead of a `401`. The factory above already gets this right because `require_role` depends on `get_current_user`, but be careful if you stack things in `dependencies=[...]` on the router level.
+
+## Quick reference
+
+| Need | Pattern |
+|------|---------|
+| One role only | `Depends(require_role(Role.ADMIN))` |
+| Any of several roles | `Depends(require_role(Role.EDITOR, Role.ADMIN))` |
+| Capability without naming roles | `Depends(require_permission("post:delete"))` |
+| Per-record ownership | Check inside the route after loading the record |
+| Different rules on the same route based on role | Combine: dependency for the floor, inline check for the nuance |
+
+## When RBAC stops being enough
+
+If you find yourself writing rules like *"editors can edit drafts created in the last 24 hours by users in the same team during business hours"*, RBAC is probably not the right tool any more. That is policy territory. Libraries like `casbin` or services like Open Policy Agent exist for exactly that. Don't reach for them before you need them — but don't twist roles into knots either.

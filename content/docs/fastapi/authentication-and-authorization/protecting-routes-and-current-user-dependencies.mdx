@@ -1,0 +1,212 @@
+---
+title: Protecting Routes and Current User Dependencies
+---
+
+By now the pieces exist in isolation — a password hasher, a token issuer, a decoder, role checks. The job left is gluing them together so that protecting a route is one line of code and you never have to think about the wiring again.
+
+## What "protected" actually means
+
+A protected route refuses to run its body unless certain conditions hold. Those conditions usually come in three layers:
+
+1. The request carries a valid identity (authentication).
+2. That identity has the right standing (authorization).
+3. The thing being accessed permits this user (ownership, state, etc.).
+
+The first two go in dependencies. The third tends to live inside the route because it depends on data we don't have until we've looked something up.
+
+## The single source of truth: get_current_user
+
+Every protected route in the app passes through this one dependency. Get it right and the rest of auth becomes easy.
+
+```python
+from fastapi import Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer
+from jwt import InvalidTokenError
+import jwt
+from sqlalchemy.orm import Session
+
+from .config import settings
+from .database import get_db
+from .models import User
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/token")
+
+_credentials_error = HTTPException(
+    status_code=status.HTTP_401_UNAUTHORIZED,
+    detail="Could not validate credentials",
+    headers={"WWW-Authenticate": "Bearer"},
+)
+
+def get_current_user(
+    token: str = Depends(oauth2_scheme),
+    db: Session = Depends(get_db),
+) -> User:
+    try:
+        payload = jwt.decode(
+            token,
+            settings.secret_key,
+            algorithms=[settings.algorithm],
+        )
+        if payload.get("type") != "access":
+            raise _credentials_error
+        email: str | None = payload.get("sub")
+        if not email:
+            raise _credentials_error
+    except InvalidTokenError:
+        raise _credentials_error
+
+    user = db.query(User).filter(User.email == email).first()
+    if user is None:
+        raise _credentials_error
+    return user
+```
+
+Notice three things:
+
+- The error is built **once** at module load. It's a small thing, but it removes the temptation to make slightly different errors in different places, which makes client error-handling brittle.
+- We verify the token `type` is `"access"`, not `"refresh"`. Even if a refresh token leaks, it cannot be used as an access token here.
+- The database lookup matters. A token might be cryptographically valid for a user that has since been deleted or disabled — refusing those requests is the only way to actually log someone out.
+
+## Variants you'll want eventually
+
+A few cousins of `get_current_user` show up in real apps:
+
+```python
+def get_current_active_user(
+    current: User = Depends(get_current_user),
+) -> User:
+    if not current.is_active:
+        raise HTTPException(403, "Inactive account")
+    return current
+
+
+def get_current_user_optional(
+    token: str | None = Depends(oauth2_scheme_optional),
+    db: Session = Depends(get_db),
+) -> User | None:
+    """For endpoints that work logged in or out (e.g. public blog posts
+    where logged-in users get an extra 'liked' field)."""
+    if token is None:
+        return None
+    try:
+        return get_current_user(token=token, db=db)
+    except HTTPException:
+        return None
+```
+
+For the optional one, you need `OAuth2PasswordBearer(..., auto_error=False)` so missing tokens don't raise — they just produce `None`.
+
+## Three places to attach a check
+
+FastAPI gives you a few hooks for adding security, and each fits a different shape of problem.
+
+| Where you attach it | When that's the right choice | Example |
+|---------------------|------------------------------|---------|
+| Route function parameter | You need the user object inside the handler | `current: User = Depends(get_current_user)` |
+| `dependencies=[...]` on the decorator | You just need the check to run, not the value | `@app.get("/x", dependencies=[Depends(require_admin)])` |
+| `dependencies=[...]` on an `APIRouter` | Every route in this router needs the same check | `APIRouter(dependencies=[Depends(get_current_user)])` |
+
+A common pattern is to compose all three: a router-level dependency for "must be logged in", a decorator-level one for "must be admin", and a parameter-level one when the route also wants the user object.
+
+```python
+from fastapi import APIRouter
+
+admin_router = APIRouter(
+    prefix="/admin",
+    tags=["admin"],
+    dependencies=[Depends(require_role(Role.ADMIN))],
+)
+
+@admin_router.get("/users")
+def list_users(db: Session = Depends(get_db)):
+    return db.query(User).all()
+
+@admin_router.delete(
+    "/users/{user_id}",
+    dependencies=[Depends(audit_action)],  # logs every deletion
+)
+def delete_user(
+    user_id: int,
+    actor: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    ...
+```
+
+Reading the decorator tells you exactly what guards are in place before you even look at the body.
+
+## Putting it together: a real route
+
+```python
+@app.patch("/posts/{post_id}", response_model=PostOut)
+def update_post(
+    post_id: int,
+    payload: PostUpdate,
+    current: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db),
+):
+    post = db.get(Post, post_id)
+    if post is None:
+        raise HTTPException(404, "Post not found")
+
+    if post.author_id != current.id and not has_permission(current, "post:edit_any"):
+        raise HTTPException(403, "Not your post")
+
+    for field, value in payload.model_dump(exclude_unset=True).items():
+        setattr(post, field, value)
+
+    db.commit()
+    db.refresh(post)
+    return post
+```
+
+Three layers, in order: authentication via the dependency, ownership-or-permission via the inline check, then the actual update. If any layer rejects, the layers below don't run.
+
+## A small diagram of the request
+
+```text
+Request: PATCH /posts/42
+         Authorization: Bearer eyJ...
+
+   ┌──────────────────────────┐
+1. │ oauth2_scheme            │  pull token out of header
+   └──────────────────────────┘
+                │
+                v
+   ┌──────────────────────────┐
+2. │ get_current_user         │  decode JWT, look up user
+   └──────────────────────────┘
+                │
+                v
+   ┌──────────────────────────┐
+3. │ get_current_active_user  │  ensure is_active
+   └──────────────────────────┘
+                │
+                v
+   ┌──────────────────────────┐
+4. │ update_post (handler)    │  load post, ownership check, update
+   └──────────────────────────┘
+```
+
+Each step is one small dependency. Each step has one job. That is the entire pattern.
+
+## Things worth doing once and forgetting
+
+- **Centralize errors.** All auth failures should look the same to the client. Don't accidentally leak through different wording.
+- **Pin algorithms.** Always pass `algorithms=[...]` to `jwt.decode`. Leaving it open invites the algorithm-confusion class of attacks.
+- **Read the secret from config**, not from a constant in the source file. `settings.secret_key` beats `SECRET_KEY = "..."` for many obvious reasons.
+- **Add `tags=["auth"]`** to your auth router so the docs page groups things tidily.
+- **Test the failure paths**, not just the happy path. A test that says "an expired token returns 401" catches real bugs.
+
+## Wrapping up the section
+
+Across these six docs we built the same picture from many angles:
+
+- Authentication is *who*, authorization is *what*.
+- Passwords are stored as slow hashes, never raw.
+- OAuth2's password flow gives FastAPI a standard login shape.
+- JWTs carry identity across requests; pair short access with longer refresh.
+- RBAC and per-permission checks describe *what* a user may do.
+- Dependencies stitch the whole thing together with one-liners on routes.
+
+If your app does these six things correctly, you have an auth system that is honest, simple, and easy to extend. Most of the security disasters in the wild come from skipping one of these, not from missing some advanced technique.

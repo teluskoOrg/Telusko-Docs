@@ -1,0 +1,258 @@
+---
+title: Uploading Single and Multiple Files
+---
+
+File uploads are a deceptively simple feature. The handler is short. The pitfalls are not. This page walks through the working code first, then the things that are easy to get wrong.
+
+## Two ways to receive a file
+
+FastAPI gives you a choice.
+
+| Use | When |
+|-----|------|
+| `File()` | Tiny uploads you can hold in memory comfortably (a few KB) |
+| `UploadFile` | Anything realistic — uses a spooled file so big uploads don't blow up memory |
+
+In practice, prefer `UploadFile` for almost everything. The only time `File()` (raw bytes) is the right call is when you genuinely need the whole content as a `bytes` object for processing right away.
+
+## The single-file upload
+
+```python
+from fastapi import FastAPI, File, UploadFile
+
+app = FastAPI()
+
+@app.post("/upload")
+async def upload(file: UploadFile = File(...)):
+    return {
+        "filename": file.filename,
+        "content_type": file.content_type,
+        "size": file.size,
+    }
+```
+
+A few things to know about `UploadFile`:
+
+- `file.filename` — what the client *claimed* the name was. Don't trust it (more on that below).
+- `file.content_type` — also client-supplied.
+- `file.size` — the size FastAPI determined.
+- `file.file` — the underlying file-like object (for sync libraries).
+- `await file.read(size=-1)` — async read, all or part.
+- `await file.seek(0)` — rewind, useful when you want to read the same upload twice.
+- `await file.close()` — FastAPI does this for you when the request ends, but you can do it sooner if you want.
+
+## Saving the upload to disk
+
+This is the most common follow-up:
+
+```python
+import shutil
+from pathlib import Path
+from uuid import uuid4
+
+UPLOAD_DIR = Path("uploads")
+UPLOAD_DIR.mkdir(exist_ok=True)
+
+@app.post("/upload")
+async def upload(file: UploadFile = File(...)):
+    # never trust the client's filename — give it a safe random one
+    suffix = Path(file.filename or "").suffix
+    safe_name = f"{uuid4().hex}{suffix}"
+    dest = UPLOAD_DIR / safe_name
+
+    with dest.open("wb") as out:
+        shutil.copyfileobj(file.file, out)
+
+    return {"saved_as": safe_name, "original": file.filename}
+```
+
+`shutil.copyfileobj` streams the upload chunk-by-chunk rather than loading it all into memory at once. For a 4GB video, that difference is the difference between "works" and "kills the server."
+
+## Why we replace the filename
+
+The client can send absolutely anything as `filename`:
+
+- `../../../etc/passwd` — path traversal attempt.
+- `script.exe` masquerading as an image.
+- `..\\..\\Windows\\System32\\drivers\\hosts` — Windows variant.
+- A 2000-character emoji bomb.
+
+The safe move: never use the client-supplied name as a path. Generate a server-side ID (UUID, content hash, database row id), keep the original name only for display, and store them separately if you care about it.
+
+```python
+class StoredFile(Base):
+    __tablename__ = "files"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    storage_key: Mapped[str] = mapped_column(unique=True)   # uuid.hex.ext
+    original_name: Mapped[str]                              # for showing back
+    content_type: Mapped[str]
+    size: Mapped[int]
+    uploaded_at: Mapped[datetime] = mapped_column(default=datetime.utcnow)
+```
+
+## Multiple files at once
+
+```python
+@app.post("/upload-many")
+async def upload_many(files: list[UploadFile] = File(...)):
+    return [
+        {"name": f.filename, "size": f.size}
+        for f in files
+    ]
+```
+
+The HTML side just adds `multiple`:
+
+```html
+<input type="file" name="files" multiple>
+```
+
+Each chosen file becomes one element in the list.
+
+## Files alongside other form fields
+
+This is where many people get stuck. Mixing files with regular form fields is fine, *if* you use `Form` for the non-file parts:
+
+```python
+from fastapi import Form
+
+@app.post("/articles")
+async def create_article(
+    title: str = Form(...),
+    body: str = Form(...),
+    cover: UploadFile = File(...),
+):
+    return {"title": title, "cover": cover.filename}
+```
+
+Trying to mix `File` with a Pydantic `Body` model does not work — see the form-data page for the workaround (send the structured part as a JSON string in a form field).
+
+## Validating uploads
+
+The two things you almost always want to check:
+
+```python
+from fastapi import HTTPException
+
+MAX_BYTES = 5 * 1024 * 1024   # 5 MB
+ALLOWED_TYPES = {"image/jpeg", "image/png", "image/webp"}
+
+@app.post("/avatar")
+async def avatar(file: UploadFile = File(...)):
+    if file.content_type not in ALLOWED_TYPES:
+        raise HTTPException(415, "Only JPEG, PNG and WebP are allowed")
+
+    # size check, while streaming
+    contents = await file.read()
+    if len(contents) > MAX_BYTES:
+        raise HTTPException(413, "File too large (5 MB max)")
+
+    # ...save contents somewhere
+    return {"size": len(contents)}
+```
+
+A subtle point: `file.size` and `content_type` come from the client and can lie. For real assurance:
+
+- Set a **server-level** maximum body size (uvicorn flag, load balancer, the middleware from the security section).
+- For images, actually **decode** them with Pillow. If decoding succeeds, it's a real image of the claimed format. If not, reject it.
+- For other types, use a library like `python-magic` that inspects the actual byte signature.
+
+```python
+from io import BytesIO
+from PIL import Image, UnidentifiedImageError
+
+try:
+    img = Image.open(BytesIO(contents))
+    img.verify()
+except UnidentifiedImageError:
+    raise HTTPException(415, "That is not a valid image")
+```
+
+## Streaming a large upload (no full read into memory)
+
+For genuinely large uploads, don't `await file.read()` at all. Stream:
+
+```python
+import aiofiles
+
+@app.post("/big-upload")
+async def big_upload(file: UploadFile = File(...)):
+    dest = UPLOAD_DIR / f"{uuid4().hex}.bin"
+    async with aiofiles.open(dest, "wb") as out:
+        while chunk := await file.read(1024 * 1024):  # 1 MB chunks
+            await out.write(chunk)
+    return {"ok": True}
+```
+
+The walrus `:=` reads until `read()` returns an empty byte string. Each loop iteration only ever holds one chunk in memory.
+
+## Where the file actually goes (a small reality check)
+
+In production, "save to disk" is usually not the answer.
+
+| Storage choice | Good for | Watch out for |
+|----------------|----------|----------------|
+| Local disk | Single-server dev, small apps | Survives restarts, dies with the server |
+| Network volume (NFS/EFS) | Multi-server with shared storage | Slow, fragile under load |
+| S3 / GCS / Azure Blob | Anything serious | Need to handle pre-signed URLs, eventual consistency |
+| Direct-to-cloud from browser | Heavy upload traffic | Sign URLs on the backend so the browser uploads straight to the bucket |
+
+The "direct-to-cloud" pattern deserves a callout. Instead of routing every uploaded byte through your FastAPI server, your route just hands the client a pre-signed S3 PUT URL. The browser uploads straight to S3, which is far faster and cheaper. Your server only sees a small "I uploaded it" callback afterward.
+
+## A complete-ish example
+
+```python
+import shutil
+from pathlib import Path
+from uuid import uuid4
+
+from fastapi import FastAPI, File, Form, HTTPException, UploadFile
+from sqlalchemy.orm import Session
+from fastapi import Depends
+
+from .database import get_db
+from .models import StoredFile
+
+app = FastAPI()
+UPLOAD_DIR = Path("uploads")
+UPLOAD_DIR.mkdir(exist_ok=True)
+
+ALLOWED = {"image/jpeg", "image/png"}
+MAX = 5 * 1024 * 1024
+
+@app.post("/upload")
+async def upload(
+    description: str = Form(""),
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+):
+    if file.content_type not in ALLOWED:
+        raise HTTPException(415, "Unsupported file type")
+
+    suffix = Path(file.filename or "").suffix.lower()
+    key = f"{uuid4().hex}{suffix}"
+    dest = UPLOAD_DIR / key
+
+    size = 0
+    with dest.open("wb") as out:
+        while chunk := await file.read(1024 * 1024):
+            size += len(chunk)
+            if size > MAX:
+                out.close()
+                dest.unlink(missing_ok=True)
+                raise HTTPException(413, "File too large")
+            out.write(chunk)
+
+    record = StoredFile(
+        storage_key=key,
+        original_name=file.filename or "",
+        content_type=file.content_type,
+        size=size,
+    )
+    db.add(record)
+    db.commit()
+    db.refresh(record)
+    return {"id": record.id, "storage_key": key, "description": description}
+```
+
+That's a real upload route: validates the type, caps the size while streaming, picks a safe filename, and records the metadata. From here, serving the file back is the topic of the next page.

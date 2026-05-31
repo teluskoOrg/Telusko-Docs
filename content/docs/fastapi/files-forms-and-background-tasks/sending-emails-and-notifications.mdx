@@ -1,0 +1,209 @@
+---
+title: Sending Emails and Notifications
+---
+
+Email is one of those features every project eventually needs and nobody loves implementing. The good news is that for a FastAPI app, the actual sending is a handful of lines. The interesting decisions are around *how* to send — should the request wait for the email to leave, or should it fire-and-forget? The next two docs in this section answer that more carefully with background tasks and async workflows. This one is about the sending itself.
+
+## Don't send from inside the request, if you can help it
+
+A bad pattern that's surprisingly common:
+
+```python
+@app.post("/signup")
+def signup(user: UserCreate):
+    save_user(user)
+    smtp.send(welcome_email(user))   # blocks the request
+    return {"ok": True}
+```
+
+The user clicks "sign up", and then their browser sits there spinning for 2-5 seconds while your server connects to an SMTP server, negotiates TLS, ships the email, and waits for an OK. If your SMTP provider has a slow day, the signup endpoint has a slow day.
+
+The right shape, in order of how much engineering you want to invest:
+
+| Approach | Latency on the request | Reliability if it fails |
+|----------|------------------------|--------------------------|
+| Sync send inside the request | Bad | The whole request fails |
+| FastAPI `BackgroundTasks` | Good | Best-effort; lost if the worker restarts |
+| External queue (Celery, Arq, RQ) | Good | Retried, durable, observable |
+| Transactional email API (SendGrid, SES, Postmark) called from a background task | Good | Provider handles retries |
+
+The middle two are the realistic choices for most apps. We'll go through the actual sending here and the queueing in the next two pages.
+
+## Sending with the standard library
+
+For a one-off, the standard library is enough. No external dependency.
+
+```python
+import smtplib
+from email.message import EmailMessage
+
+def send_email(*, to: str, subject: str, body: str) -> None:
+    msg = EmailMessage()
+    msg["From"] = "no-reply@example.com"
+    msg["To"] = to
+    msg["Subject"] = subject
+    msg.set_content(body)
+
+    with smtplib.SMTP("smtp.example.com", 587) as smtp:
+        smtp.starttls()
+        smtp.login("user", "password")
+        smtp.send_message(msg)
+```
+
+That works. It's also synchronous and brittle. It's a fine starting point and a poor finishing point.
+
+## Sending with fastapi-mail
+
+For a more comfortable API, async support, HTML templates, and attachments, `fastapi-mail` is the popular pick.
+
+```bash
+pip install fastapi-mail
+```
+
+```python
+from fastapi_mail import ConnectionConfig, FastMail, MessageSchema, MessageType
+
+mail_config = ConnectionConfig(
+    MAIL_USERNAME="user",
+    MAIL_PASSWORD="password",
+    MAIL_FROM="no-reply@example.com",
+    MAIL_PORT=587,
+    MAIL_SERVER="smtp.example.com",
+    MAIL_STARTTLS=True,
+    MAIL_SSL_TLS=False,
+)
+
+fast_mail = FastMail(mail_config)
+
+async def send_welcome(to: str, name: str) -> None:
+    message = MessageSchema(
+        subject="Welcome aboard!",
+        recipients=[to],
+        body=f"<p>Hi {name}, glad to have you.</p>",
+        subtype=MessageType.html,
+    )
+    await fast_mail.send_message(message)
+```
+
+The `await` matters — under the hood it uses `aiosmtplib`, so it actually releases the event loop while talking to the SMTP server. That's a real benefit in an async app.
+
+## SMTP vs. transactional email APIs
+
+For anything beyond a side project, a transactional email API beats SMTP for a few honest reasons:
+
+| | Raw SMTP | Transactional API (SendGrid, SES, Postmark, etc.) |
+|---|----------|---------------------------------------------------|
+| Setup | Server credentials | API key |
+| Deliverability | Up to you (SPF, DKIM, DMARC, IP reputation) | Provider takes care of most of it |
+| Retries | You implement | Provider handles |
+| Bounce tracking | You implement | Webhook from the provider |
+| Template management | Files in your repo | UI in the provider |
+| Per-message cost | Free if you run your own server | Cents per thousand |
+
+If your app actually depends on emails landing — password resets, two-factor codes, receipts — use a transactional API. The deliverability difference alone is worth it. SMTP from a random VPS regularly gets routed to spam.
+
+Calling SendGrid from a route looks like this:
+
+```python
+import os
+from sendgrid import SendGridAPIClient
+from sendgrid.helpers.mail import Mail
+
+client = SendGridAPIClient(os.environ["SENDGRID_API_KEY"])
+
+def send_welcome(to: str, name: str) -> None:
+    message = Mail(
+        from_email="no-reply@example.com",
+        to_emails=to,
+        subject="Welcome!",
+        html_content=f"<p>Hi {name}.</p>",
+    )
+    client.send(message)
+```
+
+Synchronous, but quick — it's an HTTPS POST, not an SMTP handshake.
+
+## Templating bodies
+
+Hardcoded HTML strings get ugly fast. Jinja2 templates fit the job:
+
+```python
+from jinja2 import Environment, FileSystemLoader, select_autoescape
+
+env = Environment(
+    loader=FileSystemLoader("templates/email"),
+    autoescape=select_autoescape(["html"]),
+)
+
+def render(template: str, **context) -> str:
+    return env.get_template(template).render(**context)
+
+
+body = render("welcome.html", name="Alice", verify_url="https://...")
+```
+
+`autoescape=True` is not optional — without it, a user with the name `<script>...` becomes a stored XSS in every email they're mentioned in.
+
+## A small SignalingNote about plain-text fallbacks
+
+A well-formed email has both HTML and plain-text versions in the same envelope. Some clients (a tiny minority, but they exist) won't render HTML. Spam filters also tend to view HTML-only emails with more suspicion.
+
+```python
+message = MessageSchema(
+    subject="Welcome",
+    recipients=[to],
+    body="<p>Welcome!</p>",
+    template_body={"name": name},
+    subtype=MessageType.html,
+)
+# fastapi-mail handles alternative bodies if you provide a template;
+# for hand-built messages, set both body and subtype carefully.
+```
+
+For raw SMTP with the stdlib:
+
+```python
+msg = EmailMessage()
+msg["From"] = ...
+msg["To"] = ...
+msg["Subject"] = ...
+msg.set_content("Plain text version.")          # fallback
+msg.add_alternative("<p>HTML version.</p>", subtype="html")
+```
+
+## Other notification channels, briefly
+
+The patterns are the same as email — call an SDK, ideally not in the request thread:
+
+| Channel | Library | Notes |
+|---------|---------|-------|
+| Slack | `slack_sdk` | Incoming webhooks are dead simple; Bot tokens for more |
+| Discord | `aiohttp` + webhook URL | One HTTP POST per message |
+| SMS | `twilio` | Costs real money per send — rate-limit yourself |
+| Push (web) | `pywebpush` | Needs VAPID keys and a subscription per device |
+| Push (mobile) | Firebase Cloud Messaging | Server-side via `firebase-admin` |
+
+The architectural pattern across all of them: receive request → save the source-of-truth state → enqueue a job to send the notification → return success to the user. The notification leaving the system is a side effect, not a precondition for the request succeeding.
+
+## Local dev: don't send to real inboxes
+
+Two safety habits that pay back many times over:
+
+- In dev, point SMTP at [MailHog](https://github.com/mailhog/MailHog) or [Mailpit](https://github.com/axllent/mailpit). Both catch outgoing mail and show it in a web UI without sending it onward.
+- In a staging environment, allowlist a small set of internal email addresses. Anything outside the allowlist gets silently dropped or routed to a test inbox. This stops the classic "we ran a bulk job against production data on staging and emailed 50,000 customers" disaster.
+
+```python
+ALLOWED = {"qa@example.com", "dev@example.com"}
+
+def safe_send(to: str, *args, **kw):
+    if os.getenv("ENV") == "staging" and to not in ALLOWED:
+        log.info("staging email suppressed", extra={"to": to})
+        return
+    return send_email(to=to, *args, **kw)
+```
+
+A small habit. A large amount of dignity preserved.
+
+## Where this connects
+
+We've now got the *how* of sending. The next page covers `BackgroundTasks`, which is FastAPI's built-in answer to "don't make the request wait for this." After that, async workflows pull the pieces together for slightly more complex orchestration.

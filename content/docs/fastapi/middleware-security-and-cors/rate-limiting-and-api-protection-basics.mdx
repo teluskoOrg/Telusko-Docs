@@ -1,0 +1,188 @@
+---
+title: Rate Limiting and API Protection Basics
+---
+
+Without limits, one careless client can soak up a server's capacity for everyone else. Without limits, a brute-force script can try ten thousand passwords a minute against your login endpoint. Without limits, a bug in a frontend can hammer your database into the ground. Rate limiting is the answer to all three.
+
+This page is the *basics* — enough to ship something sensible. The truly serious stuff (distributed rate limits, sliding windows, leaky buckets, per-tenant quotas) gets its own day eventually.
+
+## What "rate limit" actually means
+
+A rate limit caps how often something can happen in a window of time. The classic form is "N requests per minute per IP."
+
+```text
+   :01s  :05s  :12s  :18s  :30s  :45s  :58s  :60s ─┐
+    ●     ●     ●     ●     ●     ●     ●         │  7 requests
+                                                    │  in 60 seconds
+   :60s+
+    ●     ●     ●  ←  if limit is 5/min, these are rejected
+```
+
+The exact algorithm matters more than people think:
+
+| Algorithm | How it works | Trade-off |
+|-----------|--------------|-----------|
+| **Fixed window** | Reset a counter every 60 seconds | Allows bursts at window boundaries |
+| **Sliding window** | Count requests in the trailing 60 seconds | Smoother, more accurate |
+| **Token bucket** | A bucket refills at a rate; each request takes a token | Allows bursts up to bucket size |
+| **Leaky bucket** | Requests drip out at a fixed rate; overflow is rejected | Smooths spikes but adds latency |
+
+For 90% of APIs, **fixed window per IP** is fine. The other algorithms exist because at scale or in specific shapes (login, payments) the fixed-window burst behavior matters.
+
+## SlowAPI — the easy default
+
+`slowapi` is the most popular rate-limit library for FastAPI. It's a wrapper around `limits`, which knows the math, and integrates cleanly with FastAPI's dependency system.
+
+```bash
+pip install slowapi
+```
+
+```python
+from fastapi import FastAPI, Request
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
+
+limiter = Limiter(key_func=get_remote_address)
+
+app = FastAPI()
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+```
+
+The `key_func` decides what to count by. `get_remote_address` counts per client IP. You'll probably swap this out later.
+
+### A per-route limit
+
+```python
+@app.get("/search")
+@limiter.limit("30/minute")
+def search(request: Request, q: str):
+    ...
+```
+
+That's it. Thirty requests per minute per IP. If a client exceeds it, they get a `429 Too Many Requests` with the standard `Retry-After` header.
+
+### Multiple limits, stacked
+
+```python
+@app.post("/auth/token")
+@limiter.limit("5/minute")
+@limiter.limit("100/day")
+def login(request: Request, form: OAuth2PasswordRequestForm = Depends()):
+    ...
+```
+
+Both have to hold. Five per minute prevents brute force, 100/day prevents the slow grind across an entire day.
+
+### A global default
+
+If you want every route limited unless overridden:
+
+```python
+limiter = Limiter(
+    key_func=get_remote_address,
+    default_limits=["60/minute"],
+)
+```
+
+## Beyond IP — what to actually count by
+
+Counting by IP is the most common default, but it's also the easiest to abuse. A botnet has many IPs. A NAT'd corporate network shares one IP across thousands of users.
+
+A more honest set of keys:
+
+| Endpoint shape | Better key |
+|----------------|------------|
+| Public read endpoints | IP address |
+| Login / password reset | IP + username (so attackers can't smear attempts across different IPs *and* victims) |
+| Authenticated endpoints | User ID |
+| API-key clients (B2B) | API key |
+| Anonymous mutations (signups, contact forms) | IP + CAPTCHA |
+
+```python
+def key_for_user(request: Request) -> str:
+    user = getattr(request.state, "user", None)
+    return user.id if user else get_remote_address(request)
+
+limiter = Limiter(key_func=key_for_user)
+```
+
+## The 429 response
+
+`429 Too Many Requests` should travel with a `Retry-After` header so clients know when to try again. SlowAPI sets this automatically. A polite response also explains the limit so clients can build backoff into their own logic:
+
+```python
+from fastapi.responses import JSONResponse
+
+async def rate_limit_handler(request, exc):
+    return JSONResponse(
+        status_code=429,
+        content={
+            "detail": "Too many requests",
+            "limit": str(exc.detail),
+        },
+        headers={"Retry-After": "60"},
+    )
+
+app.add_exception_handler(RateLimitExceeded, rate_limit_handler)
+```
+
+## In-memory vs distributed counters
+
+The default SlowAPI backend keeps counts in process memory. That works fine for a single-process app. The moment you scale to two workers or two pods, the limits get split — a "5 per minute" cap becomes "5 per minute per worker", which is not what you intended.
+
+For multi-process or multi-host setups, point SlowAPI at Redis:
+
+```python
+limiter = Limiter(
+    key_func=get_remote_address,
+    storage_uri="redis://localhost:6379",
+)
+```
+
+Now every worker increments the same counter. This is the production answer.
+
+## Things rate limits do not protect against
+
+It is tempting to think "I added rate limiting, I'm safe." A few things rate limits *don't* do:
+
+- **They don't authenticate.** A high-volume legitimate user might trip them; an attacker pacing themselves below the limit won't.
+- **They don't validate.** SQL injection at one request per second is still SQL injection.
+- **They don't replace a WAF.** Cloudflare, AWS WAF, etc. catch a class of attacks (botnets, known-bad signatures) that an in-app limiter never sees.
+- **They don't stop a DDoS.** A real distributed denial-of-service overwhelms the *network*, not the application. By the time the request reaches your rate limiter, you've already paid the cost.
+
+Rate limits live in a layer that complements the others, not replaces them.
+
+## A small companion: request size and timeout
+
+Two siblings of rate limiting often grouped together:
+
+```python
+# In your ASGI server config (uvicorn, gunicorn, etc.):
+# --limit-max-requests, --timeout-keep-alive, --backlog
+```
+
+```python
+# In middleware, a body size cap (from the earlier doc):
+app.add_middleware(MaxBodySizeMiddleware, max_bytes=2_000_000)
+```
+
+Together: rate limits cap how *often*, body caps cap how *big*, timeouts cap how *long*. Each closes a different door.
+
+## A sane starter policy
+
+If you have no rate limits today and want a reasonable starting point:
+
+| Route family | Limit |
+|--------------|-------|
+| `/auth/token`, `/auth/register`, password reset | 5 per minute per IP+username |
+| Other write endpoints | 30 per minute per user |
+| Read endpoints | 60-120 per minute per user |
+| Public unauthenticated | 30 per minute per IP |
+
+Ship it, watch the 429 rate, adjust. You will overshoot or undershoot the first time. That's fine — the rule of thumb is "tight enough to hurt an attacker, loose enough to never hurt a real user." That gap is wider than it sounds.
+
+## Where this fits
+
+Rate limiting sits at a peculiar layer. It is part security, part reliability, part fairness. You add it not because you expect attackers (though you should), but because you owe it to your other users to make sure one client cannot ruin their day.

@@ -1,0 +1,185 @@
+---
+title: Security Headers and Trusted Hosts
+---
+
+Security headers are the cheapest defense you'll ever add to an API. They're small, they cost nothing at runtime, and they shut down whole categories of attacks before they get started. The downside is that nobody adds them by default — you have to remember.
+
+This page is part checklist, part explanation. Skim the table at the end if you just want the recipe; read the explanations to understand *why* each one is there.
+
+## The headers worth knowing
+
+| Header | What it does | Worth it for an API? |
+|--------|--------------|----------------------|
+| `Strict-Transport-Security` | Forces the browser to always use HTTPS | Yes, in production |
+| `X-Content-Type-Options: nosniff` | Stops browsers guessing content types | Always |
+| `X-Frame-Options: DENY` | Forbids your responses being embedded in an iframe | Yes, except when you serve embeddable widgets |
+| `Referrer-Policy` | Controls how much of the URL is leaked in `Referer` | Yes |
+| `Content-Security-Policy` | The big one — restricts what the browser may load | Critical for HTML pages, optional for pure JSON APIs |
+| `Permissions-Policy` | Disables browser features (camera, geolocation, etc.) | Useful for HTML |
+| `Cache-Control` | Whether sensitive responses get cached anywhere | Always think about it |
+
+For a pure JSON API consumed by your own frontend, the most impactful three are `HSTS`, `nosniff`, and (if responses can be sensitive) a strict `Cache-Control`.
+
+## Adding them via middleware
+
+There's no built-in "security headers" middleware in FastAPI/Starlette, but a small custom one covers the basics.
+
+```python
+from starlette.middleware.base import BaseHTTPMiddleware
+
+class SecurityHeadersMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request, call_next):
+        response = await call_next(request)
+        headers = response.headers
+
+        headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+        headers["X-Content-Type-Options"] = "nosniff"
+        headers["X-Frame-Options"] = "DENY"
+        headers["Referrer-Policy"] = "no-referrer"
+        headers["Permissions-Policy"] = "geolocation=(), microphone=(), camera=()"
+
+        return response
+
+
+app.add_middleware(SecurityHeadersMiddleware)
+```
+
+Each line is one decision. Let's go through what each one is actually doing.
+
+### Strict-Transport-Security (HSTS)
+
+```text
+Strict-Transport-Security: max-age=31536000; includeSubDomains
+```
+
+Tells the browser: *"For the next year (31,536,000 seconds), don't even try plain HTTP. Always upgrade to HTTPS automatically."* This protects users on networks where an attacker could downgrade the connection.
+
+Two caveats:
+- Don't ship this on a domain where some routes only work over HTTP. It is sticky in the browser and hard to undo.
+- `includeSubDomains` is the right default but think about whether all your subdomains can actually serve HTTPS.
+
+### X-Content-Type-Options: nosniff
+
+```text
+X-Content-Type-Options: nosniff
+```
+
+Some browsers used to try to "be helpful" by guessing the type of a response when the server's `Content-Type` looked wrong. That guessing has been exploited to turn what looks like an image into executable JavaScript. `nosniff` disables it. There is no reason not to send this header.
+
+### X-Frame-Options: DENY
+
+```text
+X-Frame-Options: DENY
+```
+
+Stops anyone from embedding your responses inside an `<iframe>` on another site. This is the defense against clickjacking — the trick where an attacker overlays a transparent iframe of your app over their own UI to harvest clicks.
+
+If your API legitimately needs to be iframed (an embeddable widget, an OAuth consent page), switch this to `SAMEORIGIN` or use a `Content-Security-Policy` `frame-ancestors` directive instead.
+
+### Referrer-Policy
+
+```text
+Referrer-Policy: no-referrer
+```
+
+When a user navigates from one page to another, the browser sends the previous URL in a `Referer` header. That URL might contain sensitive data — tokens, IDs, search queries. `no-referrer` is the strictest option. `strict-origin-when-cross-origin` is a popular middle ground if you need analytics to know roughly where traffic came from.
+
+### Permissions-Policy
+
+```text
+Permissions-Policy: geolocation=(), microphone=(), camera=()
+```
+
+For HTML responses this disables browser APIs. For a pure JSON API it's largely cosmetic but cheap to add.
+
+### What about Content-Security-Policy?
+
+CSP is the most powerful and the most fiddly. For a JSON API, you usually don't need it. For any HTML page (your docs UI, an admin panel, server-rendered pages) it is well worth the time. A starting CSP for a server-rendered admin page might be:
+
+```text
+Content-Security-Policy:
+  default-src 'self';
+  script-src 'self';
+  style-src 'self' 'unsafe-inline';
+  img-src 'self' data:;
+  connect-src 'self';
+  frame-ancestors 'none';
+```
+
+That blocks every external script, every inline event handler, and every embed of the page. Tightening CSP is an iterative process — you ship it in `Content-Security-Policy-Report-Only` first, watch the violation reports, then promote to enforcement.
+
+## Trusted hosts
+
+A different kind of header check, this time on the *request*.
+
+```python
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
+
+app.add_middleware(
+    TrustedHostMiddleware,
+    allowed_hosts=["api.example.com", "*.example.com"],
+)
+```
+
+The middleware rejects any request whose `Host` header isn't on the list. Why does this matter? Several reasons:
+
+- **Cache poisoning**: a malicious request with a fake `Host` header can trick downstream caches into storing a poisoned response keyed by the legitimate host.
+- **Password reset link generation**: if your code builds reset URLs from `request.url`, an attacker can ship themselves a link pointing at their own domain.
+- **Routing confusion**: in shared infrastructure, mismatched hosts often indicate scanning.
+
+A reasonable production config rejects everything but your real hostnames:
+
+```python
+import os
+
+allowed_hosts = (
+    ["api.example.com", "*.example.com"]
+    if os.getenv("ENV") == "production"
+    else ["*"]
+)
+
+app.add_middleware(TrustedHostMiddleware, allowed_hosts=allowed_hosts)
+```
+
+Wildcard locally is fine because local dev hits things like `localhost`, `127.0.0.1`, `0.0.0.0`, and whatever weird hostname your container uses.
+
+## Cache-Control on sensitive responses
+
+This one is so easy to forget that it's worth calling out separately. By default, a response with no `Cache-Control` header can be cached by intermediaries. For anything containing user data, you almost certainly don't want that.
+
+```python
+@app.get("/me")
+def me(current = Depends(get_current_user)):
+    return JSONResponse(
+        content=jsonable_encoder(current),
+        headers={"Cache-Control": "no-store"},
+    )
+```
+
+Or in a middleware, for the whole API:
+
+```python
+class NoStoreMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request, call_next):
+        response = await call_next(request)
+        response.headers.setdefault("Cache-Control", "no-store")
+        return response
+```
+
+`setdefault` is the trick — it only sets the header if the route hasn't already chosen its own cache policy.
+
+## Where to verify
+
+Once you've added these, point a scanner at the deployed site:
+
+| Tool | What it checks |
+|------|----------------|
+| [securityheaders.com](https://securityheaders.com) | Quick A-to-F grade on common headers |
+| Mozilla Observatory | Deeper analysis with explanations |
+| Browser devtools → Network → response headers | The ground truth, no third party involved |
+
+A `B` from securityheaders.com on a small API is fine. The goal is to know what you've chosen, not to chase a grade.
+
+## In short
+
+Security headers are a "set them once, leave them alone" job. The middleware in this doc covers the safe defaults, and `TrustedHostMiddleware` handles the request-side counterpart. Add them early in a project's life — they get harder to introduce later when you discover something inadvertently depends on the missing protection.

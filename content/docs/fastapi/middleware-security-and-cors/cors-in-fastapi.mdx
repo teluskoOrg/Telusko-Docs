@@ -1,0 +1,176 @@
+---
+title: CORS in FastAPI
+---
+
+CORS is the most-Googled FastAPI topic that isn't a bug. Almost every developer building a frontend hits the same wall:
+
+> *Access to fetch at 'http://localhost:8000/api/x' from origin 'http://localhost:5173' has been blocked by CORS policy.*
+
+The frustrating part is that this error never came from your code. It came from the **browser**, refusing to give your JavaScript the response that the server already sent. Understanding *why* matters more than memorizing the fix.
+
+## What CORS actually is
+
+CORS — Cross-Origin Resource Sharing — is a browser security rule. The default behavior is: JavaScript running on `https://a.com` cannot read responses from `https://b.com`. CORS is the mechanism that lets a server **opt in** to allowing this, by sending specific response headers.
+
+The server isn't blocking anything. The browser is. CORS headers are how the server tells the browser *"yes, it's fine, this script is allowed to see this response."*
+
+## An origin, defined
+
+An origin is three things together: **scheme + host + port**.
+
+| URL | Origin |
+|-----|--------|
+| `https://api.example.com/users` | `https://api.example.com` |
+| `http://localhost:5173/login` | `http://localhost:5173` |
+| `http://localhost:8000/api` | `http://localhost:8000` |
+
+Notice the last two are *different origins* even though both are localhost. Different port = different origin. This is why a Vite frontend on `:5173` calling a FastAPI backend on `:8000` triggers CORS.
+
+## The two-phase dance
+
+Some CORS requests trigger a **preflight** — an extra `OPTIONS` request the browser fires before the real one. It happens when the request is "non-simple": custom headers, `PUT`/`DELETE`/`PATCH`, JSON content type, and so on. Basically everything a real API does.
+
+```text
+Frontend (https://app.com)          Backend (https://api.com)
+        │                                  │
+        │  OPTIONS /users                  │
+        │  Origin: https://app.com         │
+        │  Access-Control-Request-Method:  │
+        │      POST                        │
+        │ ───────────────────────────────► │
+        │                                  │
+        │  204 No Content                  │
+        │  Access-Control-Allow-Origin:    │
+        │      https://app.com             │
+        │  Access-Control-Allow-Methods:   │
+        │      GET, POST, PUT, DELETE      │
+        │ ◄─────────────────────────────── │
+        │                                  │
+        │  POST /users                     │
+        │  Origin: https://app.com         │
+        │  { ... json ... }                │
+        │ ───────────────────────────────► │
+        │                                  │
+        │  201 Created                     │
+        │  Access-Control-Allow-Origin:    │
+        │      https://app.com             │
+        │ ◄─────────────────────────────── │
+```
+
+If the preflight fails or the response is missing the right headers, the browser never sends the actual request. The backend logs show nothing. The frontend developer is confused. This is the whole story behind 90% of CORS pain.
+
+## The fix
+
+```python
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
+app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["https://app.example.com"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+```
+
+Five settings to understand. Skim the table, then we'll look at the traps.
+
+| Setting | What it controls | Sensible value |
+|---------|------------------|----------------|
+| `allow_origins` | Which origins may access this API | Explicit list of your frontends |
+| `allow_credentials` | Whether cookies / auth headers may be sent | `True` only when you actually use cookies |
+| `allow_methods` | Allowed HTTP methods on the actual request | `["*"]` for simplicity, or list them |
+| `allow_headers` | Allowed custom headers on the request | `["*"]` is fine for most APIs |
+| `expose_headers` | Which response headers JavaScript can read | List the custom ones if you set any |
+
+## The credentials trap
+
+This is the one that bites everyone exactly once.
+
+```python
+# This LOOKS reasonable. It is not.
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,   # ← incompatible with origins="*"
+)
+```
+
+The CORS spec forbids the combination of `allow_credentials=True` and a wildcard origin. The browser will silently refuse the response. You have to name origins explicitly when credentials are in play.
+
+```python
+# Correct
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["https://app.example.com"],
+    allow_credentials=True,
+)
+```
+
+## Local dev vs production
+
+You almost always want different settings in development and in production.
+
+```python
+import os
+
+if os.getenv("ENV") == "production":
+    origins = ["https://app.example.com"]
+else:
+    origins = [
+        "http://localhost:3000",
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+    ]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+```
+
+Note `localhost` and `127.0.0.1` are *different origins*. Listing both saves a lot of head-scratching later.
+
+## Subdomain patterns
+
+When you have many subdomains (`app.example.com`, `admin.example.com`, `widgets.example.com`) the middleware also supports a regex.
+
+```python
+app.add_middleware(
+    CORSMiddleware,
+    allow_origin_regex=r"https://.*\.example\.com",
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+```
+
+Use this carefully. A regex of `.*` matches every origin on the internet — which is the same as `["*"]`, with all of the credential incompatibility plus none of the obvious-look-at-it-and-cringe value.
+
+## Symptoms and what they really mean
+
+| Symptom | Likely cause |
+|---------|--------------|
+| "No 'Access-Control-Allow-Origin' header is present" | The middleware isn't installed, or your origin isn't in the list |
+| "The value of the 'Access-Control-Allow-Origin' header in the response must not be the wildcard '*' when the request's credentials mode is 'include'" | `allow_credentials=True` with `allow_origins=["*"]` |
+| Preflight gets a `405 Method Not Allowed` | The CORS middleware is *after* a more restrictive one, or not registered at all |
+| Cookie isn't sent on cross-origin requests | Need `credentials: "include"` on the fetch *and* `allow_credentials=True` on the server *and* `SameSite=None; Secure` on the cookie |
+| Works in Postman, fails in browser | That's the whole point — CORS is a browser-only check. Postman doesn't enforce it. |
+
+The "works in Postman" one is worth saying out loud: if it works in Postman but fails in the browser, the bug is in your CORS configuration, not in your route.
+
+## Two anti-patterns to avoid
+
+**Putting other middlewares between CORS and your routes** can swallow the preflight `OPTIONS` requests. The CORS middleware needs to handle them. If your auth middleware tries to authenticate an `OPTIONS` request and rejects it, the preflight fails. Register `CORSMiddleware` early.
+
+**Disabling CORS "to make it work"** by allowing everything. That ships to production and stays there for years. Be explicit about which origins, and prune the list when frontends are decommissioned.
+
+## A final note
+
+CORS exists because the alternative is much worse. Without it, any random site you visited could quietly make authenticated requests to your bank, your email, your everything. The friction is the safety feature. Once you've configured it once, the rest is muscle memory.

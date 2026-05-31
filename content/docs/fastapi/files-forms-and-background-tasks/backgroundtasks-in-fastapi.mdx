@@ -1,0 +1,182 @@
+---
+title: BackgroundTasks in FastAPI
+---
+
+A `BackgroundTask` is FastAPI's way of saying *"return the response now, do this other work right after."* It is the simplest possible answer to "don't make the user wait for the email to send." It is also the answer with the most caveats — knowing when it's the right tool, and when you need something heavier, is most of the skill.
+
+## How it works in one paragraph
+
+You add a `BackgroundTasks` parameter to a route. Inside the route, you register one or more callables on it. FastAPI sends your response back to the client, and *then* it runs the registered callables, in the same process, on the same event loop.
+
+```text
+   Client                Server
+     │                     │
+     │ POST /signup        │
+     │ ─────────────────►  │
+     │                     │  save_user(...)
+     │                     │  bg.add_task(send_welcome, user.email)
+     │  201 Created        │
+     │ ◄─────────────────  │
+     │                     │  ← response gone
+     │                     │  send_welcome(user.email)   ← now runs
+     │                     │
+```
+
+The client sees a fast response. The email is sent in the background, by your same FastAPI process.
+
+## The smallest possible example
+
+```python
+from fastapi import BackgroundTasks, FastAPI
+
+app = FastAPI()
+
+def write_log(message: str) -> None:
+    with open("app.log", "a") as f:
+        f.write(message + "\n")
+
+@app.post("/notify")
+def notify(message: str, background: BackgroundTasks):
+    background.add_task(write_log, message)
+    return {"queued": True}
+```
+
+`background.add_task` takes a function and the arguments to call it with — both positional and keyword. The function can be sync or async; FastAPI handles both.
+
+## A more realistic case
+
+The welcome email from the previous page, done right:
+
+```python
+from fastapi import BackgroundTasks, FastAPI, Depends
+from sqlalchemy.orm import Session
+
+from .database import get_db
+from .schemas import UserCreate, UserOut
+from .services.users import create_user
+from .services.email import send_welcome
+
+app = FastAPI()
+
+@app.post("/signup", response_model=UserOut, status_code=201)
+def signup(
+    payload: UserCreate,
+    background: BackgroundTasks,
+    db: Session = Depends(get_db),
+):
+    user = create_user(db, payload)
+    background.add_task(send_welcome, to=user.email, name=user.name)
+    return user
+```
+
+The user gets their `201 Created` immediately. The email goes out a heartbeat later. If the email fails, the signup still succeeded — which is usually what you want.
+
+## Multiple tasks
+
+You can register as many as you like. They run in order.
+
+```python
+background.add_task(send_welcome, to=user.email, name=user.name)
+background.add_task(notify_slack, channel="#signups", text=f"new user: {user.email}")
+background.add_task(increment_metric, "signup")
+```
+
+If task 1 fails, tasks 2 and 3 still run. They're independent. If you need them to *not* be independent, you're past what `BackgroundTasks` is for.
+
+## Tasks in dependencies
+
+Dependencies can also receive a `BackgroundTasks` and add to it. The same instance is shared with the route.
+
+```python
+def audit(request: Request, background: BackgroundTasks):
+    background.add_task(log_access, request.url.path)
+
+@app.get("/secret", dependencies=[Depends(audit)])
+def secret():
+    return {"value": 42}
+```
+
+Every hit on `/secret` logs an access line after the response is sent. The route function itself doesn't know about it.
+
+## What BackgroundTasks does NOT do
+
+This is the important part. The pattern looks magic, and it is genuinely useful, but it has real limits.
+
+| | Behavior |
+|---|----------|
+| Runs in a separate process? | No. Same process, same event loop. |
+| Survives a server restart? | No. If the worker is killed before the task runs, the task is lost. |
+| Retries on failure? | No. If the function raises, the exception is logged and that's it. |
+| Visible in any UI / queue? | No. There is no introspection. |
+| Scales independently from your web servers? | No. More background work = busier web workers. |
+| Suitable for long-running jobs? | No. A 10-minute task ties up worker resources for 10 minutes. |
+
+`BackgroundTasks` is for *short, non-critical* work that you'd rather not block the request on. Sending a notification email. Updating a search index. Recording an analytics event. Things where "best effort" is genuinely fine.
+
+For anything where loss is unacceptable — payment confirmations, password reset emails, anything a customer relies on — you want a real queue. The next page covers that distinction.
+
+## The CPU question
+
+`BackgroundTasks` runs on the same event loop as your route handlers. If a task is CPU-heavy (image resizing, PDF rendering, ML inference), it will *block* the event loop and slow down everything else the worker is handling.
+
+```python
+# This is a trap.
+@app.post("/upload-avatar")
+def upload(file: UploadFile = File(...), bg: BackgroundTasks = ...):
+    bg.add_task(resize_image, file)   # CPU-bound, blocks the loop
+    return {"queued": True}
+```
+
+For CPU work, either run it in a worker process (a real queue) or use `run_in_executor` to push it to a thread:
+
+```python
+import asyncio
+from functools import partial
+
+async def resize_in_thread(path: str) -> None:
+    loop = asyncio.get_running_loop()
+    await loop.run_in_executor(None, partial(resize_image, path))
+
+# then
+bg.add_task(resize_in_thread, path)
+```
+
+A thread pool is still in the same process — it doesn't help if you're maxed out on CPU — but it does keep the event loop responsive.
+
+## A small set of rules of thumb
+
+- **Short, idempotent, can-be-lost** → `BackgroundTasks`.
+- **Must definitely happen** → external queue.
+- **CPU-heavy** → not on the event loop.
+- **Needs scheduling later** → not BackgroundTasks; use a scheduler.
+- **Needs cross-process visibility** → external queue.
+
+## A diagram for picking
+
+```text
+   Is the work mostly waiting on I/O, short, and ok if it occasionally fails?
+                │
+                ├── yes ──► BackgroundTasks. Done.
+                │
+                └── no
+                    │
+                    ├── CPU-heavy ────────► thread pool or external worker process
+                    │
+                    ├── Must not be lost ──► durable queue (Celery, Arq, RQ + Redis)
+                    │
+                    └── Scheduled / recurring ──► APScheduler, or a real cron + worker
+```
+
+## When BackgroundTasks shines
+
+Don't read all the caveats and conclude `BackgroundTasks` is useless. It is the right answer in a remarkable number of cases:
+
+- Sending a Slack message about a non-critical event.
+- Touching a "last seen" timestamp on the user record.
+- Writing an audit log line.
+- Warming a cache.
+- Firing a webhook to a non-essential downstream service.
+
+These are all *fine* to lose under a server restart. The cost of using a real queue for them is higher than the cost of a rare miss.
+
+The next page is about building those "real queue" workflows for the cases where you genuinely need them — and notably, about how to keep them feeling FastAPI-shaped rather than dragging in a heavyweight infrastructure stack on day one.

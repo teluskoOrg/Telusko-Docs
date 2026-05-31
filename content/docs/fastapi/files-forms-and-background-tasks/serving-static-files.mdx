@@ -1,0 +1,174 @@
+---
+title: Serving Static Files
+---
+
+The other half of file upload is file delivery — handing a stored file back to someone who asks for it. FastAPI gives you two distinct tools for this, and choosing between them is the whole interesting part.
+
+## Two paths, two purposes
+
+```text
+   Need:                                    Use:
+   ─────────────────────────────────────    ────────────────────────────
+   Serve a folder of public files           StaticFiles mount
+   (CSS, JS, images for a small site)       (the easy one)
+
+   Serve a private/dynamic file             FileResponse from a route
+   (user uploads, generated PDFs)           (the controlled one)
+```
+
+The split is really about access control. `StaticFiles` says *"the URL is the path is the file."* A route says *"check who's asking, decide what to send."*
+
+## StaticFiles — the easy path
+
+For genuinely public assets you can just mount a directory and walk away.
+
+```python
+from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
+
+app = FastAPI()
+app.mount("/static", StaticFiles(directory="static"), name="static")
+```
+
+Now `GET /static/logo.png` serves `./static/logo.png`. URLs map one-to-one to files. Sub-folders work too. There is no auth, no transformation — what's on disk is what the world sees.
+
+A single-page app is a common use:
+
+```python
+app.mount("/", StaticFiles(directory="dist", html=True), name="spa")
+```
+
+`html=True` makes the mount serve `index.html` for any path that doesn't match a file. That's the magic that lets a React/Vue/Svelte client-side router work behind a single FastAPI process.
+
+<Callout type="warn" title="Order matters with a root mount">
+Mount the SPA last. If you mount it at `/` before your `/api/...` routes are registered, the mount can swallow paths you intended for the API. Register API routes first, then mount.
+</Callout>
+
+## FileResponse — the controlled path
+
+When the file lives outside of any public folder, or only certain users should see it, or you compute the file on demand, route it through a function.
+
+```python
+from pathlib import Path
+from fastapi import FastAPI, HTTPException
+from fastapi.responses import FileResponse
+
+UPLOAD_DIR = Path("uploads")
+
+@app.get("/files/{storage_key}")
+def download(storage_key: str):
+    # safety: never let the client craft a path that escapes UPLOAD_DIR
+    candidate = (UPLOAD_DIR / storage_key).resolve()
+    if not candidate.is_file() or UPLOAD_DIR.resolve() not in candidate.parents:
+        raise HTTPException(404, "File not found")
+
+    return FileResponse(
+        candidate,
+        media_type="application/octet-stream",
+        filename=candidate.name,
+    )
+```
+
+The `is_file()` + `parents` check is the path-traversal defense. A request for `files/../../etc/passwd` resolves outside `UPLOAD_DIR` and gets a clean 404.
+
+Three useful parameters on `FileResponse`:
+
+| Parameter | Effect |
+|-----------|--------|
+| `media_type=` | The `Content-Type` header. Pick a specific one when you know it. |
+| `filename=` | Adds a `Content-Disposition: attachment; filename=...` header so the browser downloads instead of rendering. |
+| `headers=` | Add cache headers, custom ones, anything. |
+
+## Force download vs. inline
+
+A small thing that confuses people. Without `Content-Disposition: attachment`, the browser will try to render PDFs inline, play audio inline, show images inline. With it, the browser pops a save dialog. Both are correct — pick based on what the user expects.
+
+```python
+# inline (browser displays)
+return FileResponse(path, media_type="application/pdf")
+
+# attachment (browser downloads)
+return FileResponse(
+    path,
+    media_type="application/pdf",
+    filename="invoice-2024.pdf",
+)
+```
+
+## Streaming a generated file
+
+For files that don't exist on disk yet — a CSV built from a database query, a zip of selected uploads, a rendered report — use `StreamingResponse` and a generator.
+
+```python
+import csv
+import io
+from fastapi.responses import StreamingResponse
+
+@app.get("/export.csv")
+def export_csv(db: Session = Depends(get_db)):
+    def rows():
+        buffer = io.StringIO()
+        writer = csv.writer(buffer)
+        writer.writerow(["id", "email"])
+        yield buffer.getvalue()
+        buffer.seek(0); buffer.truncate(0)
+
+        for user in db.query(User).yield_per(500):
+            writer.writerow([user.id, user.email])
+            yield buffer.getvalue()
+            buffer.seek(0); buffer.truncate(0)
+
+    return StreamingResponse(
+        rows(),
+        media_type="text/csv",
+        headers={"Content-Disposition": 'attachment; filename="users.csv"'},
+    )
+```
+
+The point of streaming: a 500MB export never sits in memory. Each row is yielded and sent. The client can start downloading before the server has finished generating.
+
+## Range requests (the bit that makes video work)
+
+If you serve audio or video and want users to scrub, the response must support HTTP `Range` requests so the browser can ask for "bytes 1000000 through 2000000" instead of the whole file. `StaticFiles` handles this automatically. `FileResponse` also supports it as of recent FastAPI versions. If you're rolling your own, you have to implement range handling by hand — at which point you're probably better off using `StaticFiles` or a CDN.
+
+## A note on what FastAPI is and isn't good at
+
+Serving static files through a Python app is *fine* for moderate traffic. It is not what Python is fastest at. At scale, the right architecture is almost always:
+
+```text
+    Browser  ─►  CDN / nginx  ─►  S3 / static bucket
+                                          │
+                                          │ (auth checks happen here)
+                                          ▼
+                                       FastAPI
+                                       (issues signed URLs)
+```
+
+The Python app does the *thinking* (who can see what), and then hands the client a short-lived signed URL pointing directly at the storage layer. The bytes never travel through your app. For uploads serving a public website's assets, put them behind a CDN and stop worrying.
+
+That said: for small projects, internal tools, prototypes — `StaticFiles` and `FileResponse` are perfectly good. Knowing when to graduate is the point.
+
+## A tiny decision tree
+
+```text
+  Is the file public to everyone?
+    │
+    ├── yes ──► StaticFiles mount
+    │
+    └── no
+        │
+        ├── exists on disk, just needs an auth check ──► FileResponse from a route
+        │
+        ├── doesn't exist yet, built on the fly ──► StreamingResponse with a generator
+        │
+        └── lives in S3/GCS and high traffic ──► return a signed URL, let the client fetch direct
+```
+
+## A final word
+
+Whatever path you pick, two rules are worth carving into your brain:
+
+1. **Never use a client-supplied string as a filesystem path.** Always resolve and verify it stays inside an allowed directory.
+2. **Set a `Content-Type` you actually mean.** A wrong type can turn a download into an XSS vector if the browser decides to render an HTML file you intended as plain text.
+
+The rest is plumbing. Pick the right tool and the plumbing is short.

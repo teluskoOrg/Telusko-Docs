@@ -1,0 +1,186 @@
+---
+title: Handling Form Data
+---
+
+Most modern APIs speak JSON. But forms haven't gone away — login pages, file uploads, the OAuth2 token endpoint we built earlier, and any HTML page that uses `<form method="post">` all submit `application/x-www-form-urlencoded` or `multipart/form-data` bodies. FastAPI handles both, but the syntax is just different enough to trip you up the first time.
+
+## JSON vs form data — the practical difference
+
+It's the same idea in both cases (send some key-value pairs to the server), but the encoding is different.
+
+| | JSON | Form |
+|---|------|------|
+| Content-Type | `application/json` | `application/x-www-form-urlencoded` (or `multipart/form-data` for files) |
+| Body looks like | `{"username": "alice", "password": "x"}` | `username=alice&password=x` |
+| FastAPI dependency | Pydantic model | `Form(...)` |
+| Can carry files | Not really | Yes (when multipart) |
+| Native HTML support | No (needs JS) | Yes |
+
+A handler can accept **either**, but not both for the same field at the same time. If your endpoint is consumed by HTML forms, use `Form`. If it's consumed by a JS frontend that always sends JSON, use a Pydantic model.
+
+## Installing the prerequisite
+
+Forms in FastAPI need an extra parser:
+
+```bash
+pip install python-multipart
+```
+
+Forget this and FastAPI will tell you exactly what's missing the first time you hit the endpoint. It's a small one-time gotcha.
+
+## The simplest form endpoint
+
+```python
+from fastapi import FastAPI, Form
+
+app = FastAPI()
+
+@app.post("/login")
+def login(username: str = Form(...), password: str = Form(...)):
+    return {"username": username}
+```
+
+That's it. `Form(...)` tells FastAPI "this parameter comes from a form field with this name." Sending a body like `username=alice&password=hunter2` populates the parameters.
+
+The `...` (Ellipsis) means *required*. You can default it with anything else:
+
+```python
+@app.post("/search")
+def search(
+    q: str = Form(...),
+    page: int = Form(1),
+    sort: str = Form("relevance"),
+):
+    ...
+```
+
+## Validation works the same way
+
+`Form` accepts the same constraints as `Query` and `Body`:
+
+```python
+from fastapi import Form
+
+@app.post("/signup")
+def signup(
+    email: str = Form(..., pattern=r"^[^@]+@[^@]+\.[^@]+$"),
+    password: str = Form(..., min_length=8, max_length=128),
+    age: int = Form(..., ge=13),
+):
+    ...
+```
+
+Bad input raises the same `422 Unprocessable Entity` you'd get from a Pydantic model.
+
+## Why you can't mix Form and a Body model
+
+If a single endpoint declares both `Form(...)` and a Pydantic model, FastAPI rejects the setup. The two require different content types and FastAPI can't pull a Pydantic model from a `multipart/form-data` body.
+
+```python
+# This will error at app startup
+@app.post("/bad")
+def bad(
+    name: str = Form(...),
+    payload: ItemModel = Body(...),  # nope
+):
+    ...
+```
+
+If you genuinely need both — fields plus a structured blob — there are two patterns:
+
+1. **Send the structured part as a JSON string field**, then parse it inside the route.
+2. **Use a multipart body where one part is a JSON file**, and read it via `UploadFile`.
+
+For an HTML form, the first option is the practical one:
+
+```python
+import json
+from pydantic import BaseModel, ValidationError
+from fastapi import HTTPException
+
+class ItemModel(BaseModel):
+    name: str
+    quantity: int
+
+@app.post("/orders")
+def create_order(
+    customer: str = Form(...),
+    item_json: str = Form(...),
+):
+    try:
+        item = ItemModel.model_validate_json(item_json)
+    except ValidationError as e:
+        raise HTTPException(422, e.errors())
+
+    return {"customer": customer, "item": item.model_dump()}
+```
+
+A bit awkward, but it works and stays type-safe.
+
+## OAuth2's quirky form
+
+The login endpoint we built in the auth section used `OAuth2PasswordRequestForm`. That dependency is just a thin wrapper that turns the standard OAuth2 form fields (`username`, `password`, `grant_type`, `scope`, `client_id`, `client_secret`) into typed attributes you can read.
+
+```python
+from fastapi.security import OAuth2PasswordRequestForm
+
+@app.post("/auth/token")
+def login(form: OAuth2PasswordRequestForm = Depends()):
+    print(form.username, form.password, form.scopes)
+```
+
+It's worth keeping in mind: this isn't magic JSON. The endpoint accepts a form body, which is why curl examples look like:
+
+```bash
+curl -X POST http://localhost:8000/auth/token \
+  -d "username=alice" \
+  -d "password=hunter2"
+```
+
+Not:
+
+```bash
+# This does NOT work against an OAuth2 password flow endpoint
+curl -X POST -H 'Content-Type: application/json' \
+  -d '{"username":"alice","password":"hunter2"}' \
+  http://localhost:8000/auth/token
+```
+
+This trips up almost every developer the first time.
+
+## Checkbox-style multi-value fields
+
+HTML forms can submit multiple values under the same name (`?tags=a&tags=b`, or `<input type="checkbox" name="tags">` repeated). Accept a list:
+
+```python
+from typing import Annotated
+
+@app.post("/items")
+def create_item(tags: Annotated[list[str], Form()] = []):
+    return {"tags": tags}
+```
+
+`Annotated[list[str], Form()]` is the modern way to ask for a repeated form field. The list will be empty if none were sent.
+
+## When forms beat JSON
+
+JSON has won for APIs, and that's largely good. But forms still have honest advantages in specific places:
+
+| Reach for forms when... | Reach for JSON when... |
+|--------------------------|-------------------------|
+| A plain HTML page must work without JavaScript | A JS frontend is the primary client |
+| You need to upload files alongside fields | The payload has no binary parts |
+| You're implementing an OAuth2 endpoint | You're building a typical REST API |
+| You want progressive enhancement | You want strict typed nested data |
+
+For everything else, JSON's nested structure and type clarity beat form-encoded key-value pairs.
+
+## A small but important security reminder
+
+Forms submitted from HTML pages are subject to CSRF — an attacker's page can `<form action="https://yourapi.com/transfer" method="post">` and the browser will helpfully send cookies along. JSON APIs don't have this exact shape of risk, because cross-origin JSON requests can't run without CORS approval.
+
+If you use cookies for authentication *and* accept form posts, you need CSRF tokens. If you use `Authorization: Bearer ...` headers, you mostly don't (because attackers can't add headers from a cross-origin form). Worth knowing where on that map your API sits.
+
+## Coming up
+
+Form handling is the warm-up. The same `python-multipart` parser is what makes file uploads work, and we'll need both in the next page when one part of a multipart body is the file itself.

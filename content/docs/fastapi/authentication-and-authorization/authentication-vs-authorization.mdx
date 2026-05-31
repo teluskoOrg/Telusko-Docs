@@ -1,0 +1,108 @@
+---
+title: Authentication vs Authorization
+---
+
+People mix these two words up all the time. They sound similar, they often appear in the same sentence, and a lot of tutorials use them as if they mean the same thing. They don't.
+
+Before writing a single line of login code, it helps to slow down and get this distinction straight. Most of the bugs in security code come from confusing the two.
+
+## A One-Sentence Definition
+
+- **Authentication** answers *"Who are you?"*
+- **Authorization** answers *"What are you allowed to do?"*
+
+That's the whole idea. Everything else is detail.
+
+## The Airport Analogy
+
+Picture an airport.
+
+| Step | What happens | Maps to |
+|------|--------------|---------|
+| You show your passport at the counter | Staff confirms you are who you claim to be | Authentication |
+| The boarding pass you get says Gate 14, Seat 22A | You may go to that gate, that seat, on that flight | Authorization |
+| You try to walk into the pilot's cabin | Denied. Not because of who you are, but because of what your ticket allows | Authorization failure |
+
+Two completely different checks. They run one after the other, but they are not the same check.
+
+## Why Order Matters
+
+Authentication always comes first. You cannot decide *what* a person can do until you know *who* they are.
+
+```text
+Request arrives
+      |
+      v
++--------------+      no       +-----------+
+|  Is user     | ------------> |  401      |
+|  authentic?  |               |  Reject   |
++--------------+               +-----------+
+      | yes
+      v
++--------------+      no       +-----------+
+|  Allowed to  | ------------> |  403      |
+|  do this?    |               |  Reject   |
++--------------+               +-----------+
+      | yes
+      v
+   Run handler
+```
+
+Notice the two different status codes: `401 Unauthorized` (you didn't prove who you are) and `403 Forbidden` (you proved it, but you still cannot do this). HTTP got the naming a bit unlucky here — `401` is really about *authentication*, not authorization.
+
+## In a FastAPI Route
+
+Here is the smallest possible glimpse of both in action. Don't worry about the full implementation yet — later docs cover hashing, tokens, and roles in detail.
+
+```python
+from fastapi import Depends, FastAPI, HTTPException, status
+
+app = FastAPI()
+
+def get_current_user(token: str | None = None):
+    if token != "valid-token":
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Login required")
+    return {"username": "alice", "role": "editor"}
+
+def require_admin(user = Depends(get_current_user)):
+    if user["role"] != "admin":
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "Admins only")
+    return user
+
+@app.delete("/posts/{post_id}")
+def delete_post(post_id: int, _admin = Depends(require_admin)):
+    return {"deleted": post_id}
+```
+
+`get_current_user` is authentication. `require_admin` is authorization. They stack as dependencies, and each raises its own kind of error.
+
+## Quick Comparison
+
+| | Authentication | Authorization |
+|---|---|---|
+| Question | Who are you? | What can you do? |
+| Runs | First | After authentication |
+| Typical failure code | 401 | 403 |
+| Where the answer comes from | User credentials, tokens, sessions | Roles, permissions, ownership rules |
+| Common building blocks | Passwords, OAuth2, JWTs, OTPs | RBAC, ACLs, scopes, policies |
+
+## A Common Source of Confusion
+
+Some libraries blur the lines. A "permission denied" message might really mean your token expired (an authentication problem). A `401` might come back when you should have gotten a `403`. Real systems are sometimes sloppy here, but in your own code it is worth being precise.
+
+A small rule of thumb:
+
+- If logging back in could fix it → it's authentication.
+- If logging back in would not change anything → it's authorization.
+
+## What You'll Build Next
+
+The docs that follow each tackle one piece of this picture:
+
+- **Password hashing and user registration** — storing credentials safely.
+- **OAuth2 password flow** — the standard way FastAPI handles login.
+- **JWT access and refresh tokens** — how identity travels between requests.
+- **Role-based access control** — building the *what can they do* part.
+- **Protecting routes** — wiring it all together with dependencies.
+
+Keep the airport picture in mind as you go. Almost every decision will fall on one side of that line or the other.

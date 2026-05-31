@@ -1,0 +1,155 @@
+---
+title: What Middleware Does
+---
+
+Middleware is the layer of code that runs *around* your route, not *inside* it. Every HTTP request that arrives at FastAPI walks through whatever middleware you've registered before it ever reaches the function decorated with `@app.get` or `@app.post`. The response walks back through the same stack on the way out.
+
+If a route handler is the thing that *answers* a request, middleware is the thing that *prepares the question and packages the answer*.
+
+## A picture beats a paragraph
+
+```text
+   HTTP request
+        │
+        v
+ ┌────────────────┐
+ │  Middleware A  │  ← runs first on the way in
+ ├────────────────┤
+ │  Middleware B  │
+ ├────────────────┤
+ │  Middleware C  │  ← runs last on the way in
+ ├────────────────┤
+ │   ROUTE        │  ← your @app.get function
+ ├────────────────┤
+ │  Middleware C  │  ← runs first on the way out
+ ├────────────────┤
+ │  Middleware B  │
+ ├────────────────┤
+ │  Middleware A  │  ← runs last on the way out
+ └────────────────┘
+        │
+        v
+   HTTP response
+```
+
+The order matters more than people expect. Middleware registered *last* runs *closest to the route*. The first one you add wraps everything else. This will catch you out once, and then never again.
+
+## What kinds of things belong here
+
+| Concern | Why it belongs in middleware |
+|---------|------------------------------|
+| Logging every request | Needs to run for every endpoint, no exceptions |
+| Adding a request ID | Should exist before any route code touches the request |
+| CORS headers | Must be applied to *every* response, including errors |
+| GZip compression | Wraps the outgoing body without the route caring |
+| Timing / metrics | Need the moment-of-arrival and moment-of-departure timestamps |
+| Auth token decoding (sometimes) | When the user should be on `request.state` for the whole pipeline |
+
+And what does *not* belong in middleware:
+
+- Business decisions that depend on the route. Use a dependency.
+- Heavy database work. Middleware runs for every request — you'd pay the cost on routes that don't need it.
+- Anything that needs to *change* the request body shape. Use a dependency or a Pydantic model.
+
+## The minimum viable middleware
+
+FastAPI gives you a decorator that hides almost all of the Starlette machinery.
+
+```python
+import time
+from fastapi import FastAPI, Request
+
+app = FastAPI()
+
+@app.middleware("http")
+async def add_process_time(request: Request, call_next):
+    start = time.perf_counter()
+    response = await call_next(request)
+    elapsed = time.perf_counter() - start
+    response.headers["X-Process-Time"] = f"{elapsed:.4f}"
+    return response
+```
+
+The signature is always the same: an incoming `Request`, and `call_next` — a function you must `await` to actually run the rest of the pipeline. The return value of `call_next` is the response you can inspect or modify.
+
+You can do work *before* the await (request-side), *after* the await (response-side), or both.
+
+## Short-circuiting the request
+
+Sometimes you want to refuse a request without ever reaching the route.
+
+```python
+from fastapi.responses import JSONResponse
+
+@app.middleware("http")
+async def block_old_clients(request: Request, call_next):
+    if request.headers.get("user-agent", "").startswith("LegacyApp/1."):
+        return JSONResponse(
+            status_code=410,
+            content={"detail": "Upgrade your client. Version 1.x is no longer supported."},
+        )
+    return await call_next(request)
+```
+
+Notice the early return — no `call_next` call, so the route is never invoked.
+
+## A practical request-ID middleware
+
+This pattern is so common it's worth seeing written out fully.
+
+```python
+import uuid
+from fastapi import Request
+
+@app.middleware("http")
+async def add_request_id(request: Request, call_next):
+    request_id = request.headers.get("x-request-id") or str(uuid.uuid4())
+    request.state.request_id = request_id  # available inside routes
+    response = await call_next(request)
+    response.headers["x-request-id"] = request_id
+    return response
+```
+
+Now any route can pull the id from `request.state.request_id` and log it. The response carries it back so the client can quote it in support tickets. Tracing the entire life of one request through logs becomes trivial.
+
+## Two flavors of middleware, briefly
+
+FastAPI's `@app.middleware("http")` is the friendly form. Underneath, Starlette also has a more powerful interface — classes that implement `BaseHTTPMiddleware` or work as raw ASGI. You add those with `app.add_middleware(SomeClass, option=value)`.
+
+| You'd reach for the class form when... |
+|---------------------------------------|
+| The middleware needs configuration knobs |
+| You're using a third-party middleware (CORS, GZip, sessions, etc.) |
+| You want to share state across requests |
+
+For most one-off application logic, the decorator form is enough.
+
+## Order, one more time, because it matters
+
+The rule again, said differently: **registration order is application order on the way in, and reverse order on the way out**.
+
+If you register A then B then C, a request flows A → B → C → route → C → B → A. So if your auth middleware needs to set `request.state.user` before logging can include the user id, the auth middleware must be registered *after* the logging one. That feels backwards the first time. Sketch the picture above on paper if you have to.
+
+## How this fits with everything else
+
+Middleware is one of three places where you can intercept a request, and choosing the right one keeps the code clean:
+
+| Tool | Best at | Cost |
+|------|---------|------|
+| **Dependency** | Per-route logic that needs typed parameters and OpenAPI to know about it | Adds to the function signature |
+| **Middleware** | Cross-cutting work that should apply to every request | Runs on every request, even when not needed |
+| **Exception handler** | Translating known errors into specific responses | Only fires on raised exceptions |
+
+If a check is needed on three routes out of fifty, write a dependency. If it's needed on all fifty, write middleware. If it's recovering from an error, write an exception handler.
+
+## Where this section is going
+
+The next few docs lean on this foundation:
+
+- Built-in and custom middleware in practice
+- CORS — the most commonly-needed built-in middleware
+- Security headers and trusted hosts
+- Rate limiting basics
+- Logging, monitoring, and tracing
+
+The mental model from this page — *middleware is the layer that wraps every request and response* — will keep coming back. Hold onto it.

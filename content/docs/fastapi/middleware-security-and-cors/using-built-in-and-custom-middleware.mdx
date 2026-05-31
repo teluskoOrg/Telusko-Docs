@@ -1,0 +1,198 @@
+---
+title: Using Built-in and Custom Middleware
+---
+
+FastAPI inherits a small but useful set of middlewares from Starlette, and you can stack your own on top. This page is a tour: what comes in the box, when to add it, and how to write your own when nothing fits.
+
+## What you get for free
+
+| Middleware | Lives in | What it does |
+|------------|----------|--------------|
+| `CORSMiddleware` | `fastapi.middleware.cors` | Adds CORS headers, handles preflight |
+| `GZipMiddleware` | `fastapi.middleware.gzip` | Compresses responses above a size threshold |
+| `TrustedHostMiddleware` | `fastapi.middleware.trustedhost` | Rejects requests with unexpected Host headers |
+| `HTTPSRedirectMiddleware` | `fastapi.middleware.httpsredirect` | 307-redirects HTTP to HTTPS |
+| `SessionMiddleware` | `starlette.middleware.sessions` | Signed cookie sessions |
+
+You don't need to install anything extra for these — they come with FastAPI.
+
+CORS gets its own page next, so we'll skip past it here.
+
+## GZip in two lines
+
+If your API ever returns big JSON responses, this is the cheapest performance improvement you'll ever ship.
+
+```python
+from fastapi import FastAPI
+from fastapi.middleware.gzip import GZipMiddleware
+
+app = FastAPI()
+app.add_middleware(GZipMiddleware, minimum_size=1000)
+```
+
+`minimum_size` is in bytes. Anything smaller skips compression because the CPU cost would outweigh the bandwidth saved. The default of 500 is fine; bumping it to ~1000 is more conservative.
+
+Browsers and most clients send `Accept-Encoding: gzip` automatically. The middleware checks for it and only compresses when the client said it could handle it.
+
+## Trusted hosts
+
+A common production safety net.
+
+```python
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
+
+app.add_middleware(
+    TrustedHostMiddleware,
+    allowed_hosts=["api.example.com", "*.example.com"],
+)
+```
+
+If a request arrives with a `Host` header that doesn't match, it's rejected with a `400`. This blocks an entire class of "host header injection" attacks, where someone tries to trick your app into generating links pointing somewhere they control.
+
+Don't use `["*"]` in production. That undoes the whole point.
+
+## HTTPS redirect
+
+```python
+from fastapi.middleware.httpsredirect import HTTPSRedirectMiddleware
+
+app.add_middleware(HTTPSRedirectMiddleware)
+```
+
+Only use this if your app is genuinely exposed to plain HTTP. If you're behind a load balancer that already does the redirect, this duplicates the work. And in local dev (`http://localhost`), it will make you cry.
+
+A pragmatic switch:
+
+```python
+import os
+if os.getenv("ENV") == "production":
+    app.add_middleware(HTTPSRedirectMiddleware)
+```
+
+## Sessions
+
+For traditional cookie-based sessions (think old-school login forms, server-rendered pages):
+
+```python
+from starlette.middleware.sessions import SessionMiddleware
+
+app.add_middleware(
+    SessionMiddleware,
+    secret_key="...",         # MUST be a strong secret
+    session_cookie="session",
+    max_age=14 * 24 * 60 * 60,
+    same_site="lax",
+    https_only=True,
+)
+```
+
+Now any route can read or write `request.session["user_id"] = 42`. The session is stored signed in a cookie, so the server stays stateless but a tampered cookie would fail signature verification.
+
+For pure API workloads using JWTs, you don't need this. It's useful when you have a mix — say, a small admin UI on the same backend.
+
+## Writing your own — the function form
+
+This is the form you saw in the previous doc.
+
+```python
+import time
+from fastapi import Request
+
+@app.middleware("http")
+async def time_request(request: Request, call_next):
+    start = time.perf_counter()
+    response = await call_next(request)
+    response.headers["x-process-time-ms"] = f"{(time.perf_counter() - start) * 1000:.1f}"
+    return response
+```
+
+Simple, async, gets the job done for one-off behaviors.
+
+## Writing your own — the class form
+
+When the middleware needs configuration, or you want to ship it as a reusable library, write a class.
+
+```python
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.types import ASGIApp
+
+class TimingMiddleware(BaseHTTPMiddleware):
+    def __init__(self, app: ASGIApp, header_name: str = "x-process-time-ms"):
+        super().__init__(app)
+        self.header_name = header_name
+
+    async def dispatch(self, request, call_next):
+        import time
+        start = time.perf_counter()
+        response = await call_next(request)
+        elapsed_ms = (time.perf_counter() - start) * 1000
+        response.headers[self.header_name] = f"{elapsed_ms:.1f}"
+        return response
+
+app.add_middleware(TimingMiddleware, header_name="x-elapsed-ms")
+```
+
+Same behavior, configurable from outside. This is how the built-in middlewares are written.
+
+## A worked example: enforcing a max body size
+
+A real piece of middleware you might actually write.
+
+```python
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.responses import JSONResponse
+
+class MaxBodySizeMiddleware(BaseHTTPMiddleware):
+    def __init__(self, app, max_bytes: int = 1_000_000):  # 1 MB
+        super().__init__(app)
+        self.max_bytes = max_bytes
+
+    async def dispatch(self, request, call_next):
+        length = request.headers.get("content-length")
+        if length is not None and int(length) > self.max_bytes:
+            return JSONResponse(
+                status_code=413,
+                content={"detail": "Request body too large"},
+            )
+        return await call_next(request)
+
+app.add_middleware(MaxBodySizeMiddleware, max_bytes=2_000_000)
+```
+
+This is much cheaper than letting a 50 MB upload reach a route only to reject it after parsing. It also doubles as a tiny safeguard against accidental denial-of-service from oversized payloads.
+
+<Callout type="info" title="The content-length header is hint, not gospel">
+A malicious client can lie about its content-length. For real upload limits, you also want server-level limits (uvicorn's `--limit-max-requests`, or your load balancer). Treat this middleware as defense in depth, not the only defense.
+</Callout>
+
+## Stacking middlewares in the right order
+
+A common production stack, roughly outer-to-inner:
+
+```text
+1. TrustedHostMiddleware         (drop attacks early)
+2. HTTPSRedirectMiddleware       (force https)
+3. CORSMiddleware                (handle cross-origin before auth)
+4. SessionMiddleware             (if using sessions)
+5. Custom logging / request-id   (so logs cover the auth step too)
+6. Custom auth-context           (sets request.state.user)
+7. GZipMiddleware                (compress the response on the way out)
+```
+
+Remember: in code, you `add_middleware` from outermost to innermost — i.e., `TrustedHost` is added *first*, GZip *last*. The outer ones wrap the inner ones.
+
+If the order ever feels wrong, draw the request flow on paper. It is faster than guessing.
+
+## When to reach for a middleware vs. a dependency
+
+A small heuristic worth keeping:
+
+| Question | Answer |
+|----------|--------|
+| Does this need to run for **every** request? | Middleware |
+| Does this only apply to certain routes? | Dependency |
+| Does this need to appear in the OpenAPI schema? | Dependency |
+| Does this need access to typed query/path parameters? | Dependency |
+| Is this mostly about headers, timing, or transport? | Middleware |
+
+Middleware is a sledgehammer; dependencies are surgical. Both have their place. Reaching for the right one keeps the code honest.

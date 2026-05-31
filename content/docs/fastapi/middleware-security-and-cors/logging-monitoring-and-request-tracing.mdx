@@ -1,0 +1,213 @@
+---
+title: Logging, Monitoring and Request Tracing
+---
+
+Production code without observability is faith-based programming. You ship it, hope it works, and only learn it didn't when a user emails you. Three small habits change that completely:
+
+- **Logging** — recording what happened, in a form a human can read.
+- **Monitoring** — counting how often things happen, in a form a dashboard can chart.
+- **Tracing** — following one request across many components.
+
+These aren't separate disciplines. They overlap in the middle, and a good FastAPI setup tends to do all three through the same middleware spine.
+
+## Start with structured logs
+
+Plain string logs work, until the moment you have to grep for `"user=alice"` across three weeks of logs and discover that one service writes `user='alice'` and another writes `username:alice`. Structured logs — JSON, key-value, anything machine-parseable — fix this.
+
+Python's standard `logging` module can emit JSON with a tiny formatter:
+
+```python
+import json
+import logging
+from datetime import datetime, timezone
+
+class JsonFormatter(logging.Formatter):
+    def format(self, record: logging.LogRecord) -> str:
+        payload = {
+            "ts": datetime.now(timezone.utc).isoformat(),
+            "level": record.levelname,
+            "logger": record.name,
+            "msg": record.getMessage(),
+        }
+        if record.exc_info:
+            payload["exc"] = self.formatException(record.exc_info)
+        # any extra=... data attached to the log call
+        for k, v in record.__dict__.items():
+            if k.startswith("_") or k in payload or k in {
+                "args", "msg", "name", "levelname", "levelno", "pathname",
+                "filename", "module", "exc_info", "exc_text", "stack_info",
+                "lineno", "funcName", "created", "msecs", "relativeCreated",
+                "thread", "threadName", "processName", "process",
+            }:
+                continue
+            payload[k] = v
+        return json.dumps(payload)
+
+
+handler = logging.StreamHandler()
+handler.setFormatter(JsonFormatter())
+logging.basicConfig(level=logging.INFO, handlers=[handler])
+log = logging.getLogger("app")
+```
+
+Now every log line is a JSON object. Your log aggregator (Loki, Cloudwatch, Datadog, whatever) can index any field without parsing tricks.
+
+If JSON-by-hand feels like a lot, the `structlog` library does this nicely with less code.
+
+## The request-logging middleware
+
+The one piece of middleware that almost every production FastAPI app needs:
+
+```python
+import time
+import uuid
+from fastapi import Request
+from starlette.middleware.base import BaseHTTPMiddleware
+
+class RequestLogMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        request_id = request.headers.get("x-request-id") or str(uuid.uuid4())
+        request.state.request_id = request_id
+
+        start = time.perf_counter()
+        try:
+            response = await call_next(request)
+        except Exception:
+            elapsed_ms = (time.perf_counter() - start) * 1000
+            log.exception(
+                "request failed",
+                extra={
+                    "request_id": request_id,
+                    "method": request.method,
+                    "path": request.url.path,
+                    "elapsed_ms": round(elapsed_ms, 1),
+                },
+            )
+            raise
+
+        elapsed_ms = (time.perf_counter() - start) * 1000
+        response.headers["x-request-id"] = request_id
+        log.info(
+            "request completed",
+            extra={
+                "request_id": request_id,
+                "method": request.method,
+                "path": request.url.path,
+                "status": response.status_code,
+                "elapsed_ms": round(elapsed_ms, 1),
+            },
+        )
+        return response
+
+
+app.add_middleware(RequestLogMiddleware)
+```
+
+What this gives you, almost for free:
+
+- A unique id on every request that's also on every related log line.
+- Latency measurement per endpoint.
+- A stack trace for any uncaught exception, attached to the same id.
+- The same id sent back to the client in a header so they can quote it in bug reports.
+
+That fourth one is criminally underrated. The first time a customer pastes a request id into a Slack message and you find every log line for that request in seconds, you'll wonder how you ever worked without it.
+
+## Don't log secrets
+
+The catch: any field you put into the log persists somewhere, possibly for years.
+
+| Probably don't log | Definitely don't log |
+|--------------------|----------------------|
+| Full request bodies | Passwords, tokens |
+| Full query strings (may contain tokens) | API keys, secrets |
+| User PII | Credit card numbers, full SSNs |
+| Stack traces with local variables containing the above | The contents of `Authorization` headers |
+
+A quick gut check: imagine the log line appearing in a screenshot in a tweet. If that would be a problem, don't log it.
+
+## The bridge to monitoring
+
+Logs answer "what happened?" Metrics answer "how often, how fast, how many?" The same middleware can do both with a small addition.
+
+```python
+from prometheus_client import Counter, Histogram
+
+REQUESTS = Counter(
+    "http_requests_total", "Total HTTP requests",
+    ["method", "path", "status"],
+)
+LATENCY = Histogram(
+    "http_request_duration_seconds", "Request latency in seconds",
+    ["method", "path"],
+)
+```
+
+Then in the middleware, after measuring elapsed time:
+
+```python
+REQUESTS.labels(request.method, request.url.path, response.status_code).inc()
+LATENCY.labels(request.method, request.url.path).observe(elapsed_ms / 1000)
+```
+
+A small caveat: don't label by raw `request.url.path` if the path includes IDs (`/users/42`, `/users/43`, `/users/44`). You'll explode your metric cardinality. Use the route template (`/users/{user_id}`) instead — FastAPI exposes it via `request.scope.get("route").path`.
+
+`prometheus-fastapi-instrumentator` does all of this for you if you'd rather not roll your own:
+
+```python
+from prometheus_fastapi_instrumentator import Instrumentator
+Instrumentator().instrument(app).expose(app)
+```
+
+That exposes a `/metrics` endpoint Prometheus can scrape.
+
+## Tracing across services
+
+If a request hits service A → calls service B → calls service C, logs alone make it hard to see the whole picture. Distributed tracing assigns a single `trace_id` at the entry point and propagates it across every call. OpenTelemetry is the open standard for this.
+
+```bash
+pip install opentelemetry-instrumentation-fastapi opentelemetry-exporter-otlp
+```
+
+```python
+from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
+FastAPIInstrumentor.instrument_app(app)
+```
+
+That one line gets you spans for every request. Combined with auto-instrumentation for `requests`, `httpx`, `psycopg`, etc., a trace shows you exactly where the time went:
+
+```text
+GET /orders/42 ─────────────────────────────────────── 184ms
+├── auth: decode_jwt ─────  2ms
+├── db: SELECT order ─────────  18ms
+├── db: SELECT order_items ─────── 22ms
+├── http: GET /inventory/availability ──────────────── 95ms
+└── render response ──── 4ms
+```
+
+You can stare at logs for hours without spotting that the `/inventory/availability` call took half the request. A trace shows it instantly.
+
+## Tying it together
+
+A useful mental model:
+
+| Layer | Question | Tool example |
+|-------|----------|--------------|
+| Logs | What happened, in detail? | structured `logging`, ELK, Loki |
+| Metrics | How often, how fast, how many? | Prometheus + Grafana |
+| Traces | Where did the time go for this one request? | OpenTelemetry + Jaeger / Tempo |
+| Alerts | When should a human be paged? | Alertmanager, PagerDuty, etc. |
+
+You don't need all four on day one. The order to add them is usually: structured logs, then a request log middleware, then metrics, then traces, then alerts on the metrics that matter.
+
+## A note about noise
+
+Once you have logs flowing, the temptation is to log everything. Resist a little. Logs that nobody reads are still logs you pay storage for. A few habits that keep noise down:
+
+- **DEBUG for routine, INFO for noteworthy, WARN for "this is unusual but recovered", ERROR for "something failed."** People rarely respect this and pay for it later.
+- **Sample at high traffic.** You don't need to log every single `/healthz` poll.
+- **Suppress expected errors.** Validation errors that return 422 are not problems; they're the API working. Don't log them at ERROR.
+- **Make the request id the join key for everything.** One id glues many lines together, instead of needing more verbose lines.
+
+## Wrapping the section
+
+We started this section asking what middleware does and finished with the whole observability story. The thread is the same: middleware is the place where you can attach cross-cutting concerns to every request without polluting any single route. CORS, security headers, trusted hosts, rate limits, logging, tracing — they all live here for the same reason. One layer, set up once, doing quiet useful work on every request that flows through your app.
