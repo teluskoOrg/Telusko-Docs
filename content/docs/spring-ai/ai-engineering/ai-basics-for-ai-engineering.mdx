@@ -1,0 +1,189 @@
+---
+title: AI basics for AI Engineering
+---
+
+
+<Steps>
+<Video id="304i_BWgXNc" />
+
+---
+
+
+To work as an AI Engineer, a foundational understanding of AI concepts is essential. This includes understanding how AI, Machine Learning, and Deep Learning relate to each other, how neural networks work at a conceptual level, and how modern architectures like Transformers have revolutionized AI capabilities.
+
+
+## AI, Machine Learning, and Deep Learning
+
+### Artificial Intelligence (AI)
+
+AI enables adding **intelligence to machines**, allowing them to perform tasks autonomously rather than simply following pre-coded instructions.
+
+### Machine Learning (ML)
+
+A method within AI where a machine is **trained on huge amounts of data** to learn patterns and implement intelligent tasks without being explicitly programmed for each scenario.
+
+### Deep Learning (DL)
+
+A subset of Machine Learning that uses **neural networks with multiple layers** to mimic human thinking and processing. This is the foundation of modern AI models like LLMs (Large Language Models).
+
+
+---
+
+
+## The Fundamental Shift in Development
+
+| Traditional Development | AI-Powered Development |
+|------------------------|----------------------|
+| Developer writes explicit rules and logic | AI learns decision-making patterns from data |
+| "If X happens, do Y" — manually coded | Model observes patterns and generates logic |
+| Static, rule-based behavior | Dynamic, data-driven behavior |
+
+> AI fundamentally shifts development by replacing manual rule-writing with **learned decision-making patterns**.
+
+
+---
+
+
+## Neural Networks
+
+### Inspiration from the Human Brain
+
+Human decision-making involves processing inputs through **neurons** to produce a response. This biological concept inspired the development of artificial neural networks.
+
+- Multiple inputs → Processing → One output
+- Decisions emerge from **accumulated learned experiences**, not programmed instructions
+
+### Structure of a Neural Network
+
+![Structure_neural_network](https://dyz1pdcuffwr5.cloudfront.net/SpringAI/AI-Engineering/neural_network_structure.png)
+
+| Component | Role |
+|-----------|------|
+| **Input Layer** | Takes in the raw data |
+| **Hidden Layers** | Transform and process information through interconnected neurons |
+| **Output Layer** | Produces the final result or prediction |
+
+### Shallow vs Deep Networks
+
+| Type | Structure | Capability |
+|------|-----------|------------|
+| **Shallow Neural Network** | Few hidden layers | Simpler pattern recognition |
+| **Deep Neural Network** | Many hidden layers | Complex pattern recognition, abstraction |
+
+> The number of hidden layers determines whether it's shallow or deep learning. More layers enable understanding of more complex patterns.
+
+![Shallow_ML_Learning](https://dyz1pdcuffwr5.cloudfront.net/SpringAI/AI-Engineering/shallow_ml_learning.png)
+
+![Deep_ML_Learning](https://dyz1pdcuffwr5.cloudfront.net/SpringAI/AI-Engineering/deep_ml_learning.png)
+
+
+---
+
+
+## Weights — How Neurons Make Decisions?
+
+**Weights** determine the importance of each input in a neural network's decision-making process.
+
+### Weight Range: -1 to 1
+
+| Weight Value | Meaning |
+|--------------|---------|
+| **1** | Full importance — confirms the input |
+| **0** | No importance — ignores the input |
+| **-1** | Reverse importance — negates the input |
+| **Near 0** | Negligible influence on the decision |
+
+### How It Works
+
+- Each connection between neurons has a weight assigned to it.
+- The network processes **weighted inputs from multiple neurons** and combines them to make decisions.
+- During training, weights are adjusted to improve accuracy, similar to how humans refine decisions based on experience.
+
+> As an AI Engineer, understanding **what** weights and neurons are is important. Understanding the deep mathematical details is not required.
+
+![Deep_Neural_Networks](https://dyz1pdcuffwr5.cloudfront.net/SpringAI/AI-Engineering/deep_neural_networks.png)
+
+
+---
+
+
+## Transformers — The Architecture Behind Modern AI
+
+### What Are Transformers?
+
+Transformers are a neural network architecture that revolutionized AI by enabling models to **understand context** and process information in parallel rather than sequentially.
+
+- Used in models like **GPT** (Generative Pre-trained Transformer), including ChatGPT
+- Introduced the concept of **self-attention**
+
+### The Problem Before Transformers
+
+Previous models like **RNN (Recurrent Neural Networks)** processed text **one word at a time** (sequentially).
+
+| Issue | Impact |
+|-------|--------|
+| Sequential processing | Slow — words handled one after another |
+| Long sequences | Context from early words gets lost by the end |
+| No parallel processing | Cannot leverage modern hardware efficiently |
+
+### How Transformers Solve This
+
+| Feature | Benefit |
+|---------|---------|
+| **Parallel Processing** | All words are processed simultaneously |
+| **Self-Attention** | Each word understands its relationship to every other word |
+| **Context Retention** | Full context is maintained regardless of input length |
+
+
+---
+
+
+## Self-Attention Mechanism
+
+The key innovation in Transformers is **self-attention**, the ability for each word in a sentence to evaluate its relationship and relevance to every other word.
+
+### Example
+
+Sentence: *"The cat sat on the mat because it was tired."*
+
+- Self-attention allows the model to understand that **"it"** refers to **"the cat"** by examining relationships between all words simultaneously.
+- Each word gets assigned a weight relative to other words, indicating how much attention it should pay to them.
+
+### How Self-Attention Works?
+
+1. For each word, the model asks: "How important is every other word to understanding this word?"
+2. Weights are assigned to all word relationships
+3. Words with higher relevance receive more attention
+4. This enables **contextual understanding** of language
+
+
+---
+
+
+## Previous Models vs Transformers
+
+| Aspect | RNN (Previous) | Transformers (Current) |
+|--------|---------------|----------------------|
+| Processing | Sequential (one word at a time) | Parallel (all words simultaneously) |
+| Context handling | Loses context in long sequences | Retains full context |
+| Speed | Slower | Faster |
+| Understanding | Limited relationship awareness | Full self-attention across all words |
+| Modern usage | Mostly replaced | Foundation of GPT, BERT, and all modern LLMs |
+
+
+---
+
+
+## Summary
+
+- **AI** adds intelligence to machines, **ML** trains on data, **Deep Learning** uses multi-layer neural networks.
+- Neural networks are inspired by human brain neurons, they process weighted inputs through layers to produce outputs.
+- **Weights** (ranging from -1 to 1) determine how much importance each input has in decision-making.
+- **Transformers** revolutionized AI by introducing **self-attention**, enabling models to understand context and relationships between all words simultaneously.
+- Previous sequential models (RNN) lost context in long text, while transformers solve this by processing everything in parallel.
+- For AI Engineering, conceptual understanding of these fundamentals is sufficient, deep mathematical expertise is not required.
+
+
+</Steps>
+
+Written By: <a href="https://www.linkedin.com/in/muskangarg03/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer"> Muskan Garg <ExternalLink className="w-4 h-4" /></a>

@@ -1,0 +1,228 @@
+---
+title: Prompt Engineering
+---
+
+
+<Steps>
+<Video id="n0VpK1RfYGA" />
+
+---
+
+**Prompt Engineering** is the practice of crafting effective prompts to obtain accurate, predictable, and specific outputs from AI language models. The quality of the response directly depends on the effectiveness of the prompt.
+
+> AI is like a very knowledgeable person who provides accurate answers when asked specific questions, but may give excessive or irrelevant information if not guided properly.
+
+
+---
+
+
+## Why Prompt Engineering Matters
+
+| Bad Prompting | Good Prompting |
+|---------------|----------------|
+| Uncertain, unpredictable outputs | Predictable, specific outputs |
+| Excessive or irrelevant information | Focused, relevant responses |
+| Generic answers | Tailored, actionable results |
+
+> Even as large language models improve, well-crafted prompts consistently produce better results than vague ones.
+
+
+---
+
+
+## Four Components of a Good Prompt
+
+Every effective prompt should include these key components:
+
+![Components_of_Prompt](https://dyz1pdcuffwr5.cloudfront.net/SpringAI/AI-Engineering/prompt_components.png)
+
+| Component | Purpose | Example |
+|-----------|---------|---------|
+| **Instruction** | What you want the AI to do | "Explain," "Generate," "Compare," "Summarize" |
+| **Input** | The specific data or topic to work with | A code snippet, a paragraph, a question |
+| **Context** | Background information to guide the response | User's expertise level, project details, constraints |
+| **Output Format** | Expected structure of the response | JSON, table, bullet points, paragraph |
+
+### Example
+
+```
+Instruction: Compare the following frontend frameworks
+Input: React, Angular, Vue
+Context: I am a junior developer choosing my first framework
+Output: Present as a markdown table with columns for learning curve,
+        community size, and job market demand
+```
+
+> Adding more context results in better output — a well-contextualized prompt provides the AI with necessary information to generate accurate and relevant responses.
+
+
+---
+
+
+## Prompt Engineering Techniques
+
+<Step>
+### Zero-Shot Prompting
+
+The simplest approach — a clear, concise instruction **without any examples**.
+
+| Aspect | Detail |
+|--------|--------|
+| **How it works** | Relies solely on clear instructions to guide the response |
+| **When to use** | Simple questions, quick answers, straightforward tasks |
+| **Limitation** | Least controlled; output format may vary |
+
+**Example:**
+```
+What is a smart contract in blockchain?
+```
+
+</Step>
+
+<Step>
+### Few-Shot Prompting
+
+Providing **examples of the desired output format** along with the prompt, so the model learns the expected pattern.
+
+| Aspect | Detail |
+|--------|--------|
+| **How it works** | Give 2-3 examples of the desired output before asking the actual question |
+| **When to use** | When you need a specific format, structure, or style |
+| **Benefit** | Guarantees consistent, structured outputs matching the desired format |
+
+**Example — Generating Commit Messages:**
+```
+Generate a commit message for the following change.
+
+Examples:
+- Change: Added user authentication → Commit: feat: add user authentication with JWT tokens
+- Change: Fixed navbar alignment → Commit: fix: resolve navbar alignment issue on mobile
+- Change: Updated README → Commit: docs: update README with installation instructions
+
+Now generate for:
+- Change: Added login button to the homepage
+```
+
+**Output:** `feat: add login button to homepage`
+
+> Few-shot prompting establishes a pattern that the AI follows, ensuring consistent and predictable outputs.
+
+</Step>
+
+<Step>
+### Chain of Thought (CoT) Prompting
+
+Forces the AI to **break down complex problems into step-by-step reasoning**, similar to showing work in mathematics.
+
+| Aspect | Detail |
+|--------|--------|
+| **How it works** | Ask the model to "think step by step" or show its reasoning |
+| **When to use** | Complex calculations, logical problems, multi-step reasoning |
+| **Benefit** | Increases accuracy and allows verification of the logic path |
+
+**Example:**
+```
+A store has 45 apples. They sell 12 in the morning and receive
+a shipment of 30 in the afternoon. How many apples do they have now?
+
+Think step by step.
+```
+
+**Output:**
+```
+Step 1: Start with 45 apples
+Step 2: Sell 12 → 45 - 12 = 33 apples
+Step 3: Receive 30 → 33 + 30 = 63 apples
+Answer: 63 apples
+```
+
+> Adding "think step by step" slows down the model's response, improving accuracy by forcing it to reason through each stage rather than jumping to an answer.
+
+</Step>
+
+<Step>
+### Role Prompting
+
+Assigning a **specific persona or role** to the AI, causing it to adjust technical depth, terminology, and examples to match that role's expertise.
+
+| Aspect | Detail |
+|--------|--------|
+| **How it works** | Prefix the prompt with a role assignment |
+| **When to use** | When you need responses tailored to a specific expertise level or perspective |
+| **Benefit** | Transforms the depth and style of responses |
+
+**Example:**
+```
+You are a senior blockchain architect. Explain smart contracts
+to a junior developer using relatable analogies.
+```
+
+The AI will adjust its response to be technically informed but accessible, using analogies appropriate for a beginner.
+
+</Step>
+
+<Step>
+### Structured Output Prompting
+
+Specifying the **exact output format** (JSON, CSV, table, list) to get parseable, predictable data.
+
+| Aspect | Detail |
+|--------|--------|
+| **How it works** | Explicitly state the desired format in the prompt |
+| **When to use** | AI-powered applications that need machine-readable data |
+| **Benefit** | Predictable, parseable output rather than free-form text |
+
+**Example:**
+```
+List the top 3 JavaScript frameworks with their release year
+and primary use case. Return the result as JSON.
+```
+
+**Output:**
+```json
+[
+  { "name": "React", "year": 2013, "useCase": "UI component libraries" },
+  { "name": "Angular", "year": 2016, "useCase": "Enterprise SPAs" },
+  { "name": "Vue", "year": 2014, "useCase": "Progressive web apps" }
+]
+```
+
+> Structured output prompting is critical for AI-powered applications that need to parse and process AI responses programmatically.
+
+</Step>
+
+![Prompt_Technique_Comparison](https://dyz1pdcuffwr5.cloudfront.net/SpringAI/AI-Engineering/prompt_comparison.png)
+
+
+---
+
+
+## Context Optimization
+
+Embedding contextual information about the user's background, goals, and expertise level enables AI to generate **tailored responses** rather than generic answers.
+
+| Context Element | Impact |
+|-----------------|--------|
+| User's expertise level | Adjusts complexity of explanation |
+| Project constraints | Focuses on relevant solutions |
+| Desired outcome | Aligns response with goals |
+| Industry/domain | Uses appropriate terminology |
+
+
+---
+
+
+## Summary
+
+- **Prompt Engineering** is a critical skill for AI Engineers, the quality of output directly depends on the quality of the prompt.
+- A good prompt has four components: **Instruction, Input, Context, and Output Format**.
+- **Zero-shot** is simplest but least controlled; **few-shot** ensures format consistency through examples.
+- **Chain of Thought** improves accuracy on complex problems by forcing step-by-step reasoning.
+- **Role prompting** tailors responses to specific expertise levels and perspectives.
+- **Structured output** is essential for building AI-powered applications that need predictable, parseable data.
+- Always provide clear instructions, relevant context, and specify the expected output format for best results.
+
+
+</Steps>
+
+Written By: <a href="https://www.linkedin.com/in/muskangarg03/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer"> Muskan Garg <ExternalLink className="w-4 h-4" /></a>
