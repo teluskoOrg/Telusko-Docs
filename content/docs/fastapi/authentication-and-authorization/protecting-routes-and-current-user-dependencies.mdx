@@ -2,7 +2,7 @@
 title: Protecting Routes and Current User Dependencies
 ---
 
-By now the pieces exist in isolation — a password hasher, a token issuer, a decoder, role checks. The job left is gluing them together so that protecting a route is one line of code and you never have to think about the wiring again.
+By now the pieces exist in isolation - a password hasher, a token issuer, a decoder, role checks. The job left is gluing them together so that protecting a route is one line of code and you never have to think about the wiring again.
 
 ## What "protected" actually means
 
@@ -65,7 +65,7 @@ Notice three things:
 
 - The error is built **once** at module load. It's a small thing, but it removes the temptation to make slightly different errors in different places, which makes client error-handling brittle.
 - We verify the token `type` is `"access"`, not `"refresh"`. Even if a refresh token leaks, it cannot be used as an access token here.
-- The database lookup matters. A token might be cryptographically valid for a user that has since been deleted or disabled — refusing those requests is the only way to actually log someone out.
+- The database lookup matters. A token might be cryptographically valid for a user that has since been deleted or disabled - refusing those requests is the only way to actually log someone out.
 
 ## Variants you'll want eventually
 
@@ -94,7 +94,7 @@ def get_current_user_optional(
         return None
 ```
 
-For the optional one, you need `OAuth2PasswordBearer(..., auto_error=False)` so missing tokens don't raise — they just produce `None`.
+For the optional one, you need `OAuth2PasswordBearer(..., auto_error=False)` so missing tokens don't raise - they just produce `None`.
 
 ## Three places to attach a check
 

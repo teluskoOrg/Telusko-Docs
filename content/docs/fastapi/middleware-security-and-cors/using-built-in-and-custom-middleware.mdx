@@ -14,7 +14,7 @@ FastAPI inherits a small but useful set of middlewares from Starlette, and you c
 | `HTTPSRedirectMiddleware` | `fastapi.middleware.httpsredirect` | 307-redirects HTTP to HTTPS |
 | `SessionMiddleware` | `starlette.middleware.sessions` | Signed cookie sessions |
 
-You don't need to install anything extra for these — they come with FastAPI.
+You don't need to install anything extra for these - they come with FastAPI.
 
 CORS gets its own page next, so we'll skip past it here.
 
@@ -88,9 +88,9 @@ app.add_middleware(
 
 Now any route can read or write `request.session["user_id"] = 42`. The session is stored signed in a cookie, so the server stays stateless but a tampered cookie would fail signature verification.
 
-For pure API workloads using JWTs, you don't need this. It's useful when you have a mix — say, a small admin UI on the same backend.
+For pure API workloads using JWTs, you don't need this. It's useful when you have a mix - say, a small admin UI on the same backend.
 
-## Writing your own — the function form
+## Writing your own - the function form
 
 This is the form you saw in the previous doc.
 
@@ -108,7 +108,7 @@ async def time_request(request: Request, call_next):
 
 Simple, async, gets the job done for one-off behaviors.
 
-## Writing your own — the class form
+## Writing your own - the class form
 
 When the middleware needs configuration, or you want to ship it as a reusable library, write a class.
 
@@ -179,7 +179,7 @@ A common production stack, roughly outer-to-inner:
 7. GZipMiddleware                (compress the response on the way out)
 ```
 
-Remember: in code, you `add_middleware` from outermost to innermost — i.e., `TrustedHost` is added *first*, GZip *last*. The outer ones wrap the inner ones.
+Remember: in code, you `add_middleware` from outermost to innermost - i.e., `TrustedHost` is added *first*, GZip *last*. The outer ones wrap the inner ones.
 
 If the order ever feels wrong, draw the request flow on paper. It is faster than guessing.
 

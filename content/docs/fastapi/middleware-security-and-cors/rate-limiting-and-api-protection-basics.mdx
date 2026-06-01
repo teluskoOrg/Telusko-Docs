@@ -4,7 +4,7 @@ title: Rate Limiting and API Protection Basics
 
 Without limits, one careless client can soak up a server's capacity for everyone else. Without limits, a brute-force script can try ten thousand passwords a minute against your login endpoint. Without limits, a bug in a frontend can hammer your database into the ground. Rate limiting is the answer to all three.
 
-This page is the *basics* — enough to ship something sensible. The truly serious stuff (distributed rate limits, sliding windows, leaky buckets, per-tenant quotas) gets its own day eventually.
+This page is the *basics* - enough to ship something sensible. The truly serious stuff (distributed rate limits, sliding windows, leaky buckets, per-tenant quotas) gets its own day eventually.
 
 ## What "rate limit" actually means
 
@@ -29,7 +29,7 @@ The exact algorithm matters more than people think:
 
 For 90% of APIs, **fixed window per IP** is fine. The other algorithms exist because at scale or in specific shapes (login, payments) the fixed-window burst behavior matters.
 
-## SlowAPI — the easy default
+## SlowAPI - the easy default
 
 `slowapi` is the most popular rate-limit library for FastAPI. It's a wrapper around `limits`, which knows the math, and integrates cleanly with FastAPI's dependency system.
 
@@ -86,7 +86,7 @@ limiter = Limiter(
 )
 ```
 
-## Beyond IP — what to actually count by
+## Beyond IP - what to actually count by
 
 Counting by IP is the most common default, but it's also the easiest to abuse. A botnet has many IPs. A NAT'd corporate network shares one IP across thousands of users.
 
@@ -130,7 +130,7 @@ app.add_exception_handler(RateLimitExceeded, rate_limit_handler)
 
 ## In-memory vs distributed counters
 
-The default SlowAPI backend keeps counts in process memory. That works fine for a single-process app. The moment you scale to two workers or two pods, the limits get split — a "5 per minute" cap becomes "5 per minute per worker", which is not what you intended.
+The default SlowAPI backend keeps counts in process memory. That works fine for a single-process app. The moment you scale to two workers or two pods, the limits get split - a "5 per minute" cap becomes "5 per minute per worker", which is not what you intended.
 
 For multi-process or multi-host setups, point SlowAPI at Redis:
 
@@ -181,7 +181,7 @@ If you have no rate limits today and want a reasonable starting point:
 | Read endpoints | 60-120 per minute per user |
 | Public unauthenticated | 30 per minute per IP |
 
-Ship it, watch the 429 rate, adjust. You will overshoot or undershoot the first time. That's fine — the rule of thumb is "tight enough to hurt an attacker, loose enough to never hurt a real user." That gap is wider than it sounds.
+Ship it, watch the 429 rate, adjust. You will overshoot or undershoot the first time. That's fine - the rule of thumb is "tight enough to hurt an attacker, loose enough to never hurt a real user." That gap is wider than it sounds.
 
 ## Where this fits
 

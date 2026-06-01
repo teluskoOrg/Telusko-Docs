@@ -2,7 +2,7 @@
 title: Role Based Access Control
 ---
 
-Once you know *who* a user is, the next question is *what they're allowed to do*. RBAC — role based access control — is a small, sensible answer to that question. You group permissions into roles, you give users one or more roles, and routes check the role instead of the individual user.
+Once you know *who* a user is, the next question is *what they're allowed to do*. RBAC - role based access control - is a small, sensible answer to that question. You group permissions into roles, you give users one or more roles, and routes check the role instead of the individual user.
 
 It is not the only model out there. ABAC (attribute-based) and PBAC (policy-based) get fancier when you need them. But for most applications, RBAC is the right starting point because it stays understandable as the team and the codebase grow.
 
@@ -52,7 +52,7 @@ class User(Base):
     role: Mapped[Role] = mapped_column(SQLEnum(Role), default=Role.USER)
 ```
 
-A user is created as `USER`. Promotion to `EDITOR` or `ADMIN` is an explicit, deliberate action — usually behind an admin-only route.
+A user is created as `USER`. Promotion to `EDITOR` or `ADMIN` is an explicit, deliberate action - usually behind an admin-only route.
 
 ## A role-checking dependency
 
@@ -89,11 +89,11 @@ def list_all_users(
     ...
 ```
 
-The route reads like a sentence — "delete a post, requires editor or admin." That clarity is the whole point of the pattern.
+The route reads like a sentence - "delete a post, requires editor or admin." That clarity is the whole point of the pattern.
 
 ## Going one step further: permissions, not just roles
 
-Roles are convenient, but they hide *why* someone can do something. As the app grows you end up wanting "can edit posts" rather than "is an editor", because the answers might diverge — maybe a `moderator` role can also edit posts, and now you're listing roles in seven different places.
+Roles are convenient, but they hide *why* someone can do something. As the app grows you end up wanting "can edit posts" rather than "is an editor", because the answers might diverge - maybe a `moderator` role can also edit posts, and now you're listing roles in seven different places.
 
 Move to a permission-centric model:
 
@@ -174,4 +174,4 @@ Dependencies that raise authentication errors should come *before* role checks, 
 
 ## When RBAC stops being enough
 
-If you find yourself writing rules like *"editors can edit drafts created in the last 24 hours by users in the same team during business hours"*, RBAC is probably not the right tool any more. That is policy territory. Libraries like `casbin` or services like Open Policy Agent exist for exactly that. Don't reach for them before you need them — but don't twist roles into knots either.
+If you find yourself writing rules like *"editors can edit drafts created in the last 24 hours by users in the same team during business hours"*, RBAC is probably not the right tool any more. That is policy territory. Libraries like `casbin` or services like Open Policy Agent exist for exactly that. Don't reach for them before you need them - but don't twist roles into knots either.

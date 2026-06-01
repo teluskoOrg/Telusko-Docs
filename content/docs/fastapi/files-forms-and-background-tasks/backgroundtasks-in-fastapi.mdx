@@ -2,7 +2,7 @@
 title: BackgroundTasks in FastAPI
 ---
 
-A `BackgroundTask` is FastAPI's way of saying *"return the response now, do this other work right after."* It is the simplest possible answer to "don't make the user wait for the email to send." It is also the answer with the most caveats — knowing when it's the right tool, and when you need something heavier, is most of the skill.
+A `BackgroundTask` is FastAPI's way of saying *"return the response now, do this other work right after."* It is the simplest possible answer to "don't make the user wait for the email to send." It is also the answer with the most caveats - knowing when it's the right tool, and when you need something heavier, is most of the skill.
 
 ## How it works in one paragraph
 
@@ -41,7 +41,7 @@ def notify(message: str, background: BackgroundTasks):
     return {"queued": True}
 ```
 
-`background.add_task` takes a function and the arguments to call it with — both positional and keyword. The function can be sync or async; FastAPI handles both.
+`background.add_task` takes a function and the arguments to call it with - both positional and keyword. The function can be sync or async; FastAPI handles both.
 
 ## A more realistic case
 
@@ -69,7 +69,7 @@ def signup(
     return user
 ```
 
-The user gets their `201 Created` immediately. The email goes out a heartbeat later. If the email fails, the signup still succeeded — which is usually what you want.
+The user gets their `201 Created` immediately. The email goes out a heartbeat later. If the email fails, the signup still succeeded - which is usually what you want.
 
 ## Multiple tasks
 
@@ -113,7 +113,7 @@ This is the important part. The pattern looks magic, and it is genuinely useful,
 
 `BackgroundTasks` is for *short, non-critical* work that you'd rather not block the request on. Sending a notification email. Updating a search index. Recording an analytics event. Things where "best effort" is genuinely fine.
 
-For anything where loss is unacceptable — payment confirmations, password reset emails, anything a customer relies on — you want a real queue. The next page covers that distinction.
+For anything where loss is unacceptable - payment confirmations, password reset emails, anything a customer relies on - you want a real queue. The next page covers that distinction.
 
 ## The CPU question
 
@@ -141,7 +141,7 @@ async def resize_in_thread(path: str) -> None:
 bg.add_task(resize_in_thread, path)
 ```
 
-A thread pool is still in the same process — it doesn't help if you're maxed out on CPU — but it does keep the event loop responsive.
+A thread pool is still in the same process - it doesn't help if you're maxed out on CPU - but it does keep the event loop responsive.
 
 ## A small set of rules of thumb
 
@@ -179,4 +179,4 @@ Don't read all the caveats and conclude `BackgroundTasks` is useless. It is the 
 
 These are all *fine* to lose under a server restart. The cost of using a real queue for them is higher than the cost of a rare miss.
 
-The next page is about building those "real queue" workflows for the cases where you genuinely need them — and notably, about how to keep them feeling FastAPI-shaped rather than dragging in a heavyweight infrastructure stack on day one.
+The next page is about building those "real queue" workflows for the cases where you genuinely need them - and notably, about how to keep them feeling FastAPI-shaped rather than dragging in a heavyweight infrastructure stack on day one.

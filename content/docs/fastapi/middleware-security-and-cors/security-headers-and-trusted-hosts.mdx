@@ -2,7 +2,7 @@
 title: Security Headers and Trusted Hosts
 ---
 
-Security headers are the cheapest defense you'll ever add to an API. They're small, they cost nothing at runtime, and they shut down whole categories of attacks before they get started. The downside is that nobody adds them by default — you have to remember.
+Security headers are the cheapest defense you'll ever add to an API. They're small, they cost nothing at runtime, and they shut down whole categories of attacks before they get started. The downside is that nobody adds them by default - you have to remember.
 
 This page is part checklist, part explanation. Skim the table at the end if you just want the recipe; read the explanations to understand *why* each one is there.
 
@@ -14,7 +14,7 @@ This page is part checklist, part explanation. Skim the table at the end if you 
 | `X-Content-Type-Options: nosniff` | Stops browsers guessing content types | Always |
 | `X-Frame-Options: DENY` | Forbids your responses being embedded in an iframe | Yes, except when you serve embeddable widgets |
 | `Referrer-Policy` | Controls how much of the URL is leaked in `Referer` | Yes |
-| `Content-Security-Policy` | The big one — restricts what the browser may load | Critical for HTML pages, optional for pure JSON APIs |
+| `Content-Security-Policy` | The big one - restricts what the browser may load | Critical for HTML pages, optional for pure JSON APIs |
 | `Permissions-Policy` | Disables browser features (camera, geolocation, etc.) | Useful for HTML |
 | `Cache-Control` | Whether sensitive responses get cached anywhere | Always think about it |
 
@@ -72,7 +72,7 @@ Some browsers used to try to "be helpful" by guessing the type of a response whe
 X-Frame-Options: DENY
 ```
 
-Stops anyone from embedding your responses inside an `<iframe>` on another site. This is the defense against clickjacking — the trick where an attacker overlays a transparent iframe of your app over their own UI to harvest clicks.
+Stops anyone from embedding your responses inside an `<iframe>` on another site. This is the defense against clickjacking - the trick where an attacker overlays a transparent iframe of your app over their own UI to harvest clicks.
 
 If your API legitimately needs to be iframed (an embeddable widget, an OAuth consent page), switch this to `SAMEORIGIN` or use a `Content-Security-Policy` `frame-ancestors` directive instead.
 
@@ -82,7 +82,7 @@ If your API legitimately needs to be iframed (an embeddable widget, an OAuth con
 Referrer-Policy: no-referrer
 ```
 
-When a user navigates from one page to another, the browser sends the previous URL in a `Referer` header. That URL might contain sensitive data — tokens, IDs, search queries. `no-referrer` is the strictest option. `strict-origin-when-cross-origin` is a popular middle ground if you need analytics to know roughly where traffic came from.
+When a user navigates from one page to another, the browser sends the previous URL in a `Referer` header. That URL might contain sensitive data - tokens, IDs, search queries. `no-referrer` is the strictest option. `strict-origin-when-cross-origin` is a popular middle ground if you need analytics to know roughly where traffic came from.
 
 ### Permissions-Policy
 
@@ -106,7 +106,7 @@ Content-Security-Policy:
   frame-ancestors 'none';
 ```
 
-That blocks every external script, every inline event handler, and every embed of the page. Tightening CSP is an iterative process — you ship it in `Content-Security-Policy-Report-Only` first, watch the violation reports, then promote to enforcement.
+That blocks every external script, every inline event handler, and every embed of the page. Tightening CSP is an iterative process - you ship it in `Content-Security-Policy-Report-Only` first, watch the violation reports, then promote to enforcement.
 
 ## Trusted hosts
 
@@ -166,7 +166,7 @@ class NoStoreMiddleware(BaseHTTPMiddleware):
         return response
 ```
 
-`setdefault` is the trick — it only sets the header if the route hasn't already chosen its own cache policy.
+`setdefault` is the trick - it only sets the header if the route hasn't already chosen its own cache policy.
 
 ## Where to verify
 
@@ -182,4 +182,4 @@ A `B` from securityheaders.com on a small API is fine. The goal is to know what 
 
 ## In short
 
-Security headers are a "set them once, leave them alone" job. The middleware in this doc covers the safe defaults, and `TrustedHostMiddleware` handles the request-side counterpart. Add them early in a project's life — they get harder to introduce later when you discover something inadvertently depends on the missing protection.
+Security headers are a "set them once, leave them alone" job. The middleware in this doc covers the safe defaults, and `TrustedHostMiddleware` handles the request-side counterpart. Add them early in a project's life - they get harder to introduce later when you discover something inadvertently depends on the missing protection.

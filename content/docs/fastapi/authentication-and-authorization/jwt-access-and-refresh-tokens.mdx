@@ -19,7 +19,7 @@ eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhbGljZSIsImV4cCI6MTcwMDAwMH0.signature
 | Payload | Claims about the user | `{"sub": "alice", "exp": 1700000000}` |
 | Signature | HMAC or RSA proof the payload wasn't tampered with | binary bytes |
 
-The first two parts are **not encrypted** — they're just base64. Anyone with the token can read them. The signature is what stops people from changing the payload and getting away with it.
+The first two parts are **not encrypted** - they're just base64. Anyone with the token can read them. The signature is what stops people from changing the payload and getting away with it.
 
 ## Standard claims you should know
 
@@ -37,7 +37,7 @@ You don't have to use all of them. `sub` and `exp` are the bare minimum for an a
 
 ## Why two tokens?
 
-A single long-lived token is convenient but dangerous. If it leaks, the attacker has free run for as long as the token is valid. A single short-lived token is safer but annoying — users would get logged out every fifteen minutes.
+A single long-lived token is convenient but dangerous. If it leaks, the attacker has free run for as long as the token is valid. A single short-lived token is safer but annoying - users would get logged out every fifteen minutes.
 
 The compromise: hand out two tokens.
 
@@ -124,7 +124,7 @@ def refresh(payload: RefreshRequest):
     return {"access_token": new_access, "token_type": "bearer"}
 ```
 
-Two checks beyond the signature: the token is a valid JWT, *and* it claims to be a refresh token. Skipping the type check is a classic bug — an access token would also be accepted, defeating the point.
+Two checks beyond the signature: the token is a valid JWT, *and* it claims to be a refresh token. Skipping the type check is a classic bug - an access token would also be accepted, defeating the point.
 
 ## What JWT does not solve
 
@@ -136,7 +136,7 @@ Once you issue a JWT, the server has no idea who holds it. A logout button on th
 
 To get real revocation you need state on the server: either a denylist of revoked `jti` values, or a per-user "tokens issued before this timestamp are invalid" field. At that point you have given up some of the stateless appeal of JWTs.
 
-For most apps, the pragmatic answer is: keep access tokens short (15 minutes), and accept that a stolen access token has a small window of damage. Refresh token rotation — issuing a new refresh token every time one is used, and revoking the old one — closes the longer-lived hole.
+For most apps, the pragmatic answer is: keep access tokens short (15 minutes), and accept that a stolen access token has a small window of damage. Refresh token rotation - issuing a new refresh token every time one is used, and revoking the old one - closes the longer-lived hole.
 
 ## Storage on the client
 
@@ -149,7 +149,7 @@ This part is not FastAPI's problem but it shapes how secure the whole system act
 | In-memory only | XSS still bad but token lost on reload | Forces refresh on every reload |
 | `HttpOnly` cookie | Not visible to JS, automatic on requests | Need CSRF protection |
 
-The current recommendation from most security folks is **HttpOnly, Secure, SameSite=Strict cookies** for browser apps, and the platform keychain (iOS Keychain, Android Keystore) for native apps. Your backend doesn't change much — it just sets a cookie instead of returning a JSON token.
+The current recommendation from most security folks is **HttpOnly, Secure, SameSite=Strict cookies** for browser apps, and the platform keychain (iOS Keychain, Android Keystore) for native apps. Your backend doesn't change much - it just sets a cookie instead of returning a JSON token.
 
 ## Common mistakes worth listing
 
@@ -161,4 +161,4 @@ The current recommendation from most security folks is **HttpOnly, Secure, SameS
 
 ## In one line
 
-A JWT is a signed envelope carrying claims about a user. Pair a short-lived access token with a longer-lived refresh token, validate both honestly, and remember that JWTs trade revocability for statelessness — that trade is good for most APIs but worth making with your eyes open.
+A JWT is a signed envelope carrying claims about a user. Pair a short-lived access token with a longer-lived refresh token, validate both honestly, and remember that JWTs trade revocability for statelessness - that trade is good for most APIs but worth making with your eyes open.

@@ -2,7 +2,7 @@
 title: Sending Emails and Notifications
 ---
 
-Email is one of those features every project eventually needs and nobody loves implementing. The good news is that for a FastAPI app, the actual sending is a handful of lines. The interesting decisions are around *how* to send — should the request wait for the email to leave, or should it fire-and-forget? The next two docs in this section answer that more carefully with background tasks and async workflows. This one is about the sending itself.
+Email is one of those features every project eventually needs and nobody loves implementing. The good news is that for a FastAPI app, the actual sending is a handful of lines. The interesting decisions are around *how* to send - should the request wait for the email to leave, or should it fire-and-forget? The next two docs in this section answer that more carefully with background tasks and async workflows. This one is about the sending itself.
 
 ## Don't send from inside the request, if you can help it
 
@@ -85,7 +85,7 @@ async def send_welcome(to: str, name: str) -> None:
     await fast_mail.send_message(message)
 ```
 
-The `await` matters — under the hood it uses `aiosmtplib`, so it actually releases the event loop while talking to the SMTP server. That's a real benefit in an async app.
+The `await` matters - under the hood it uses `aiosmtplib`, so it actually releases the event loop while talking to the SMTP server. That's a real benefit in an async app.
 
 ## SMTP vs. transactional email APIs
 
@@ -100,7 +100,7 @@ For anything beyond a side project, a transactional email API beats SMTP for a f
 | Template management | Files in your repo | UI in the provider |
 | Per-message cost | Free if you run your own server | Cents per thousand |
 
-If your app actually depends on emails landing — password resets, two-factor codes, receipts — use a transactional API. The deliverability difference alone is worth it. SMTP from a random VPS regularly gets routed to spam.
+If your app actually depends on emails landing - password resets, two-factor codes, receipts - use a transactional API. The deliverability difference alone is worth it. SMTP from a random VPS regularly gets routed to spam.
 
 Calling SendGrid from a route looks like this:
 
@@ -121,7 +121,7 @@ def send_welcome(to: str, name: str) -> None:
     client.send(message)
 ```
 
-Synchronous, but quick — it's an HTTPS POST, not an SMTP handshake.
+Synchronous, but quick - it's an HTTPS POST, not an SMTP handshake.
 
 ## Templating bodies
 
@@ -142,7 +142,7 @@ def render(template: str, **context) -> str:
 body = render("welcome.html", name="Alice", verify_url="https://...")
 ```
 
-`autoescape=True` is not optional — without it, a user with the name `<script>...` becomes a stored XSS in every email they're mentioned in.
+`autoescape=True` is not optional - without it, a user with the name `<script>...` becomes a stored XSS in every email they're mentioned in.
 
 ## A small SignalingNote about plain-text fallbacks
 
@@ -173,13 +173,13 @@ msg.add_alternative("<p>HTML version.</p>", subtype="html")
 
 ## Other notification channels, briefly
 
-The patterns are the same as email — call an SDK, ideally not in the request thread:
+The patterns are the same as email - call an SDK, ideally not in the request thread:
 
 | Channel | Library | Notes |
 |---------|---------|-------|
 | Slack | `slack_sdk` | Incoming webhooks are dead simple; Bot tokens for more |
 | Discord | `aiohttp` + webhook URL | One HTTP POST per message |
-| SMS | `twilio` | Costs real money per send — rate-limit yourself |
+| SMS | `twilio` | Costs real money per send - rate-limit yourself |
 | Push (web) | `pywebpush` | Needs VAPID keys and a subscription per device |
 | Push (mobile) | Firebase Cloud Messaging | Server-side via `firebase-admin` |
 

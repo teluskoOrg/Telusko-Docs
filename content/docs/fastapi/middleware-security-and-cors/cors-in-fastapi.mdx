@@ -10,7 +10,7 @@ The frustrating part is that this error never came from your code. It came from 
 
 ## What CORS actually is
 
-CORS — Cross-Origin Resource Sharing — is a browser security rule. The default behavior is: JavaScript running on `https://a.com` cannot read responses from `https://b.com`. CORS is the mechanism that lets a server **opt in** to allowing this, by sending specific response headers.
+CORS - Cross-Origin Resource Sharing - is a browser security rule. The default behavior is: JavaScript running on `https://a.com` cannot read responses from `https://b.com`. CORS is the mechanism that lets a server **opt in** to allowing this, by sending specific response headers.
 
 The server isn't blocking anything. The browser is. CORS headers are how the server tells the browser *"yes, it's fine, this script is allowed to see this response."*
 
@@ -28,7 +28,7 @@ Notice the last two are *different origins* even though both are localhost. Diff
 
 ## The two-phase dance
 
-Some CORS requests trigger a **preflight** — an extra `OPTIONS` request the browser fires before the real one. It happens when the request is "non-simple": custom headers, `PUT`/`DELETE`/`PATCH`, JSON content type, and so on. Basically everything a real API does.
+Some CORS requests trigger a **preflight** - an extra `OPTIONS` request the browser fires before the real one. It happens when the request is "non-simple": custom headers, `PUT`/`DELETE`/`PATCH`, JSON content type, and so on. Basically everything a real API does.
 
 ```text
 Frontend (https://app.com)          Backend (https://api.com)
@@ -151,7 +151,7 @@ app.add_middleware(
 )
 ```
 
-Use this carefully. A regex of `.*` matches every origin on the internet — which is the same as `["*"]`, with all of the credential incompatibility plus none of the obvious-look-at-it-and-cringe value.
+Use this carefully. A regex of `.*` matches every origin on the internet - which is the same as `["*"]`, with all of the credential incompatibility plus none of the obvious-look-at-it-and-cringe value.
 
 ## Symptoms and what they really mean
 
@@ -161,7 +161,7 @@ Use this carefully. A regex of `.*` matches every origin on the internet — whi
 | "The value of the 'Access-Control-Allow-Origin' header in the response must not be the wildcard '*' when the request's credentials mode is 'include'" | `allow_credentials=True` with `allow_origins=["*"]` |
 | Preflight gets a `405 Method Not Allowed` | The CORS middleware is *after* a more restrictive one, or not registered at all |
 | Cookie isn't sent on cross-origin requests | Need `credentials: "include"` on the fetch *and* `allow_credentials=True` on the server *and* `SameSite=None; Secure` on the cookie |
-| Works in Postman, fails in browser | That's the whole point — CORS is a browser-only check. Postman doesn't enforce it. |
+| Works in Postman, fails in browser | That's the whole point - CORS is a browser-only check. Postman doesn't enforce it. |
 
 The "works in Postman" one is worth saying out loud: if it works in Postman but fails in the browser, the bug is in your CORS configuration, not in your route.
 

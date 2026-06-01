@@ -4,15 +4,15 @@ title: Logging, Monitoring and Request Tracing
 
 Production code without observability is faith-based programming. You ship it, hope it works, and only learn it didn't when a user emails you. Three small habits change that completely:
 
-- **Logging** — recording what happened, in a form a human can read.
-- **Monitoring** — counting how often things happen, in a form a dashboard can chart.
-- **Tracing** — following one request across many components.
+- **Logging** - recording what happened, in a form a human can read.
+- **Monitoring** - counting how often things happen, in a form a dashboard can chart.
+- **Tracing** - following one request across many components.
 
 These aren't separate disciplines. They overlap in the middle, and a good FastAPI setup tends to do all three through the same middleware spine.
 
 ## Start with structured logs
 
-Plain string logs work, until the moment you have to grep for `"user=alice"` across three weeks of logs and discover that one service writes `user='alice'` and another writes `username:alice`. Structured logs — JSON, key-value, anything machine-parseable — fix this.
+Plain string logs work, until the moment you have to grep for `"user=alice"` across three weeks of logs and discover that one service writes `user='alice'` and another writes `username:alice`. Structured logs - JSON, key-value, anything machine-parseable - fix this.
 
 Python's standard `logging` module can emit JSON with a tiny formatter:
 
@@ -149,7 +149,7 @@ REQUESTS.labels(request.method, request.url.path, response.status_code).inc()
 LATENCY.labels(request.method, request.url.path).observe(elapsed_ms / 1000)
 ```
 
-A small caveat: don't label by raw `request.url.path` if the path includes IDs (`/users/42`, `/users/43`, `/users/44`). You'll explode your metric cardinality. Use the route template (`/users/{user_id}`) instead — FastAPI exposes it via `request.scope.get("route").path`.
+A small caveat: don't label by raw `request.url.path` if the path includes IDs (`/users/42`, `/users/43`, `/users/44`). You'll explode your metric cardinality. Use the route template (`/users/{user_id}`) instead - FastAPI exposes it via `request.scope.get("route").path`.
 
 `prometheus-fastapi-instrumentator` does all of this for you if you'd rather not roll your own:
 
@@ -210,4 +210,4 @@ Once you have logs flowing, the temptation is to log everything. Resist a little
 
 ## Wrapping the section
 
-We started this section asking what middleware does and finished with the whole observability story. The thread is the same: middleware is the place where you can attach cross-cutting concerns to every request without polluting any single route. CORS, security headers, trusted hosts, rate limits, logging, tracing — they all live here for the same reason. One layer, set up once, doing quiet useful work on every request that flows through your app.
+We started this section asking what middleware does and finished with the whole observability story. The thread is the same: middleware is the place where you can attach cross-cutting concerns to every request without polluting any single route. CORS, security headers, trusted hosts, rate limits, logging, tracing - they all live here for the same reason. One layer, set up once, doing quiet useful work on every request that flows through your app.

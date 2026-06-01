@@ -2,7 +2,7 @@
 title: Building Small Async Workflows
 ---
 
-There comes a point in most projects where `BackgroundTasks` stops being enough. The work needs to survive a restart. It needs to retry. It needs to run on a schedule. It needs to scale separately from the web servers. This page is about that next step — not a full Celery deep-dive, but enough to pick a sensible tool and wire up a small, honest workflow without blowing the project's complexity budget.
+There comes a point in most projects where `BackgroundTasks` stops being enough. The work needs to survive a restart. It needs to retry. It needs to run on a schedule. It needs to scale separately from the web servers. This page is about that next step - not a full Celery deep-dive, but enough to pick a sensible tool and wire up a small, honest workflow without blowing the project's complexity budget.
 
 ## A short tour of options
 
@@ -22,7 +22,7 @@ There's a real ladder here. Each rung adds capability but also moves, install, a
 | **Celery** | The mainstream choice, many features | The complexity is overkill for your scale |
 | **Temporal / Airflow** | Multi-step orchestration | You don't have multi-day workflows |
 
-For FastAPI specifically, **Arq** tends to be the most natural fit — it's async, the task code looks like FastAPI handler code, and Redis is the only extra moving part.
+For FastAPI specifically, **Arq** tends to be the most natural fit - it's async, the task code looks like FastAPI handler code, and Redis is the only extra moving part.
 
 ## A working Arq example
 
@@ -39,7 +39,7 @@ from arq.connections import RedisSettings
 REDIS_SETTINGS = RedisSettings(host="localhost", port=6379)
 
 async def send_welcome_email(ctx, to: str, name: str) -> None:
-    # ctx is a dict — Arq passes shared resources here
+    # ctx is a dict - Arq passes shared resources here
     await ctx["mailer"].send(to=to, subject="Welcome", body=f"Hi {name}")
 
 async def startup(ctx):
@@ -159,7 +159,7 @@ Notes worth noticing:
 
 - Each job re-fetches its own state. They don't pass objects between them, only IDs. Objects don't serialize well across processes.
 - `process_document` enqueues `email_user`. Workflows are just jobs that enqueue other jobs.
-- The early `if doc.processed_at: return` makes the job idempotent — if it gets retried after partly succeeding, the second run becomes a no-op.
+- The early `if doc.processed_at: return` makes the job idempotent - if it gets retried after partly succeeding, the second run becomes a no-op.
 
 ## Scheduling: the cron use case
 

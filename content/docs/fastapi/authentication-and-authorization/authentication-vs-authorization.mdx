@@ -48,11 +48,11 @@ Request arrives
    Run handler
 ```
 
-Notice the two different status codes: `401 Unauthorized` (you didn't prove who you are) and `403 Forbidden` (you proved it, but you still cannot do this). HTTP got the naming a bit unlucky here — `401` is really about *authentication*, not authorization.
+Notice the two different status codes: `401 Unauthorized` (you didn't prove who you are) and `403 Forbidden` (you proved it, but you still cannot do this). HTTP got the naming a bit unlucky here - `401` is really about *authentication*, not authorization.
 
 ## In a FastAPI Route
 
-Here is the smallest possible glimpse of both in action. Don't worry about the full implementation yet — later docs cover hashing, tokens, and roles in detail.
+Here is the smallest possible glimpse of both in action. Don't worry about the full implementation yet - later docs cover hashing, tokens, and roles in detail.
 
 ```python
 from fastapi import Depends, FastAPI, HTTPException, status
@@ -99,10 +99,10 @@ A small rule of thumb:
 
 The docs that follow each tackle one piece of this picture:
 
-- **Password hashing and user registration** — storing credentials safely.
-- **OAuth2 password flow** — the standard way FastAPI handles login.
-- **JWT access and refresh tokens** — how identity travels between requests.
-- **Role-based access control** — building the *what can they do* part.
-- **Protecting routes** — wiring it all together with dependencies.
+- **Password hashing and user registration** - storing credentials safely.
+- **OAuth2 password flow** - the standard way FastAPI handles login.
+- **JWT access and refresh tokens** - how identity travels between requests.
+- **Role-based access control** - building the *what can they do* part.
+- **Protecting routes** - wiring it all together with dependencies.
 
 Keep the airport picture in mind as you go. Almost every decision will fall on one side of that line or the other.

@@ -2,9 +2,9 @@
 title: Handling Form Data
 ---
 
-Most modern APIs speak JSON. But forms haven't gone away — login pages, file uploads, the OAuth2 token endpoint we built earlier, and any HTML page that uses `<form method="post">` all submit `application/x-www-form-urlencoded` or `multipart/form-data` bodies. FastAPI handles both, but the syntax is just different enough to trip you up the first time.
+Most modern APIs speak JSON. But forms haven't gone away - login pages, file uploads, the OAuth2 token endpoint we built earlier, and any HTML page that uses `<form method="post">` all submit `application/x-www-form-urlencoded` or `multipart/form-data` bodies. FastAPI handles both, but the syntax is just different enough to trip you up the first time.
 
-## JSON vs form data — the practical difference
+## JSON vs form data - the practical difference
 
 It's the same idea in both cases (send some key-value pairs to the server), but the encoding is different.
 
@@ -86,7 +86,7 @@ def bad(
     ...
 ```
 
-If you genuinely need both — fields plus a structured blob — there are two patterns:
+If you genuinely need both - fields plus a structured blob - there are two patterns:
 
 1. **Send the structured part as a JSON string field**, then parse it inside the route.
 2. **Use a multipart body where one part is a JSON file**, and read it via `UploadFile`.
@@ -177,7 +177,7 @@ For everything else, JSON's nested structure and type clarity beat form-encoded 
 
 ## A small but important security reminder
 
-Forms submitted from HTML pages are subject to CSRF — an attacker's page can `<form action="https://yourapi.com/transfer" method="post">` and the browser will helpfully send cookies along. JSON APIs don't have this exact shape of risk, because cross-origin JSON requests can't run without CORS approval.
+Forms submitted from HTML pages are subject to CSRF - an attacker's page can `<form action="https://yourapi.com/transfer" method="post">` and the browser will helpfully send cookies along. JSON APIs don't have this exact shape of risk, because cross-origin JSON requests can't run without CORS approval.
 
 If you use cookies for authentication *and* accept form posts, you need CSRF tokens. If you use `Authorization: Bearer ...` headers, you mostly don't (because attackers can't add headers from a cross-origin form). Worth knowing where on that map your API sits.
 

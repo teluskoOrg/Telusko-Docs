@@ -2,7 +2,7 @@
 title: Serving Static Files
 ---
 
-The other half of file upload is file delivery — handing a stored file back to someone who asks for it. FastAPI gives you two distinct tools for this, and choosing between them is the whole interesting part.
+The other half of file upload is file delivery - handing a stored file back to someone who asks for it. FastAPI gives you two distinct tools for this, and choosing between them is the whole interesting part.
 
 ## Two paths, two purposes
 
@@ -18,7 +18,7 @@ The other half of file upload is file delivery — handing a stored file back to
 
 The split is really about access control. `StaticFiles` says *"the URL is the path is the file."* A route says *"check who's asking, decide what to send."*
 
-## StaticFiles — the easy path
+## StaticFiles - the easy path
 
 For genuinely public assets you can just mount a directory and walk away.
 
@@ -30,7 +30,7 @@ app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
 ```
 
-Now `GET /static/logo.png` serves `./static/logo.png`. URLs map one-to-one to files. Sub-folders work too. There is no auth, no transformation — what's on disk is what the world sees.
+Now `GET /static/logo.png` serves `./static/logo.png`. URLs map one-to-one to files. Sub-folders work too. There is no auth, no transformation - what's on disk is what the world sees.
 
 A single-page app is a common use:
 
@@ -44,7 +44,7 @@ app.mount("/", StaticFiles(directory="dist", html=True), name="spa")
 Mount the SPA last. If you mount it at `/` before your `/api/...` routes are registered, the mount can swallow paths you intended for the API. Register API routes first, then mount.
 </Callout>
 
-## FileResponse — the controlled path
+## FileResponse - the controlled path
 
 When the file lives outside of any public folder, or only certain users should see it, or you compute the file on demand, route it through a function.
 
@@ -81,7 +81,7 @@ Three useful parameters on `FileResponse`:
 
 ## Force download vs. inline
 
-A small thing that confuses people. Without `Content-Disposition: attachment`, the browser will try to render PDFs inline, play audio inline, show images inline. With it, the browser pops a save dialog. Both are correct — pick based on what the user expects.
+A small thing that confuses people. Without `Content-Disposition: attachment`, the browser will try to render PDFs inline, play audio inline, show images inline. With it, the browser pops a save dialog. Both are correct - pick based on what the user expects.
 
 ```python
 # inline (browser displays)
@@ -97,7 +97,7 @@ return FileResponse(
 
 ## Streaming a generated file
 
-For files that don't exist on disk yet — a CSV built from a database query, a zip of selected uploads, a rendered report — use `StreamingResponse` and a generator.
+For files that don't exist on disk yet - a CSV built from a database query, a zip of selected uploads, a rendered report - use `StreamingResponse` and a generator.
 
 ```python
 import csv
@@ -129,7 +129,7 @@ The point of streaming: a 500MB export never sits in memory. Each row is yielded
 
 ## Range requests (the bit that makes video work)
 
-If you serve audio or video and want users to scrub, the response must support HTTP `Range` requests so the browser can ask for "bytes 1000000 through 2000000" instead of the whole file. `StaticFiles` handles this automatically. `FileResponse` also supports it as of recent FastAPI versions. If you're rolling your own, you have to implement range handling by hand — at which point you're probably better off using `StaticFiles` or a CDN.
+If you serve audio or video and want users to scrub, the response must support HTTP `Range` requests so the browser can ask for "bytes 1000000 through 2000000" instead of the whole file. `StaticFiles` handles this automatically. `FileResponse` also supports it as of recent FastAPI versions. If you're rolling your own, you have to implement range handling by hand - at which point you're probably better off using `StaticFiles` or a CDN.
 
 ## A note on what FastAPI is and isn't good at
 
@@ -146,7 +146,7 @@ Serving static files through a Python app is *fine* for moderate traffic. It is 
 
 The Python app does the *thinking* (who can see what), and then hands the client a short-lived signed URL pointing directly at the storage layer. The bytes never travel through your app. For uploads serving a public website's assets, put them behind a CDN and stop worrying.
 
-That said: for small projects, internal tools, prototypes — `StaticFiles` and `FileResponse` are perfectly good. Knowing when to graduate is the point.
+That said: for small projects, internal tools, prototypes - `StaticFiles` and `FileResponse` are perfectly good. Knowing when to graduate is the point.
 
 ## A tiny decision tree
 

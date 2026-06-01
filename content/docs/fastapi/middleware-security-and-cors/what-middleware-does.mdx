@@ -48,7 +48,7 @@ The order matters more than people expect. Middleware registered *last* runs *cl
 And what does *not* belong in middleware:
 
 - Business decisions that depend on the route. Use a dependency.
-- Heavy database work. Middleware runs for every request — you'd pay the cost on routes that don't need it.
+- Heavy database work. Middleware runs for every request - you'd pay the cost on routes that don't need it.
 - Anything that needs to *change* the request body shape. Use a dependency or a Pydantic model.
 
 ## The minimum viable middleware
@@ -70,7 +70,7 @@ async def add_process_time(request: Request, call_next):
     return response
 ```
 
-The signature is always the same: an incoming `Request`, and `call_next` — a function you must `await` to actually run the rest of the pipeline. The return value of `call_next` is the response you can inspect or modify.
+The signature is always the same: an incoming `Request`, and `call_next` - a function you must `await` to actually run the rest of the pipeline. The return value of `call_next` is the response you can inspect or modify.
 
 You can do work *before* the await (request-side), *after* the await (response-side), or both.
 
@@ -91,7 +91,7 @@ async def block_old_clients(request: Request, call_next):
     return await call_next(request)
 ```
 
-Notice the early return — no `call_next` call, so the route is never invoked.
+Notice the early return - no `call_next` call, so the route is never invoked.
 
 ## A practical request-ID middleware
 
@@ -114,7 +114,7 @@ Now any route can pull the id from `request.state.request_id` and log it. The re
 
 ## Two flavors of middleware, briefly
 
-FastAPI's `@app.middleware("http")` is the friendly form. Underneath, Starlette also has a more powerful interface — classes that implement `BaseHTTPMiddleware` or work as raw ASGI. You add those with `app.add_middleware(SomeClass, option=value)`.
+FastAPI's `@app.middleware("http")` is the friendly form. Underneath, Starlette also has a more powerful interface - classes that implement `BaseHTTPMiddleware` or work as raw ASGI. You add those with `app.add_middleware(SomeClass, option=value)`.
 
 | You'd reach for the class form when... |
 |---------------------------------------|
@@ -147,9 +147,9 @@ If a check is needed on three routes out of fifty, write a dependency. If it's n
 The next few docs lean on this foundation:
 
 - Built-in and custom middleware in practice
-- CORS — the most commonly-needed built-in middleware
+- CORS - the most commonly-needed built-in middleware
 - Security headers and trusted hosts
 - Rate limiting basics
 - Logging, monitoring, and tracing
 
-The mental model from this page — *middleware is the layer that wraps every request and response* — will keep coming back. Hold onto it.
+The mental model from this page - *middleware is the layer that wraps every request and response* - will keep coming back. Hold onto it.

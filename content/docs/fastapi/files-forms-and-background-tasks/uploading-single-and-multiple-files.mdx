@@ -11,7 +11,7 @@ FastAPI gives you a choice.
 | Use | When |
 |-----|------|
 | `File()` | Tiny uploads you can hold in memory comfortably (a few KB) |
-| `UploadFile` | Anything realistic — uses a spooled file so big uploads don't blow up memory |
+| `UploadFile` | Anything realistic - uses a spooled file so big uploads don't blow up memory |
 
 In practice, prefer `UploadFile` for almost everything. The only time `File()` (raw bytes) is the right call is when you genuinely need the whole content as a `bytes` object for processing right away.
 
@@ -33,13 +33,13 @@ async def upload(file: UploadFile = File(...)):
 
 A few things to know about `UploadFile`:
 
-- `file.filename` — what the client *claimed* the name was. Don't trust it (more on that below).
-- `file.content_type` — also client-supplied.
-- `file.size` — the size FastAPI determined.
-- `file.file` — the underlying file-like object (for sync libraries).
-- `await file.read(size=-1)` — async read, all or part.
-- `await file.seek(0)` — rewind, useful when you want to read the same upload twice.
-- `await file.close()` — FastAPI does this for you when the request ends, but you can do it sooner if you want.
+- `file.filename` - what the client *claimed* the name was. Don't trust it (more on that below).
+- `file.content_type` - also client-supplied.
+- `file.size` - the size FastAPI determined.
+- `file.file` - the underlying file-like object (for sync libraries).
+- `await file.read(size=-1)` - async read, all or part.
+- `await file.seek(0)` - rewind, useful when you want to read the same upload twice.
+- `await file.close()` - FastAPI does this for you when the request ends, but you can do it sooner if you want.
 
 ## Saving the upload to disk
 
@@ -55,7 +55,7 @@ UPLOAD_DIR.mkdir(exist_ok=True)
 
 @app.post("/upload")
 async def upload(file: UploadFile = File(...)):
-    # never trust the client's filename — give it a safe random one
+    # never trust the client's filename - give it a safe random one
     suffix = Path(file.filename or "").suffix
     safe_name = f"{uuid4().hex}{suffix}"
     dest = UPLOAD_DIR / safe_name
@@ -72,9 +72,9 @@ async def upload(file: UploadFile = File(...)):
 
 The client can send absolutely anything as `filename`:
 
-- `../../../etc/passwd` — path traversal attempt.
+- `../../../etc/passwd` - path traversal attempt.
 - `script.exe` masquerading as an image.
-- `..\\..\\Windows\\System32\\drivers\\hosts` — Windows variant.
+- `..\\..\\Windows\\System32\\drivers\\hosts` - Windows variant.
 - A 2000-character emoji bomb.
 
 The safe move: never use the client-supplied name as a path. Generate a server-side ID (UUID, content hash, database row id), keep the original name only for display, and store them separately if you care about it.
@@ -125,7 +125,7 @@ async def create_article(
     return {"title": title, "cover": cover.filename}
 ```
 
-Trying to mix `File` with a Pydantic `Body` model does not work — see the form-data page for the workaround (send the structured part as a JSON string in a form field).
+Trying to mix `File` with a Pydantic `Body` model does not work - see the form-data page for the workaround (send the structured part as a JSON string in a form field).
 
 ## Validating uploads
 
