@@ -1,0 +1,281 @@
+---
+title: Performance Profiling Basics
+---
+
+"Slow" is a kind of bug. It doesn't throw a stack trace. The endpoint returns 200, the tests pass, and yet somewhere between "feels snappy" and "feels broken" your API has crossed an invisible line. Profiling is how you find out *where* the time is going so you can fix the right thing - instead of optimizing the part that turns out to be 2% of the latency.
+
+This page is the short version: enough to find your biggest wins, not a deep dive into flamegraphs.
+
+## Measure before you optimize
+
+The single most important rule in performance work. Without numbers, you're guessing, and the guesses are usually wrong. The places people *think* are slow and the places that are *actually* slow are almost never the same.
+
+A small example. A team once spent two days optimizing a JSON serializer that turned out to be 4% of a 600ms response. The other 96% was a database query nobody had timed. A 30-second `EXPLAIN ANALYZE` would have saved them two days.
+
+Always: measure → identify the biggest cost → fix it → measure again.
+
+## The latency budget
+
+Before profiling, set a target. "Faster" isn't a goal; "under 200ms at p95" is.
+
+A rough guide for what feels how:
+
+| Response time | How it feels |
+|---------------|--------------|
+| < 100ms | Instant |
+| 100–300ms | Snappy |
+| 300ms–1s | Noticeable |
+| 1s–3s | Slow |
+| > 3s | Broken |
+
+Anything that takes more than 300ms for a routine API call deserves a look. Anything that crosses a second on a hot path is a problem.
+
+## The four usual suspects
+
+Almost every slow FastAPI endpoint is slow for one of these four reasons. Check them in order - the higher up the list, the more common.
+
+```text
+   1. Database queries           ← 80% of slow endpoints
+   2. External HTTP calls        ← 10%
+   3. Blocking work in async     ← 5%
+   4. Genuinely CPU-heavy code   ← 5%
+```
+
+Notice what's not on the list: framework overhead. FastAPI itself is fast enough that it's rarely the bottleneck.
+
+### Database queries
+
+The classic offenders:
+
+- **N+1 queries.** Loading a list of 100 orders, then loading the user for each one in a separate query. 1 + 100 queries instead of 1 with a join.
+- **Missing index.** A query that scans the whole table when it could use an index. `EXPLAIN ANALYZE` will tell you.
+- **Loading too much.** `SELECT *` from a table with 50 columns when you only need 3.
+- **Many small queries instead of one big one.** Same total work, much higher round-trip overhead.
+
+A trick worth knowing: turn on SQLAlchemy query logging temporarily and watch what your endpoint actually does.
+
+```python
+import logging
+logging.getLogger("sqlalchemy.engine").setLevel(logging.INFO)
+```
+
+Hit the endpoint, count the queries in the log. If a single request triggers 30 queries, you have an N+1.
+
+### External HTTP calls
+
+Anything you call over the network has latency you don't control. Each hit to a third-party API, each Redis call, each cache miss - they add up. Two questions:
+
+- **Do you need this call at all?** Can the value be cached, or computed locally?
+- **Can it run in parallel with other work?** Two 100ms calls in sequence is 200ms; two 100ms calls in parallel is 100ms.
+
+```python
+import asyncio
+
+# Bad: sequential
+profile = await fetch_profile(user_id)
+prefs   = await fetch_prefs(user_id)
+orders  = await fetch_orders(user_id)
+
+# Better: concurrent
+profile, prefs, orders = await asyncio.gather(
+    fetch_profile(user_id),
+    fetch_prefs(user_id),
+    fetch_orders(user_id),
+)
+```
+
+### Blocking work in async
+
+We touched on this in the debugging page. A `time.sleep(1)` inside `async def` blocks the entire worker for a second. So does an unconverted `requests.get`. So does a CPU-bound loop.
+
+Symptom: throughput collapses under load, even though CPU usage is low. The event loop is parked waiting on one slow operation while every other request piles up behind it.
+
+Diagnosis: look at what your route does. Any sync I/O in an async function is suspect.
+
+Fix: either make it async, or push it to a thread:
+
+```python
+from asyncio import get_running_loop
+from functools import partial
+
+@app.get("/report")
+async def report():
+    loop = get_running_loop()
+    pdf = await loop.run_in_executor(None, partial(generate_pdf_sync, ...))
+    return Response(pdf, media_type="application/pdf")
+```
+
+### Genuinely CPU-heavy code
+
+Image processing, ML inference, big data transformations. Python is not fast at this; no amount of "fixing the code" turns Python into C.
+
+Options, in order of effort:
+
+| Approach | When |
+|----------|------|
+| Use a faster library (NumPy, Pillow-SIMD, orjson) | Easy wins for common operations |
+| Push work to background workers | When latency-per-request matters more than total throughput |
+| Cache the result | If the same inputs come up repeatedly |
+| Move the hot path to Rust/C extension | Last resort, big payoff |
+
+## Tools, lightest to heaviest
+
+### Time it yourself
+
+The simplest profiler: a stopwatch.
+
+```python
+import time
+
+@app.get("/expensive")
+def expensive():
+    t0 = time.perf_counter()
+    a = load_thing_a()
+    t1 = time.perf_counter()
+    b = load_thing_b()
+    t2 = time.perf_counter()
+    result = combine(a, b)
+    t3 = time.perf_counter()
+    print(f"a: {(t1-t0)*1000:.1f}ms  b: {(t2-t1)*1000:.1f}ms  combine: {(t3-t2)*1000:.1f}ms")
+    return result
+```
+
+Crude, ugly, and unreasonably effective. You'll find the bottleneck in five minutes. Just remember to remove the prints.
+
+### A request-timing middleware
+
+Already in the middleware section, worth a reminder: a middleware that records elapsed time per request lets you see which *endpoints* are slow at a glance.
+
+### cProfile for one specific path
+
+Python's built-in profiler. Wrap one slow operation and dump the stats:
+
+```python
+import cProfile
+import pstats
+
+@app.get("/expensive")
+def expensive():
+    profiler = cProfile.Profile()
+    profiler.enable()
+    result = do_the_work()
+    profiler.disable()
+    pstats.Stats(profiler).sort_stats("cumulative").print_stats(20)
+    return result
+```
+
+The output shows which functions ate the most time. Read the `cumtime` column.
+
+### pyinstrument for human-readable output
+
+`cProfile`'s output is dense. `pyinstrument` produces a tree that's easier to scan:
+
+```bash
+pip install pyinstrument
+```
+
+```python
+from pyinstrument import Profiler
+
+@app.get("/expensive")
+def expensive():
+    profiler = Profiler()
+    profiler.start()
+    result = do_the_work()
+    profiler.stop()
+    print(profiler.output_text(unicode=True, color=True))
+    return result
+```
+
+The output is a sampled call tree with timings. The top of the tree is your function; each level deeper shows where the time went. It looks like:
+
+```text
+0.482  do_the_work  app/services.py:42
+├─ 0.310  query.all  sqlalchemy/orm/query.py
+├─ 0.110  serialize  app/schemas.py:18
+└─ 0.062  cache.set  app/cache.py:7
+```
+
+Almost always, one line is responsible for more than half the time. That's the line to fix.
+
+### A full middleware for production profiling
+
+For finding slow requests in a running app without instrumenting routes by hand:
+
+```python
+from pyinstrument import Profiler
+from starlette.middleware.base import BaseHTTPMiddleware
+
+class ProfilerMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request, call_next):
+        if request.query_params.get("profile") != "1":
+            return await call_next(request)
+
+        profiler = Profiler()
+        profiler.start()
+        response = await call_next(request)
+        profiler.stop()
+        with open(f"/tmp/profile-{int(time.time())}.html", "w") as f:
+            f.write(profiler.output_html())
+        return response
+
+app.add_middleware(ProfilerMiddleware)
+```
+
+Hit any endpoint with `?profile=1` and you get a flamegraph as HTML in `/tmp`. Never enable this in production for normal users - only for yourself, during diagnosis.
+
+## Load testing, briefly
+
+Profiling shows where time goes for one request. Load testing shows what happens under many requests. Two free, painless tools:
+
+```bash
+# k6 (modern, scripts are JS)
+brew install k6
+
+# wrk (classic, command line)
+brew install wrk
+```
+
+A two-line `wrk` example:
+
+```bash
+wrk -t4 -c100 -d30s http://localhost:8000/products
+```
+
+That hits the endpoint with 100 concurrent connections across 4 threads for 30 seconds. The output gives you requests/sec and latency percentiles.
+
+What to watch for:
+
+- **Throughput plateaus way below CPU.** Usually means blocking I/O in async code.
+- **p99 latency much worse than p50.** Some requests are tail-latency outliers; find them.
+- **Errors at higher load.** Connection limits, timeouts, database saturation.
+
+## A short list of cheap wins
+
+If you have a slow FastAPI app and want quick wins, check these first:
+
+| Win | Effort | Typical impact |
+|-----|--------|----------------|
+| Add the missing database index | 5 min | Can turn 2s into 20ms |
+| Fix an N+1 with `selectinload` / `joinedload` | 15 min | Can halve total queries |
+| Parallelize independent awaits with `gather` | 15 min | Cuts a few hundred ms |
+| Swap `json.dumps` for `orjson` in hot paths | 30 min | Modest but consistent |
+| Cache a hot read with Redis | 1 hour | Can 10x throughput |
+| Add `response_model_exclude_unset=True` for big responses | 15 min | Smaller payloads |
+| GZip middleware on large responses | 5 min | Cuts bandwidth |
+| Run uvicorn with multiple workers | 5 min | Better use of cores |
+
+You probably don't need all of these. Profile first, then pick the one or two that match what your profile shows.
+
+## Closing the section
+
+Performance is one of those topics that can swallow a year of your life if you let it. For most apps, the work breaks down roughly:
+
+- Find the bottleneck (profile or time-it-yourself).
+- Fix the single biggest cost.
+- Re-measure.
+- Stop when the app feels fast enough.
+
+That last step is real. There's no prize for shaving another 10ms off an endpoint nobody complains about. Spend the time on the next feature instead.
+
+We've now covered the full testing and debugging arc - why tests matter, how to write them, how to fake what they shouldn't talk to, how to use a real database when they should, how to debug what they don't catch, and how to find performance bugs the tests don't even know to look for. The next section steps out of the code itself and into the operational side: getting all this into production.

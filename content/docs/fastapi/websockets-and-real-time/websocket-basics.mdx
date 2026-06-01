@@ -1,0 +1,187 @@
+---
+title: WebSocket Basics
+---
+
+HTTP is a one-shot conversation. The client speaks, the server answers, the line closes. That's perfect for fetching a page or saving a form, and it falls apart the second you want the server to *push* something to the client without being asked first - a new chat message, a price tick, a notification, a "someone is typing" indicator.
+
+WebSockets are the standard answer. After a single HTTP handshake, the connection stays open and either side can send messages whenever they want.
+
+## The handshake, then the upgrade
+
+A WebSocket starts life as an HTTP request with a special header.
+
+```text
+GET /ws HTTP/1.1
+Host: api.example.com
+Connection: Upgrade
+Upgrade: websocket
+Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==
+Sec-WebSocket-Version: 13
+```
+
+If the server agrees, it responds with `101 Switching Protocols` and the same TCP connection is now a WebSocket. From that moment on the rules change - there are no more requests and responses, just frames flowing in both directions.
+
+```text
+   Client                          Server
+     │                               │
+     │  GET /ws  Upgrade: websocket  │
+     │ ────────────────────────────► │
+     │   101 Switching Protocols     │
+     │ ◄──────────────────────────── │
+     │                               │
+     │       "hello"                 │
+     │ ────────────────────────────► │
+     │                               │
+     │              "hi there"       │
+     │ ◄──────────────────────────── │
+     │                               │
+     │                "are you up?"  │
+     │ ◄──────────────────────────── │
+     │                               │
+     │   "yep"                       │
+     │ ────────────────────────────► │
+```
+
+Notice the second and third server messages - neither was a response to a client request. That asymmetry is the whole point.
+
+## How FastAPI sees a WebSocket
+
+FastAPI gives WebSocket endpoints their own decorator and their own connection object.
+
+```python
+from fastapi import FastAPI, WebSocket
+
+app = FastAPI()
+
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    await websocket.accept()
+    await websocket.send_text("hello")
+    msg = await websocket.receive_text()
+    await websocket.send_text(f"you said: {msg}")
+    await websocket.close()
+```
+
+A few things to notice right away:
+
+- `accept()` completes the handshake. Until you call it, the connection is pending. If you `close()` instead, you've rejected it.
+- `send_text` / `send_json` / `send_bytes` push to the client.
+- `receive_text` / `receive_json` / `receive_bytes` wait for the next message.
+- The function is `async` and stays running for the whole life of the connection.
+
+That last point is worth dwelling on. A regular route handler runs for milliseconds. A WebSocket handler can run for hours.
+
+## Text, JSON, bytes - pick one and stick with it
+
+The three pairs of methods aren't interchangeable on the same connection. The client and server have to agree on one shape:
+
+| Server sends with | Client should read as |
+|-------------------|----------------------|
+| `send_text("...")` | text |
+| `send_json({...})` | JSON.parse on a text frame |
+| `send_bytes(b"...")` | binary frame |
+
+Mixing them works at the protocol level but is a recipe for confusion. Pick one - for most apps that's JSON - and write a small `send` helper that always uses it.
+
+## Trying it from the browser
+
+The standard browser API is `WebSocket`. Five lines is enough:
+
+```javascript
+const ws = new WebSocket("ws://localhost:8000/ws")
+ws.onopen    = () => ws.send("hi from browser")
+ws.onmessage = (e) => console.log("server said:", e.data)
+ws.onclose   = () => console.log("disconnected")
+ws.onerror   = (e) => console.log("oops", e)
+```
+
+`ws://` is plain, `wss://` is TLS-encrypted. In production, always `wss://` - for the same reason you'd never run a real API on plain HTTP.
+
+## The receive loop
+
+Most useful endpoints don't just handle a single message. They sit in a loop, processing whatever the client sends:
+
+```python
+from fastapi import WebSocket, WebSocketDisconnect
+
+@app.websocket("/ws")
+async def echo(websocket: WebSocket):
+    await websocket.accept()
+    try:
+        while True:
+            data = await websocket.receive_text()
+            await websocket.send_text(f"echo: {data}")
+    except WebSocketDisconnect:
+        # client went away - we're done
+        pass
+```
+
+The `WebSocketDisconnect` exception is FastAPI's polite way of telling you the client is gone. You don't need to call `close()` after catching it; the connection is already shut.
+
+## Send and receive at the same time
+
+A loop that only reads can't push server-initiated messages. A loop that only writes can't react to clients. Most real WebSocket code does both, which means running two coroutines concurrently:
+
+```python
+import asyncio
+
+@app.websocket("/ws")
+async def chat(websocket: WebSocket):
+    await websocket.accept()
+
+    async def reader():
+        async for message in iter_websocket(websocket):
+            await handle_incoming(message)
+
+    async def writer():
+        while True:
+            await asyncio.sleep(30)
+            await websocket.send_json({"type": "ping"})
+
+    await asyncio.gather(reader(), writer())
+```
+
+`asyncio.gather` runs both forever, and an exception in either cancels both. That's the pattern: one coroutine drains messages from the client, another emits messages to the client, and they coexist.
+
+(`iter_websocket` here is a small helper you'd write that wraps the receive-loop and yields messages until disconnect.)
+
+## Close codes, briefly
+
+When you do close a connection, you can attach a numeric code and a reason:
+
+```python
+await websocket.close(code=1008, reason="Policy violation")
+```
+
+A handful of codes show up over and over:
+
+| Code | Meaning |
+|------|---------|
+| 1000 | Normal closure |
+| 1001 | Going away (server shutting down, browser navigating away) |
+| 1008 | Policy violation (auth failure, bad message, etc.) |
+| 1011 | Server hit an unexpected condition |
+| 4000–4999 | Application-defined - use these for your own meanings |
+
+The 4000-range is yours to use however you like. Picking a small set of your own codes (`4001 = "auth required"`, `4002 = "kicked for spam"`) is more useful than reaching for the official codes.
+
+## What WebSockets are not
+
+A few honest things to keep in mind before getting too excited:
+
+- **They aren't free.** Every connection holds a socket and some memory on the server. A thousand connections is fine; a million takes real engineering.
+- **They don't traverse the internet quite as easily as HTTP.** Some corporate proxies break long-lived connections. Browsers behind weird middleboxes can lose them silently.
+- **They aren't a request/response model**, even though it's tempting to use them that way. If your interaction is "ask, get answer, done", a normal HTTP endpoint is simpler.
+- **They don't auto-reconnect.** The browser API gives up on disconnect. Your client code has to implement reconnection (and backoff) itself.
+
+## Where this section is going
+
+Across the next five pages we'll build up from "two-line echo" to a small, real chat-style backend:
+
+- A working chat endpoint with multiple clients.
+- A connection manager that keeps track of who's online.
+- Broadcasting - pushing a single message to everyone.
+- Real-time notification patterns (one user → that user's devices only).
+- And finally, an honest comparison: when REST is still the right choice.
+
+Hold onto one mental model from this page: a WebSocket is a *long-lived pipe with two ends*. Almost every interesting question about WebSocket code is really a question about how to manage those pipes over time.

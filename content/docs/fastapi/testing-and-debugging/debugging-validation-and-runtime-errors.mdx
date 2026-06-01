@@ -1,0 +1,211 @@
+---
+title: Debugging Validation and Runtime Errors
+---
+
+When something fails, the speed at which you can answer *"what exactly broke and why"* is most of the difference between "fix in five minutes" and "lose half a day." FastAPI gives you good error information out of the box, but most of the value is in knowing where to look and how to read what you see.
+
+This page is organized by *what you're staring at* - a 422, a 500, a silent failure - and what to do with it.
+
+## Reading a 422 properly
+
+A 422 means Pydantic refused to accept your input. The response body tells you exactly which fields failed and how. People often skip past the body and just see "validation error." Don't.
+
+```json
+{
+  "detail": [
+    {
+      "type": "missing",
+      "loc": ["body", "price"],
+      "msg": "Field required",
+      "input": {"name": "Pen"}
+    },
+    {
+      "type": "string_too_short",
+      "loc": ["body", "name"],
+      "msg": "String should have at least 1 character",
+      "input": "",
+      "ctx": {"min_length": 1}
+    }
+  ]
+}
+```
+
+| Key | What it tells you |
+|-----|-------------------|
+| `loc` | Where in the request the bad value was (`body`, `query`, `path`, then field path) |
+| `type` | The kind of error (`missing`, `string_too_short`, `value_error`, etc.) |
+| `msg` | A human-readable explanation |
+| `input` | The actual value that failed |
+| `ctx` | Any extra context (like `min_length`) |
+
+When a frontend reports "the API rejected my request," the `loc` field is the first place to look. `["body", "items", 0, "price"]` tells you it's the `price` of the first item in the `items` array. No guessing.
+
+## Pretty-print errors in development
+
+The default JSON output is fine for clients but a little dense in logs. A custom exception handler can make it easier to scan during development:
+
+```python
+from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
+import logging
+
+log = logging.getLogger("app")
+
+@app.exception_handler(RequestValidationError)
+async def validation_handler(request: Request, exc: RequestValidationError):
+    log.warning(
+        "validation failed",
+        extra={
+            "path": request.url.path,
+            "errors": exc.errors(),
+            "body": exc.body,
+        },
+    )
+    return JSONResponse(
+        status_code=422,
+        content={"detail": exc.errors()},
+    )
+```
+
+Now every validation failure shows up in your structured logs with the path, the errors, and the body that caused them. Triaging "why is the mobile app getting 422s?" becomes grepping logs for the path.
+
+## The 500: an exception escaped
+
+A 500 means the route raised an exception that nothing caught. The default response gives you nothing - `{"detail": "Internal Server Error"}` is intentional, because exposing tracebacks to the world is a security hole.
+
+But the traceback exists, it's just in the server logs. If you can't find it:
+
+- Check that your logging is configured (no handler = no output).
+- Check the log level (a `DEBUG` message can't be seen by an `INFO`-level logger).
+- Make sure exceptions are actually being logged. The request-log middleware from the security section catches and logs them. Without it, uvicorn logs them but with less structure.
+
+A useful custom handler for unexpected exceptions:
+
+```python
+import uuid
+
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(request: Request, exc: Exception):
+    error_id = uuid.uuid4().hex[:8]
+    log.exception(
+        "unhandled exception",
+        extra={"error_id": error_id, "path": request.url.path},
+    )
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Internal server error", "error_id": error_id},
+    )
+```
+
+The user sees an opaque error id. The logs contain the full traceback with that same id. When a customer pastes the id into a support ticket, finding the relevant traceback takes one grep.
+
+## Use the interactive debugger when print doesn't cut it
+
+For a tricky local bug, `breakpoint()` is your friend:
+
+```python
+@app.post("/products")
+def create_product(payload: ProductCreate):
+    breakpoint()
+    return service.create(payload)
+```
+
+Hit the route, the server pauses, you get a pdb prompt right there. Inspect `payload`, walk the stack, step through. Way faster than scattering `print` statements.
+
+For an IDE-friendlier experience, VS Code and PyCharm both support attaching their visual debuggers to a running uvicorn process. Configure once, then "Debug" instead of "Run."
+
+## The 404 that should have been a 200
+
+A class of bug that confuses new FastAPI users: the route looks right, but every request 404s. The usual culprits:
+
+- **Wrong method on the route.** You wrote `@app.post` but the client is sending `GET`.
+- **Trailing slash mismatch.** `/products` vs `/products/`. By default, FastAPI redirects, but some clients don't follow.
+- **Path parameter type mismatch.** `/products/{product_id}` declared as `int`, called as `/products/abc` - that's a 422, not a 404, but easy to misread.
+- **Router prefix you forgot.** The route is `@router.get("/users")` and the router was included with `prefix="/api"`, so the real path is `/api/users`.
+- **The route file isn't imported anywhere.** If `app.include_router(...)` never runs, the route doesn't exist.
+
+When in doubt, hit `/docs`. If your route isn't listed there, it isn't registered.
+
+## Async traps that look like bugs
+
+Two specific ones come up enough to mention.
+
+**Forgotten `await`** - calling an async function without awaiting it returns a coroutine object, not the result. The route returns the coroutine, FastAPI tries to serialize it, and you get a confusing error.
+
+```python
+# WRONG
+@app.get("/me")
+async def me(db: Session = Depends(get_db)):
+    user = fetch_user(db)        # if fetch_user is async, this is a coroutine
+    return user
+```
+
+If you see a response like `{"detail":"Object of type coroutine is not JSON serializable"}`, this is the bug. Add the `await`.
+
+**Sync work in async routes** - calling a blocking function (`requests.get`, a slow CPU loop, time.sleep) inside an `async def` route blocks the entire event loop. Symptoms: requests pile up, throughput tanks, but CPU is low. Solution: either make the call async (`httpx.AsyncClient`), or push it to a thread (`run_in_executor`), or make the route `def` instead of `async def` so FastAPI runs it in a thread pool.
+
+## When the error isn't on the server at all
+
+Sometimes the API works fine and the bug is somewhere else.
+
+| Symptom | Likely cause |
+|---------|--------------|
+| Browser shows CORS error, server logs look clean | CORS misconfiguration, not a backend bug |
+| Request never reaches the server, browser shows "failed" | Network, certificate, or proxy issue |
+| Works in Postman, fails in browser | Almost always CORS or cookies |
+| Server logs show the right response, client sees something else | Reverse proxy doing something (nginx, load balancer) |
+| 401 with a valid token | Token expired (decode it on jwt.io), or wrong audience |
+
+The trick is to stop assuming the bug is where you're looking. Tail the server logs while reproducing - if your request doesn't appear in the log, it never arrived. That single piece of information saves hours.
+
+## Reproducing intermittent bugs
+
+The hardest bugs are the ones that happen "sometimes." A few habits:
+
+- **Make sure you can reliably reproduce it before you start fixing.** A "fix" you can't verify is worse than no fix.
+- **Look for state.** Intermittent bugs almost always involve shared state - a global, a singleton, a database row, a cache entry.
+- **Watch for ordering.** If two requests arrive at "the same time" and one bug shows up, you've probably found a race.
+- **Add temporary correlation logging.** Log enough context that you can trace a single failed request through all its stages.
+
+## Structured logging beats print
+
+By the time you ship to staging, `print` is useless. It goes to stdout, has no level, no structure, no context. The standard `logging` module - even with its default config - gives you levels, modules, and pluggable formatters.
+
+```python
+import logging
+log = logging.getLogger(__name__)
+
+@app.post("/orders")
+def create_order(payload: OrderCreate, current = Depends(get_current_user)):
+    log.info("creating order", extra={"user_id": current.id, "items": len(payload.items)})
+    try:
+        order = service.create(payload, current)
+    except OutOfStock as e:
+        log.warning("out of stock", extra={"user_id": current.id, "sku": e.sku})
+        raise HTTPException(409, str(e))
+    log.info("order created", extra={"order_id": order.id})
+    return order
+```
+
+A few hours later you can grep for `order_id=12345` and see the entire life of that order across logs. `print` cannot do that.
+
+## A small debugging checklist
+
+When something's broken and you don't know why, run through this in order:
+
+1. **What did the client actually send?** Look at the request body, headers, query string in the logs.
+2. **Did the request reach the server?** If not, it's a network/CORS/proxy issue.
+3. **What status code came back?** 422 → validation, 401 → auth, 500 → exception, 404 → routing.
+4. **What does the response body say?** Even 500s have an `error_id` if you wired the handler above.
+5. **Find the traceback.** Search logs for the `error_id`, or for the path + timestamp.
+6. **Reproduce with a test.** Once you can reproduce, fixing is the easy part.
+7. **Keep the test.** It is the only proof the bug won't come back.
+
+That last step matters. Every bug fixed without a test is a bug that can return.
+
+## The thread
+
+Debugging is a search problem: where is the bug, and what does it look like? The faster you can answer those two questions, the more time you spend fixing and the less time you spend hunting. Structured logs, informative exception handlers, the `/docs` page as a sanity check, and one good test per bug - those are the tools. The rest is practice.
+
+The final page in this section turns to a different flavor of "something is wrong": when the code works but is too slow. Profiling, briefly, and the bottlenecks that show up most often.

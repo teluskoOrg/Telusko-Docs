@@ -1,0 +1,194 @@
+---
+title: Real-time Notifications Patterns
+---
+
+Most apps don't actually need a chat room. They need *notifications* - small, server-initiated pings that say "something happened, you might want to look." A new comment, an approved request, a finished export, a price alert. WebSockets are one way to deliver them, but they're not the only way, and the right choice depends on the shape of the problem more than on personal preference.
+
+This page is a tour of the patterns that show up in real codebases.
+
+## Three honest options
+
+```text
+                     Latency       Server work       Battery        Complexity
+   ─────────────────────────────────────────────────────────────────────────────
+   Polling           seconds       constant load     bad (mobile)    very low
+   Long polling      ~1s avg       held connections  medium          low
+   SSE               <100ms        held connections  medium          low
+   WebSockets        <50ms         held connections  medium          medium
+   Push notifs       seconds-min   none (offloaded)  great           high (setup)
+```
+
+The temptation is to reach for WebSockets for everything. The honest read: WebSockets are wonderful when the user is *actively using your app* and you want *instant* updates. For "tell the user something while they're not looking at the app", push notifications (web push or mobile push) are the right tool - and they're a different system entirely.
+
+## Pattern 1: WebSocket for live updates while the app is open
+
+This is the bread and butter. The user opens the page, the page opens a WebSocket, the server pushes events as they happen.
+
+```python
+# When something interesting happens in a request handler:
+@app.post("/comments")
+async def create_comment(payload: CommentCreate, current = Depends(get_current_user)):
+    comment = save_comment(payload, current)
+    await publish_user(comment.post.author_id, {
+        "type": "comment.created",
+        "post_id": comment.post_id,
+        "author": current.username,
+        "preview": comment.body[:80],
+    })
+    return comment
+```
+
+`publish_user` is the Redis publish from the previous page. The author's connected devices get the notification within milliseconds. If they're offline, nothing happens here - that's fine, the comment is in the database, and the unread badge will count it next time they log in.
+
+The key principle: **the WebSocket is a delivery channel, not a source of truth.** The database always reflects reality; the WebSocket just shortens the time between "reality changed" and "user knows about it."
+
+## Pattern 2: Server-Sent Events for one-way streams
+
+If the traffic is purely server-to-client (live feed, log tail, progress bar), Server-Sent Events (SSE) are simpler than WebSockets and travel through proxies more reliably.
+
+```python
+import asyncio
+from fastapi import Request
+from fastapi.responses import StreamingResponse
+
+@app.get("/events/orders/{order_id}")
+async def order_events(order_id: int, request: Request):
+    async def event_stream():
+        async for update in watch_order(order_id):
+            if await request.is_disconnected():
+                break
+            yield f"event: update\ndata: {json.dumps(update)}\n\n"
+
+    return StreamingResponse(event_stream(), media_type="text/event-stream")
+```
+
+On the browser side it's even simpler:
+
+```javascript
+const events = new EventSource("/events/orders/42")
+events.addEventListener("update", (e) => console.log(JSON.parse(e.data)))
+```
+
+When SSE beats WebSockets:
+
+| | SSE | WebSocket |
+|---|-----|-----------|
+| Server → client only | Yes (only direction supported) | Works but heavier |
+| Auto-reconnect built into the browser | Yes | No (you write it) |
+| Plays nicely with HTTP/2 multiplexing | Yes | No (separate connection) |
+| Can send binary | No (text only) | Yes |
+| Symmetric two-way | No | Yes |
+
+Order status pages, progress bars on long jobs, dashboards - all great fits for SSE. Use the heavier tool only when you need both directions.
+
+## Pattern 3: Polling - yes, still a good answer sometimes
+
+Polling has a bad reputation it doesn't fully deserve.
+
+```javascript
+setInterval(() => fetch("/notifications/unread"), 30_000)
+```
+
+When is this right?
+
+- The data changes on the order of minutes, not seconds.
+- The user is not staring at a screen waiting.
+- Your infrastructure is simple and you'd rather not add another moving part.
+
+A page that shows "5 new emails" with a 30-second poll is *fine*. Nobody is going to feel the difference between 30s and instant for that. Don't reach for WebSockets out of habit when polling solves the problem with two lines of code.
+
+## Pattern 4: Push notifications for the "app is closed" case
+
+When the user isn't looking at your tab - the laptop is asleep, the browser is closed, the phone is in their pocket - WebSockets and SSE can't help. The connection is gone.
+
+That's what web push (browsers) and FCM/APNs (mobile) exist for. The flow is different:
+
+```text
+   User grants permission ──► browser/OS gives you a subscription
+                            ──► you store it server-side
+
+   Server wants to notify ──► POST to web push gateway / FCM
+                            ──► gateway delivers when the device wakes up
+```
+
+The notification arrives without your app being open. The user clicks it and lands back in your app. WebSockets and push are complementary, not competitors:
+
+| Situation | Use |
+|-----------|-----|
+| App is open, user is active | WebSocket / SSE |
+| App is closed or backgrounded | Push notification |
+| Both, ideally | Both, and dedupe on the client |
+
+A library like `pywebpush` handles the web push side from FastAPI. The complexity isn't huge but it's a different surface area, and it usually lives behind its own service in the codebase.
+
+## Combining them sanely
+
+A common architecture for an app that does notifications well:
+
+```text
+   Event happens
+        │
+        ▼
+   ┌──────────────────────────────────────────────────────┐
+   │  Notification service                                │
+   │   1. Persist to notifications table (source of truth) │
+   │   2. publish_user(uid, ...)  ← live WS push          │
+   │   3. enqueue web-push job   ← for offline delivery    │
+   └──────────────────────────────────────────────────────┘
+```
+
+The persistence is what makes everything else honest:
+
+- WebSocket lost the message? The next page-load reads it from the table.
+- Web push delivered late? Same.
+- User has the app open *and* gets a push? The client checks the database, sees it's read, suppresses the duplicate.
+
+The notification table is also where unread counts come from. Building the rest on top of it makes those counts always correct.
+
+```python
+class Notification(Base):
+    __tablename__ = "notifications"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(index=True)
+    type: Mapped[str]
+    payload: Mapped[dict] = mapped_column(JSON)
+    created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow)
+    read_at: Mapped[datetime | None] = mapped_column(default=None)
+```
+
+## Patterns inside the WebSocket payload
+
+A few shapes worth standardizing on early.
+
+**Discriminated by `type`** - already mentioned, worth saying again.
+
+```json
+{ "type": "comment.created", "post_id": 42, "preview": "looks good" }
+{ "type": "order.shipped", "order_id": 17, "tracking": "1Z..." }
+{ "type": "ping" }
+```
+
+**Server-assigned IDs** so the client can dedupe across delivery channels.
+
+```json
+{ "id": "ntf_01HQ...", "type": "comment.created", "post_id": 42, "preview": "..." }
+```
+
+**Versioning, eventually.** Bumping a `v` field is much easier than retrofitting.
+
+```json
+{ "v": 2, "type": "comment.created", "post_id": 42, "preview": "..." }
+```
+
+You don't need any of this on day one. Adopt them as the message vocabulary grows.
+
+## Some habits that age well
+
+- **Send only what the UI needs to update**, not the whole record. The frontend can refetch the full thing if needed; the notification is a hint to refetch, not a data sync.
+- **Don't push secrets over WebSockets** unless the connection is `wss://`. (It always should be.)
+- **Cap unread counts in the UI** (`99+`). Showing 12,847 unread reads as "this app is broken" to most users.
+- **Let users mute.** Real-time done right is calm, not chatty. Real-time done wrong is the iOS "thousand notifications" meme.
+
+## The thread to remember
+
+A WebSocket is a *delivery channel*. A notification is *a thing that happened that someone cares about.* Don't conflate them. The notification belongs in a table. The WebSocket just makes it appear faster. Build it in that order and the system stays sane as it grows.

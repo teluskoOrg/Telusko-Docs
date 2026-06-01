@@ -1,0 +1,257 @@
+---
+title: Testing with Pytest and TestClient
+---
+
+Two tools do almost all the work in a FastAPI test suite: **pytest** for organizing and running tests, and **TestClient** for calling your app like an HTTP client without actually starting a server. This page walks through both, in the order you'd actually meet them on a new project.
+
+## Getting set up
+
+```bash
+pip install pytest httpx
+```
+
+`TestClient` is part of `fastapi` itself but depends on `httpx`, hence the second package. No special configuration is required to start - pytest discovers anything named `test_*.py` or `*_test.py` and runs functions named `test_*` inside them.
+
+A reasonable project layout:
+
+```text
+app/
+  main.py
+  routers/
+  services/
+tests/
+  conftest.py
+  test_products.py
+  test_users.py
+pytest.ini
+```
+
+`pytest.ini` is optional but useful:
+
+```ini
+[pytest]
+testpaths = tests
+addopts = -ra --tb=short
+```
+
+`-ra` prints a summary of skipped, xfailed, errored tests at the end. `--tb=short` trims the traceback to the useful bit. Small quality-of-life win.
+
+## The first test
+
+```python
+# tests/test_products.py
+from fastapi.testclient import TestClient
+from app.main import app
+
+client = TestClient(app)
+
+def test_health_returns_200():
+    response = client.get("/health")
+    assert response.status_code == 200
+    assert response.json() == {"status": "ok"}
+```
+
+That's a complete test. Pytest discovers it, runs it, prints a dot. `TestClient(app)` wraps your FastAPI app and gives you `.get`, `.post`, `.put`, etc. - the same surface as the `requests` library, intentionally.
+
+## Move the client into a fixture
+
+Constructing the client at module top level is fine for one file, but you'll want it in a fixture as soon as you have more than that.
+
+```python
+# tests/conftest.py
+import pytest
+from fastapi.testclient import TestClient
+from app.main import app
+
+@pytest.fixture
+def client():
+    return TestClient(app)
+```
+
+`conftest.py` is special - fixtures defined there are auto-available to every test in the same directory tree, no import needed. Now your tests just declare what they want:
+
+```python
+def test_health_returns_200(client):
+    response = client.get("/health")
+    assert response.status_code == 200
+```
+
+A small change, but it's the foundation for everything else. Once `client` is a fixture, you can transform it (with a logged-in user, with a fake database) without touching every test.
+
+## Sending JSON, headers, query parameters
+
+The shape is familiar if you've used `requests`:
+
+```python
+def test_create_product(client):
+    response = client.post(
+        "/products",
+        json={"name": "Pen", "price": 1.5},
+        headers={"x-request-id": "test-1234"},
+    )
+    assert response.status_code == 201
+
+def test_search_products(client):
+    response = client.get("/products", params={"q": "pen", "limit": 5})
+    assert response.status_code == 200
+    assert len(response.json()) <= 5
+```
+
+`json=` serializes for you and sets `Content-Type: application/json`. `params=` becomes the query string. `headers=` is a dict that gets merged with whatever default headers the client uses.
+
+## Form data and file uploads
+
+For the form-handling and upload routes from earlier sections:
+
+```python
+def test_login_form(client):
+    response = client.post(
+        "/auth/token",
+        data={"username": "alice@example.com", "password": "hunter2"},
+    )
+    assert response.status_code == 200
+
+def test_upload(client):
+    file_content = b"hello world"
+    response = client.post(
+        "/upload",
+        files={"file": ("hello.txt", file_content, "text/plain")},
+    )
+    assert response.status_code == 201
+```
+
+Note the swap: `data=` for form-encoded, `files=` for multipart. Mixing both is fine - that's how you send a form field alongside an upload.
+
+## Asserting on more than the status code
+
+The status code is the cheapest assertion, and most tests should have at least one other:
+
+```python
+def test_create_product_returns_full_shape(client):
+    response = client.post("/products", json={"name": "Pen", "price": 1.5})
+    assert response.status_code == 201
+
+    body = response.json()
+    assert body["name"] == "Pen"
+    assert body["price"] == 1.5
+    assert isinstance(body["id"], int)
+    assert "created_at" in body
+```
+
+Two small habits worth picking up:
+
+- **Assert the shape, not the literal id/timestamp.** `body["id"] > 0` is more useful than `body["id"] == 1`, because the latter breaks the day the test order changes.
+- **Don't snapshot the whole response.** A line that asserts `response.json() == {...giant dict...}` fails on every cosmetic change and tells you nothing. Pick the fields that matter.
+
+## Pytest's most useful idioms
+
+A few pytest features that come up often enough to bake in early.
+
+### Parametrize
+
+When the same test runs with different inputs:
+
+```python
+import pytest
+
+@pytest.mark.parametrize(
+    "payload, expected_status",
+    [
+        ({"name": "Pen", "price": 1.5}, 201),
+        ({"name": "", "price": 1.5}, 422),       # blank name
+        ({"name": "Pen", "price": -1}, 422),     # negative price
+        ({"name": "Pen"}, 422),                   # missing price
+    ],
+)
+def test_product_validation(client, payload, expected_status):
+    response = client.post("/products", json=payload)
+    assert response.status_code == expected_status
+```
+
+Four tests for the price of one. The output names them helpfully so a failure tells you which case broke.
+
+### Fixtures with cleanup
+
+For setup that needs teardown, `yield` instead of `return`:
+
+```python
+@pytest.fixture
+def temp_user(db):
+    user = create_user(db, email="temp@example.com", password="x")
+    yield user
+    db.delete(user)
+    db.commit()
+```
+
+The body after `yield` runs after the test finishes, even if the test failed. Same pattern works for any resource that needs releasing.
+
+### Marks
+
+Tag tests so you can run subsets:
+
+```python
+@pytest.mark.slow
+def test_full_export_pipeline(client):
+    ...
+
+@pytest.mark.skip(reason="waiting on upstream fix")
+def test_currently_broken(client):
+    ...
+```
+
+Then `pytest -m "not slow"` runs the fast suite, `pytest -m slow` runs only the slow one. Saves real time during day-to-day work.
+
+## Async endpoints - TestClient or httpx?
+
+`TestClient` is synchronous. It actually runs your async code under the hood, but the test function itself is plain `def`. That's fine for 95% of cases.
+
+When you need to test async behavior directly (concurrent calls, streaming responses, WebSockets), reach for `httpx.AsyncClient`:
+
+```python
+import pytest
+from httpx import AsyncClient, ASGITransport
+from app.main import app
+
+@pytest.mark.asyncio
+async def test_async_endpoint():
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
+        response = await ac.get("/health")
+    assert response.status_code == 200
+```
+
+Requires `pytest-asyncio` (`pip install pytest-asyncio`) and `asyncio_mode = auto` in pytest config to skip the marker on every test.
+
+## Testing WebSockets
+
+`TestClient` supports them too, with a context manager:
+
+```python
+def test_websocket_echo(client):
+    with client.websocket_connect("/ws") as ws:
+        ws.send_text("hello")
+        assert ws.receive_text() == "echo: hello"
+```
+
+Inside the `with` block, the connection is open. On exit, it closes. Clean.
+
+## A debugging trick: print the response body
+
+When a test fails with "expected 200, got 422", the next question is *why*. The response body usually tells you, but only if you look:
+
+```python
+response = client.post("/products", json={"name": "Pen"})
+print(response.json())   # shows up only on failure when pytest captures stdout
+assert response.status_code == 201
+```
+
+By default pytest hides stdout for passing tests and shows it for failures. `pytest -s` shows everything always. A `print(response.json())` before the assert turns "the test failed" into "the test failed *because* `price` is required."
+
+## What this page leaves out
+
+Two things on purpose:
+
+- **The database.** Every test we wrote here either hit a route with no database or assumed the database "just works." The next page is about replacing it cleanly with overrides so tests are fast and isolated.
+- **Auth.** Sending real tokens in every test gets repetitive. The page after that covers fixtures that hand you an authenticated client for free.
+
+For now: pytest discovers and runs, `TestClient` makes calls, you assert on the response. That's the spine of every test you'll write.

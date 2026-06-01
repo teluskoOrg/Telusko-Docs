@@ -1,0 +1,307 @@
+---
+title: Mocking Database and Dependencies
+---
+
+Real databases are slow. Real third-party APIs are flaky. Real "current user" lookups require a real login flow. None of that has to make its way into your unit tests. FastAPI's dependency-override mechanism lets you swap any of these out for a test-friendly version with a single line of code - and it does it cleanly enough that the production code never needs to know it's been overridden.
+
+## The override system, in one example
+
+Every dependency in your app is a function. FastAPI keeps a dictionary from "the production dependency" to "the version to use instead." For tests, you populate that dictionary.
+
+```python
+# app/main.py
+from fastapi import Depends, FastAPI
+from sqlalchemy.orm import Session
+
+from .database import get_db
+
+app = FastAPI()
+
+@app.get("/users/count")
+def count_users(db: Session = Depends(get_db)):
+    return {"count": db.query(User).count()}
+```
+
+```python
+# tests/test_users.py
+from app.main import app
+from app.database import get_db
+
+class FakeDB:
+    def query(self, model):
+        return self
+
+    def count(self):
+        return 42
+
+def override_get_db():
+    return FakeDB()
+
+app.dependency_overrides[get_db] = override_get_db
+
+def test_count(client):
+    response = client.get("/users/count")
+    assert response.json() == {"count": 42}
+```
+
+No monkey-patching. No mocking library. The production code is untouched. The route calls `get_db` exactly as it does in production; FastAPI sees the override and uses ours.
+
+## Doing it the right way (with a fixture)
+
+The example above mutates the global `dependency_overrides`. That works, but if one test changes it and forgets to clean up, the next test inherits the override. Better to set it up and tear it down per test:
+
+```python
+# tests/conftest.py
+import pytest
+from fastapi.testclient import TestClient
+from app.main import app
+from app.database import get_db
+
+@pytest.fixture
+def fake_db():
+    return FakeDB()
+
+@pytest.fixture
+def client(fake_db):
+    app.dependency_overrides[get_db] = lambda: fake_db
+    with TestClient(app) as c:
+        yield c
+    app.dependency_overrides.clear()
+```
+
+Every test gets a fresh `fake_db`. After the test, the override is gone. Predictable.
+
+## A more realistic fake
+
+A class with two methods isn't enough for real code. A pattern that scales better: write your code against a *repository interface*, then provide a fake repository in tests.
+
+```python
+# app/repositories/users.py
+class UserRepository:
+    def __init__(self, db: Session):
+        self.db = db
+
+    def get_by_email(self, email: str) -> User | None: ...
+    def create(self, payload: UserCreate) -> User: ...
+    def count(self) -> int: ...
+```
+
+```python
+# tests/fakes.py
+class FakeUserRepository:
+    def __init__(self):
+        self.users: list[User] = []
+
+    def get_by_email(self, email: str) -> User | None:
+        return next((u for u in self.users if u.email == email), None)
+
+    def create(self, payload: UserCreate) -> User:
+        user = User(id=len(self.users) + 1, email=payload.email)
+        self.users.append(user)
+        return user
+
+    def count(self) -> int:
+        return len(self.users)
+```
+
+Now the route depends on the repository, not the database:
+
+```python
+@app.post("/users")
+def create_user(payload: UserCreate, repo: UserRepository = Depends()):
+    if repo.get_by_email(payload.email):
+        raise HTTPException(409, "Email already registered")
+    return repo.create(payload)
+```
+
+And tests swap the repository:
+
+```python
+@pytest.fixture
+def fake_repo():
+    return FakeUserRepository()
+
+@pytest.fixture
+def client(fake_repo):
+    app.dependency_overrides[UserRepository] = lambda: fake_repo
+    with TestClient(app) as c:
+        yield c
+    app.dependency_overrides.clear()
+```
+
+The pattern is the same as before, just at a slightly higher level. The fake is a few lines of pure Python, the tests run in microseconds, and the production code path is exercised by integration tests when needed.
+
+## Faking the current user
+
+Auth is the second-most-overridden thing after the database.
+
+```python
+# in production
+def get_current_user(token: str = Depends(oauth2_scheme), db = Depends(get_db)):
+    ...
+
+# in tests
+def make_current_user_override(user: User):
+    def override():
+        return user
+    return override
+
+@pytest.fixture
+def alice():
+    return User(id=1, email="alice@example.com", role="user")
+
+@pytest.fixture
+def admin():
+    return User(id=99, email="admin@example.com", role="admin")
+
+@pytest.fixture
+def as_alice(client, alice):
+    app.dependency_overrides[get_current_user] = make_current_user_override(alice)
+    yield client
+    app.dependency_overrides.pop(get_current_user, None)
+
+@pytest.fixture
+def as_admin(client, admin):
+    app.dependency_overrides[get_current_user] = make_current_user_override(admin)
+    yield client
+    app.dependency_overrides.pop(get_current_user, None)
+```
+
+Now a test that needs an admin just declares it:
+
+```python
+def test_admin_can_delete_user(as_admin):
+    response = as_admin.delete("/users/5")
+    assert response.status_code == 204
+```
+
+And a test of the auth itself doesn't override anything:
+
+```python
+def test_anonymous_cannot_delete_user(client):
+    response = client.delete("/users/5")
+    assert response.status_code == 401
+```
+
+Two fixtures, three lines of override, zero JWT generation per test.
+
+## Faking external services
+
+The same trick covers anything else with a clean seam.
+
+```python
+# app/services/email.py
+class EmailSender:
+    async def send(self, to: str, subject: str, body: str) -> None:
+        # real SMTP / SendGrid / etc.
+        ...
+
+# app/dependencies.py
+def get_email_sender() -> EmailSender:
+    return EmailSender(...)
+```
+
+```python
+# tests/fakes.py
+class FakeEmailSender:
+    def __init__(self):
+        self.sent: list[dict] = []
+
+    async def send(self, to, subject, body):
+        self.sent.append({"to": to, "subject": subject, "body": body})
+
+# in a test
+@pytest.fixture
+def email(client):
+    fake = FakeEmailSender()
+    app.dependency_overrides[get_email_sender] = lambda: fake
+    yield fake
+    app.dependency_overrides.pop(get_email_sender, None)
+
+def test_signup_sends_welcome(client, email):
+    client.post("/signup", json={"email": "alice@example.com", "password": "x"})
+    assert len(email.sent) == 1
+    assert email.sent[0]["to"] == "alice@example.com"
+```
+
+The fake captures the calls. The test asserts on what would have been sent. The real SMTP server is never contacted. The test stays fast and deterministic.
+
+## Mocks vs. fakes - pick one and know why
+
+A small definitional thing that confuses people:
+
+| Term | What it usually means |
+|------|------------------------|
+| **Fake** | A working alternate implementation. Has real behavior. `FakeUserRepository` above. |
+| **Stub** | Returns canned answers. No logic. |
+| **Mock** | Records how it was called, asserts on the calls afterward. |
+
+Fakes scale best. They behave like the real thing, so tests stay close to reality, and the same fake works for many tests. Mocks (`unittest.mock`) are seductive but lead to brittle suites that test the implementation instead of the behavior.
+
+```python
+# brittle: tests that get_by_email was called with this exact value
+def test_signup_checks_email(monkeypatch):
+    mock = MagicMock()
+    monkeypatch.setattr("app.routers.users.repo.get_by_email", mock)
+    client.post("/signup", json={"email": "a@b.com", "password": "x"})
+    mock.assert_called_with("a@b.com")
+
+# better: tests the actual behavior, doesn't care how it's implemented
+def test_signup_rejects_duplicate(client, fake_repo):
+    fake_repo.users.append(User(id=1, email="a@b.com"))
+    response = client.post("/signup", json={"email": "a@b.com", "password": "x"})
+    assert response.status_code == 409
+```
+
+The second test still passes after you refactor `get_by_email` to `find_by_email`, or move the dedup check from the route to the service. The first one breaks.
+
+## When you can't avoid `unittest.mock`
+
+There are honest uses. Mocking out a slow library call you don't own, asserting that a webhook was POSTed with the right payload, simulating an exception from a network call you can't easily reproduce - these are all fine reasons to reach for `MagicMock`.
+
+```python
+from unittest.mock import patch
+
+@patch("app.services.payments.stripe.Charge.create")
+def test_charge_failure_is_handled(mock_charge, client):
+    mock_charge.side_effect = stripe.error.CardError("...", "...", "...")
+    response = client.post("/charge", json={"amount": 100})
+    assert response.status_code == 402
+```
+
+The principle: mock at the boundary (the third-party library), not in the middle (your own functions). Mocks belong where your code stops and someone else's begins.
+
+## The override gotcha
+
+Two small foot-guns worth flagging:
+
+**The override is keyed by the function object.** Importing `get_db` from two different module paths can give you two different objects, and the override only applies to the one you put in the dict.
+
+```python
+# in code under test
+from app.database import get_db        # version A
+
+# in the test
+from app.dependencies import get_db    # version B - re-exported
+
+app.dependency_overrides[get_db] = ...  # only catches version B
+```
+
+If your override "doesn't work," check that both sides are importing from the same module.
+
+**Forgetting to clean up.** A test that mutates `app.dependency_overrides` and exits without cleaning up leaves a sticky override that affects every following test. Always use a fixture with `yield` + `pop`/`clear`.
+
+## What this buys you
+
+A test suite using these patterns has a particular shape:
+
+- Most tests use fakes and run in microseconds.
+- A smaller set of tests uses a real database for the cases that actually need it (covered next page).
+- Almost no `unittest.mock` calls in the codebase. The few that exist are at network boundaries.
+- Tests survive most refactors because they assert on behavior, not on internals.
+
+That shape is what makes a suite *worth keeping*. A suite that's slow, brittle, and full of mocks is the kind people start ignoring within a quarter.
+
+## Where this is going
+
+Faking the database is great for unit tests. It is *not* great for testing actual SQL - the queries that work against `FakeUserRepository` might fail spectacularly against PostgreSQL. The next page covers integration tests: a real database, isolated per test, fast enough to run all the time.

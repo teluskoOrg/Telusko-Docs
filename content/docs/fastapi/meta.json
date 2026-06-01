@@ -16,8 +16,8 @@
         "authentication-and-authorization",
         "middleware-security-and-cors",
         "files-forms-and-background-tasks",
-        "DISABLED-websockets-and-real-time",
-        "DISABLED-testing-and-debugging",
+        "websockets-and-real-time",
+        "testing-and-debugging",
         "DISABLED-deployment-and-production",
         "DISABLED-architecture-and-best-practices"
     ]

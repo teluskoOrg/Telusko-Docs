@@ -1,0 +1,140 @@
+---
+title: Why API Testing Matters
+---
+
+There's a particular kind of bug that only shows up in production. You shipped a "tiny" refactor on Friday afternoon, the unit tests passed, and on Monday someone politely points out that the entire `/orders` endpoint now returns 500s. The code wasn't *wrong* in isolation - it was just wrong when called the way real clients call it.
+
+API tests catch that bug. Unit tests don't.
+
+That's the whole pitch for this section. The rest is detail.
+
+## What we mean by "API tests" here
+
+When people say "tests" they could mean a lot of things. A small map, to keep the words straight:
+
+| Kind | What it does | Runs against |
+|------|--------------|--------------|
+| **Unit test** | Tests one small piece of pure logic | A function, in isolation |
+| **API test** | Calls an endpoint, asserts on the response | Your FastAPI app, end-to-end inside the test process |
+| **Integration test** | Like an API test, but with a real database / external service | App + real backing services |
+| **E2E test** | Drives the whole stack from the outside | A deployed (or docker-composed) system |
+| **Manual test** | A human clicking around | Whatever environment they're brave enough to use |
+
+This section focuses on the middle two. Unit tests are great for pure helper functions; E2E tests are great just before a release. API and integration tests are what catch the day-to-day regressions, and they have the best return on time invested.
+
+## The shape of an API test
+
+The pattern is almost always the same:
+
+```text
+   ┌──────────────────┐
+   │ arrange          │  set up the data the test needs
+   ├──────────────────┤
+   │ act              │  call an endpoint with the client
+   ├──────────────────┤
+   │ assert           │  check the status code, the JSON shape, the database state
+   └──────────────────┘
+```
+
+A real one - getting ahead of ourselves a little, just to make it concrete:
+
+```python
+def test_create_product_returns_201(client):
+    response = client.post("/products", json={"name": "Pen", "price": 1.5})
+
+    assert response.status_code == 201
+    body = response.json()
+    assert body["name"] == "Pen"
+    assert body["id"] > 0
+```
+
+Three steps. Nothing magical. The whole subject is just *doing this consistently* for the parts of the API that matter.
+
+## What testing buys you, concretely
+
+It's worth being specific about the wins, because people who haven't worked on a well-tested codebase tend to undersell them.
+
+- **Refactoring without fear.** Rename a function, restructure a folder, swap an ORM - if the tests still pass, you didn't break the API. That confidence is the actual value of tests, far more than "they catch bugs."
+- **Documented behavior.** A test that says `assert response.status_code == 409` for a duplicate email is documentation that survives a junior engineer reading it five years later.
+- **Faster reviews.** "Show me the test" is a more useful PR comment than "are you sure this works?"
+- **Catching the dumb bug.** The off-by-one, the typo in a field name, the forgotten `await` - these are uninteresting and easy and *unbelievably common*. Tests catch them before they ship.
+- **Confidence to delete code.** Untested code is hard to remove because nobody can prove it's safe. Tested code is straightforward.
+
+The thing tests *don't* buy you: certainty that your design is good. A perfectly tested bad API is still a bad API.
+
+## Why FastAPI is unusually pleasant to test
+
+A few accidents of design conspire to make FastAPI tests genuinely nice to write:
+
+- The `TestClient` runs your app **in-process**, so a test boots in milliseconds.
+- **Dependency overrides** let you swap a database, an external service, or a "current user" with one line - no monkey-patching.
+- **Pydantic** means the request and response shapes are precise, so assertions stay simple.
+- The whole app is async-friendly, so you can also run an `httpx.AsyncClient` against it when you need to.
+
+The result: a typical test takes 10-20 milliseconds, and a thousand of them run in a few seconds. That's fast enough to run on every save during development, which is what unlocks the "refactor without fear" feeling.
+
+## The trap of testing too little
+
+The "I'll test it later" trajectory is the most common one, and it almost never recovers.
+
+```text
+   week 1 ──► no tests, things are fluid, fine
+   week 4 ──► no tests, app is bigger, changes feel risky
+   week 12 ──► no tests, every change requires manual QA
+   week 26 ──► writing tests now is a project, not a habit
+```
+
+The cheapest moment to start writing tests for an endpoint is *while you're building it*. The next-cheapest moment is right after a bug report - pin the bug down with a test, then fix it. The most expensive moment is "later", which usually means never.
+
+## The trap of testing too much
+
+The opposite trap is real too. Testing everything that compiles produces a brittle suite that fights you on every refactor.
+
+A few signs you're over-testing:
+
+- Tests that just restate the implementation (`assert add(1, 2) == 3`, when `add` is `return a + b`).
+- Mocks of your own functions inside the module being tested.
+- Tests that break every time you touch the code, with no actual behavior change.
+- A 30-second test suite that prevents shipping more than a few times a day.
+
+The rule of thumb: **test the contract, not the wiring.** If a test would still be correct after a complete reimplementation of the function under test, it's a good test. If it would break, it's probably testing how, not what.
+
+## What to test, in order of payoff
+
+If you're starting from zero and have to pick:
+
+1. **Happy path of each endpoint.** "Given a valid request, do I get a 2xx and the expected shape?"
+2. **Validation failures.** "Given a malformed request, do I get a 422 with a useful body?"
+3. **Auth failures.** "Without a token: 401. With a token for the wrong user: 403."
+4. **Edge cases that have bitten you in production.** Write the test as part of the fix; never let the same bug ship twice.
+5. **Important business rules.** "You can't delete a post that has comments."
+6. **The interactions between services.** Integration tests with a real database.
+
+A test suite that nails the top three for every endpoint is *already* better than 80% of production codebases.
+
+## A small but powerful habit
+
+When a bug report comes in, write the test *first*. Make sure it fails. Then fix the bug. Then commit them together.
+
+```text
+   1. open PR with a failing test that reproduces the bug
+   2. fix the code
+   3. test now passes
+   4. merge
+```
+
+This is the single highest-leverage habit in software testing. The test is the proof you fixed the right thing. The test is also the guarantee the bug doesn't come back next month when someone refactors. Skipping the test means relearning the same lesson in six months.
+
+## The mental model to carry forward
+
+Tests aren't about catching bugs. Tests are about *making change safe*. The bugs are a nice side effect. The day you can rename a function across the codebase, run the test suite, see green, and ship - that's when you'll understand what tests are really for.
+
+The next pages get hands-on:
+
+- Pytest and FastAPI's `TestClient` - the basics, properly.
+- Mocking databases and dependencies cleanly with overrides.
+- Integration tests that hit a real database without making your suite slow.
+- Debugging when tests (or production) tell you something is wrong.
+- A quick look at performance profiling, for the cases when "slow" is the bug.
+
+Six pages from now you should have a test suite worth keeping.

@@ -1,0 +1,242 @@
+---
+title: Integration Testing Basics
+---
+
+Unit tests with fakes will catch logic bugs. They will not catch the bug where your ORM filter returns the wrong rows because you wrote `==` instead of `.is_()`, or the migration that quietly broke a foreign key, or the query that's correct on SQLite and broken on PostgreSQL. For those, you need integration tests - tests that exercise the *real* database (and sometimes other real services) end to end.
+
+The challenge is keeping them fast and isolated. A slow integration suite gets skipped. A flaky one gets disabled. This page is about the patterns that keep them honest.
+
+## What "integration test" means here
+
+Concretely: an API test that goes through the real stack except the network. The TestClient calls the route, the route hits SQLAlchemy, SQLAlchemy talks to a real database, the response comes back. Everything inside your process is real.
+
+```text
+   test ──► TestClient ──► route ──► service ──► ORM ──► REAL DB
+                          (everything below this line is your actual code path)
+```
+
+That last hop is the difference between a unit test and an integration test.
+
+## Choosing the database for tests
+
+You have three reasonable choices.
+
+| Option | Pro | Con |
+|--------|-----|-----|
+| **SQLite (in-memory or file)** | Zero setup, blistering fast | Different SQL dialect than prod; some features missing |
+| **PostgreSQL via Docker** | Same engine as prod | Slower to start, needs Docker |
+| **PostgreSQL via testcontainers** | Real prod-like DB, scoped per session | Same as above, marginally heavier in code |
+
+The honest answer for most projects: **use the same database engine as production**. SQLite is tempting because it's fast and trivial, but every project that goes this route eventually ships a bug that was "tested fine on SQLite, broken on Postgres." JSON columns, array types, case-sensitive collations, transaction isolation levels - the divergences are real.
+
+If you're early enough and using SQLite in production too, then SQLite in tests is fine. Otherwise, pay the small startup cost for Postgres.
+
+## A working Postgres setup
+
+A common shape uses a single shared database for the suite, wrapped in a transaction per test that rolls back at the end. Each test sees a clean slate without paying for full table creation/destruction.
+
+```python
+# tests/conftest.py
+import pytest
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+
+from app.database import Base, get_db
+from app.main import app
+from fastapi.testclient import TestClient
+
+TEST_DATABASE_URL = "postgresql+psycopg://test:test@localhost:5433/test_db"
+
+engine = create_engine(TEST_DATABASE_URL)
+TestingSessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
+
+@pytest.fixture(scope="session", autouse=True)
+def create_schema():
+    Base.metadata.create_all(bind=engine)
+    yield
+    Base.metadata.drop_all(bind=engine)
+
+@pytest.fixture
+def db_session():
+    """One transaction per test, rolled back at the end."""
+    connection = engine.connect()
+    transaction = connection.begin()
+    session = TestingSessionLocal(bind=connection)
+
+    yield session
+
+    session.close()
+    transaction.rollback()
+    connection.close()
+
+@pytest.fixture
+def client(db_session):
+    def override_get_db():
+        try:
+            yield db_session
+        finally:
+            pass
+    app.dependency_overrides[get_db] = override_get_db
+    with TestClient(app) as c:
+        yield c
+    app.dependency_overrides.clear()
+```
+
+Walking through what's happening:
+
+- The schema is created once per *session* (run of pytest), and dropped at the end. Cheap if your schema is reasonable.
+- Each test opens a connection, starts a transaction, and gets a session bound to that transaction.
+- The test runs against this session, makes whatever changes it likes.
+- At the end, the transaction is rolled back. *Nothing committed during the test survives.* The next test starts from a clean state without dropping or re-creating anything.
+
+This pattern - "transaction per test" - is the single most useful technique in integration testing.
+
+## A test using it
+
+```python
+def test_create_and_list(client, db_session):
+    response = client.post("/products", json={"name": "Pen", "price": 1.5})
+    assert response.status_code == 201
+
+    response = client.get("/products")
+    assert response.status_code == 200
+    names = [p["name"] for p in response.json()]
+    assert "Pen" in names
+```
+
+The two calls share the same `db_session`. The first creates a product; the second sees it. Once the test ends, the rollback removes both.
+
+## Seeding test data
+
+Tests that need pre-existing data should set it up explicitly, not rely on a fixture file. This keeps each test self-describing:
+
+```python
+def test_only_owner_can_edit(client, db_session, as_alice, alice):
+    post = Post(id=1, author_id=alice.id, body="hi")
+    db_session.add(post)
+    db_session.commit()
+
+    response = as_alice.patch("/posts/1", json={"body": "edited"})
+    assert response.status_code == 200
+```
+
+If multiple tests need the same fixture data, lift it into a pytest fixture rather than a giant shared SQL file. The fixture's name documents what the data *means* to the test.
+
+```python
+@pytest.fixture
+def published_post(db_session, alice):
+    post = Post(author_id=alice.id, body="hi", published=True)
+    db_session.add(post)
+    db_session.commit()
+    db_session.refresh(post)
+    return post
+
+def test_published_post_visible_to_anon(client, published_post):
+    response = client.get(f"/posts/{published_post.id}")
+    assert response.status_code == 200
+```
+
+The test reads top-to-bottom in plain English. No "go look at the fixtures file" required.
+
+## When transactions don't roll back
+
+A wrinkle: if the code under test calls `db.commit()` inside its own session and uses a different session than the test's, the rollback at the end won't undo it. Two solutions:
+
+1. **Make sure the route and the test share a session.** That's what the `override_get_db` above does - both use the same `db_session`.
+2. **Use SAVEPOINTS.** SQLAlchemy supports nested transactions that survive `commit()`. This is the most robust option for production-grade test setups:
+
+```python
+@pytest.fixture
+def db_session():
+    connection = engine.connect()
+    transaction = connection.begin()
+    session = TestingSessionLocal(bind=connection)
+    nested = connection.begin_nested()
+
+    @event.listens_for(session, "after_transaction_end")
+    def restart_savepoint(session, transaction):
+        nonlocal nested
+        if not nested.is_active:
+            nested = connection.begin_nested()
+
+    yield session
+
+    session.close()
+    transaction.rollback()
+    connection.close()
+```
+
+That's more cryptic, but it lets the code under test `commit()` happily without leaking changes between tests. Worth setting up once and never thinking about again.
+
+## How fast is fast enough?
+
+A rule of thumb: a unit test should be under 10ms; an integration test under 100ms; the whole suite under a minute or two if you can manage it.
+
+A few habits that keep integration tests fast:
+
+| Habit | Why |
+|-------|-----|
+| Transaction-per-test rollback | Avoids dropping and recreating the schema |
+| `Base.metadata.create_all` once per session | Schema setup is the slow part - do it once |
+| `pytest -n auto` (with `pytest-xdist`) | Parallel test runs across cores |
+| Don't seed enormous baseline data | Insert the minimum the test needs |
+| Skip the network | Mock external HTTP calls even in integration tests |
+
+The point isn't to chase the lowest number; it's to keep the suite *fast enough that you'll actually run it.* A 30-second suite gets run on every save. A 5-minute suite gets run "later" and gradually never.
+
+## Marking the slow ones
+
+A practical separation: most tests run on every change, the heavyweight ones run in CI.
+
+```python
+@pytest.mark.slow
+def test_full_import_pipeline(client, db_session):
+    # uploads a 10k-row CSV and verifies it all imported correctly
+    ...
+```
+
+```bash
+pytest -m "not slow"   # the dev loop
+pytest                  # full suite, in CI
+```
+
+Don't let the existence of slow tests slow down your fast tests. Tag, separate, profit.
+
+## External services in integration tests
+
+Hitting real third-party APIs in tests is a bad idea - they cost money, they go down, they rate-limit you, and they leak test data into vendor systems. Patterns that work:
+
+- **Record and replay** (e.g., `vcrpy`): record a real call once, replay the canned response on subsequent runs. Good for stable APIs.
+- **Local fakes**: spin up a tiny mock server with `respx` (for HTTPX) or `pytest-httpserver` (general).
+- **Vendor's own test environment**: Stripe, Twilio, and most serious vendors run a sandbox you can call freely. Use it.
+
+For databases and caches, local containers are the right answer. For SaaS, sandboxes are.
+
+## When integration tests find a bug a unit test should have
+
+This is normal and not a failure of design. The right reaction:
+
+1. Fix the bug.
+2. Add a **unit test** that fails on the buggy code and passes on the fix. (Faster, more pinpointed.)
+3. Keep the integration test that found it. (Insurance against the same class of bug.)
+
+You end up with two tests for one bug. That's fine. Tests are cheap and bugs are not.
+
+## What the test pyramid actually looks like in FastAPI
+
+The classic "lots of unit tests, fewer integration tests, even fewer E2E tests" pyramid is a reasonable starting shape:
+
+```text
+              ╱╲          E2E (few, slow, run before release)
+             ╱──╲
+            ╱    ╲        Integration (some, medium speed, run in CI)
+           ╱──────╲
+          ╱        ╲      API + unit tests (many, fast, run on every save)
+         ╱──────────╲
+```
+
+For a typical FastAPI project, the middle layer - API tests against a real DB - does most of the work. Pure unit tests cover the helper logic; pure E2E covers the deployed system. Most days, you live in the middle.
+
+## Up next
+
+We now have a working setup for fast unit tests with fakes, and slower-but-still-fast integration tests with a real database. The next pages step away from "writing tests" and into "what to do when something is wrong" - debugging validation and runtime errors that the tests have already caught (or worse, that have escaped into production).

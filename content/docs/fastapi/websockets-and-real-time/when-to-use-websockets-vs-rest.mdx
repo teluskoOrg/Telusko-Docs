@@ -1,0 +1,169 @@
+---
+title: When to Use WebSockets vs REST
+---
+
+WebSockets feel modern. REST feels old. That framing is misleading and leads to a lot of overbuilt systems. The two solve different problems, and most apps need both - REST for the bulk of the work, WebSockets for the parts that genuinely benefit from a live channel.
+
+This page is the honest version of that comparison. By the end you should have a clear sense of which tool to reach for first, and when to mix them.
+
+## The fundamental difference, in one line
+
+REST is **request/response, one direction, short-lived.** WebSockets are **two-way, long-lived, server-can-push.**
+
+Almost every other comparison flows from those two sentences.
+
+## Side-by-side, on the things that actually matter
+
+| | REST | WebSocket |
+|---|------|-----------|
+| Who initiates a message | Always the client | Either side, any time |
+| Connection lifetime | Per request (~ms) | Per session (~minutes to hours) |
+| Caching (browser, CDN) | First-class, built in | None |
+| HTTP status codes | Rich vocabulary | None - just open or closed |
+| Auth model | Header per request | Once at connect, then trust |
+| Server memory per client | None between requests | One socket + state |
+| Horizontal scaling | Trivial (stateless) | Needs pub/sub for cross-worker fan-out |
+| Browser tooling | Excellent (devtools, curl, Postman) | Decent, but less mature |
+| Easy to test | Yes (every test framework) | Trickier (need an async client) |
+| Survives flaky networks | Reconnects per request, naturally | Connection drops; client must reconnect |
+| Good with HTTP/2 multiplexing | Yes | No (each WS is its own connection) |
+
+Read that table top to bottom and the pattern is clear: REST is the default that's good at almost everything. WebSockets win on one axis - *the server can push without being asked.* If you don't need that, you don't need WebSockets.
+
+## A decision tree
+
+```text
+   Does the server need to push updates to the client
+   without the client asking?
+        │
+        ├── no ──────────────► REST. Done.
+        │
+        └── yes
+            │
+            ├── Is "every few seconds" fast enough?
+            │       ├── yes ──────────────► REST + polling
+            │       └── no
+            │
+            ├── Is it strictly server-to-client?
+            │       ├── yes ──────────────► Server-Sent Events
+            │       └── no
+            │
+            ├── Will the user be looking at the app
+            │   when the update happens?
+            │       ├── usually yes ─────► WebSockets
+            │       └── usually no ──────► Push notifications
+            │
+            └── Truly low-latency + bidirectional?
+                    └── WebSockets
+```
+
+The branches that *don't* end at WebSockets are most apps.
+
+## Cases where REST is the right call (even though "real-time" is in the requirements)
+
+A surprising number of "real-time" features turn out to be just fine with REST.
+
+- **Unread notification count in a header badge.** Poll every 60 seconds. Nobody dies waiting an extra 30 seconds for the badge to bump.
+- **Refreshing a dashboard.** Refetch on a timer or on tab focus. Real dashboards usually update every 30s to 5min anyway.
+- **"Is this username available?"** A `GET` on focus-out beats opening a socket.
+- **Order status that changes every few minutes.** Polling, or better, SSE for the active page.
+- **Anything where you'd be embarrassed if a user saw the update 10 seconds late.** That's not real-time, that's "fast enough."
+
+## Cases where WebSockets earn their keep
+
+The genuinely good fits:
+
+- **Chat, messaging, comments-as-they-arrive.** The classic.
+- **Multiplayer games and collaborative editing.** Multiple clients editing the same state, with the server arbitrating.
+- **Live dashboards where seconds matter** (trading, ops, telemetry).
+- **Typing indicators, presence, cursors.** The kind of UX that *only* makes sense with low-latency bidirectional updates.
+- **Streaming partial results.** "Here's the answer so far" while a long computation runs.
+
+If your feature doesn't sound like one of these, the bar to choose WebSockets should be higher.
+
+## A common mistake: REST-style on WebSockets
+
+A pattern that shows up a lot in early WebSocket code:
+
+```python
+# inside the receive loop
+msg = await websocket.receive_json()
+if msg["type"] == "get_user":
+    user = db.get(User, msg["user_id"])
+    await websocket.send_json({"type": "user", "data": ...})
+elif msg["type"] == "update_user":
+    ...
+elif msg["type"] == "delete_user":
+    ...
+```
+
+This is REST, painfully reimplemented over a WebSocket. There's no caching, no devtools support, no status codes, no clean way to test it, and you have to invent your own request-id mechanism to correlate replies. You also can't put any of it behind a CDN.
+
+If your messages look like requests with responses, write actual HTTP routes. Save the WebSocket for things that genuinely *can't* be done as a request.
+
+## A common mistake the other way: REST endpoints for fast-changing data
+
+The mirror of the above. An app shows a list of live scores. The client polls `/scores` every second. Every poll hits the database, builds a JSON response, and ships it down. With a thousand viewers, that's a thousand database hits per second - for data that changes maybe once a minute.
+
+Either:
+
+- Push the data over a WebSocket / SSE so the network traffic is proportional to *changes*, not viewers.
+- Cache aggressively (a 5-second cache reduces load 5x with virtually no perceptible staleness).
+- Both.
+
+The point is: polling has a real cost at scale that's easy to miss in dev.
+
+## A useful question: what does the user expect?
+
+A simple gut-check: *if the user looked away for ten seconds, would they expect to come back and see new information already there, animating in, without any action?*
+
+- *Chat:* yes → WebSocket.
+- *Inbox:* maybe → polling or SSE.
+- *Profile page:* no → REST.
+- *A live game:* obviously yes → WebSocket.
+- *A blog comments section:* probably not → REST, refresh on action.
+
+User expectation is a better guide than technical excitement.
+
+## Cost in the small print
+
+Each technology has costs that don't appear in tutorials.
+
+| | Hidden cost |
+|---|--------------|
+| REST | Latency floor (~50-150ms round-trip) limits how "live" things can feel |
+| Polling | Linear with users × frequency, regardless of whether anything changed |
+| SSE | One held connection per active viewer (lighter than WS but still held) |
+| WebSockets | All of SSE plus cross-process fan-out infrastructure |
+| Push notifications | Browser permission UX, vendor lock-in, deliverability variability |
+
+Pick with all of those in mind, not just the marquee feature.
+
+## A pragmatic recipe
+
+For most apps, the right starting architecture looks like:
+
+```text
+   90% of features ──► REST endpoints
+                        (with sensible caching and polling where appropriate)
+
+   Live-feeling few ──► WebSocket or SSE, narrow scope
+                        (one endpoint, one purpose)
+
+   Out-of-app pings ──► Push notifications, separate system
+```
+
+Resist the urge to make it more elaborate on day one. WebSockets are not free, and a project that adopts them prematurely tends to pay for it in operational complexity long before it pays back in user experience.
+
+## Closing the section
+
+We've covered, across six pages, the full arc:
+
+- What a WebSocket is and how FastAPI exposes it.
+- Building a working chat-style endpoint with auth and typed messages.
+- Managing connections honestly - registries, pings, cleanup, limits.
+- Broadcasting across rooms, users, and multiple workers.
+- Real-time *notifications*, including when to combine WebSockets with persistence and push.
+- And finally, the harder question: when not to use them at all.
+
+The throughline is the same one that ran through middleware and background tasks: pick the right tool for the actual problem. WebSockets are a powerful tool. The skill is knowing the difference between a feature that needs them and a feature that just looks shinier with them.
