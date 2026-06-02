@@ -4,7 +4,7 @@ title: Shared Logic with Dependencies
 
 ## Introduction
 
-Dependencies shine when several routes need the same setup. Pagination, search filters, current user, request context — anything that gets repeated across routes can be lifted into a dependency and reused without copy-pasting.
+Dependencies shine when several routes need the same setup. Pagination, search filters, current user, request context - anything that gets repeated across routes can be lifted into a dependency and reused without copy-pasting.
 
 ## Why This Matters
 
@@ -140,7 +140,7 @@ The same idea scales to the whole app:
 app = FastAPI(dependencies=[Depends(log_request)])
 ```
 
-Use this sparingly — anything truly global is often better as middleware.
+Use this sparingly - anything truly global is often better as middleware.
 
 ## Reading Headers in a Shared Way
 

@@ -163,7 +163,7 @@ A handler that returns 200 OK or logs nothing makes bugs invisible. Always log u
 
 ### Catching too broadly too early
 
-Registering a handler for `Exception` before more specific ones is fine — FastAPI still matches the most specific class. But avoid catching exceptions inside route functions just to ignore them.
+Registering a handler for `Exception` before more specific ones is fine - FastAPI still matches the most specific class. But avoid catching exceptions inside route functions just to ignore them.
 
 ### Forgetting headers from HTTPException
 

@@ -189,7 +189,7 @@ Without a default like `= []`, the list becomes required. For most APIs, an empt
 
 ### Mutable default values
 
-Avoid `field: list[str] = []` with regular Python classes — it can cause shared-state bugs. Pydantic handles this safely, but in plain dataclasses you would use `field(default_factory=list)`.
+Avoid `field: list[str] = []` with regular Python classes - it can cause shared-state bugs. Pydantic handles this safely, but in plain dataclasses you would use `field(default_factory=list)`.
 
 ## Summary
 

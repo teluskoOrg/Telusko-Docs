@@ -99,7 +99,7 @@ FastAPI validates that the value is one of the allowed choices and includes thos
 When you have both a fixed path and a parameterized path at the same level, declare the fixed route first:
 
 ```python
-@app.get("/users/me")          # fixed route — must come first
+@app.get("/users/me")          # fixed route - must come first
 def get_current_user():
     return {"user": "current user"}
 

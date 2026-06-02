@@ -4,7 +4,7 @@ title: Lifespan Events and Resource Management
 
 ## Introduction
 
-Some resources should be created once when the app starts and torn down when it stops — database engines, HTTP clients, machine-learning models, message-queue connections. FastAPI's lifespan API lets you control this lifecycle cleanly using a single async context manager.
+Some resources should be created once when the app starts and torn down when it stops - database engines, HTTP clients, machine-learning models, message-queue connections. FastAPI's lifespan API lets you control this lifecycle cleanly using a single async context manager.
 
 ## Why This Matters
 
@@ -137,7 +137,7 @@ This pattern guarantees that even if startup fails partway through, anything alr
 
 ## Lifespan vs Startup Code at Import Time
 
-Putting expensive code at module top level runs it the moment the file is imported — including during test collection or tooling. Lifespan runs only when the app actually starts, which is what you want.
+Putting expensive code at module top level runs it the moment the file is imported - including during test collection or tooling. Lifespan runs only when the app actually starts, which is what you want.
 
 ```python
 # Avoid: runs on import
@@ -177,7 +177,7 @@ If something is expensive, set it up in lifespan. Per-request dependencies shoul
 
 ### Using `@app.on_event("startup")`
 
-The older `on_event` API still works but is deprecated. Prefer the lifespan context manager — it is cleaner and supports clean teardown ordering.
+The older `on_event` API still works but is deprecated. Prefer the lifespan context manager - it is cleaner and supports clean teardown ordering.
 
 ## Summary
 

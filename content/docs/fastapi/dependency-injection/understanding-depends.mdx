@@ -128,7 +128,7 @@ def root(value: int = Depends(make_value, use_cache=False)):
 
 ## Dependencies Without a Return Value
 
-A dependency can perform work without injecting anything — it might validate a header or log a metric. Declare it in the route's `dependencies` list:
+A dependency can perform work without injecting anything - it might validate a header or log a metric. Declare it in the route's `dependencies` list:
 
 ```python
 from fastapi import Header, HTTPException

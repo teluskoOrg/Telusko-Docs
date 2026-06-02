@@ -131,7 +131,7 @@ def list_items(rl: RateLimiter = Depends(get_limiter)):
     return [{"name": "Pen"}]
 ```
 
-`get_limiter` returns the same singleton each request — a nice fit for caches, clients, and connection pools.
+`get_limiter` returns the same singleton each request - a nice fit for caches, clients, and connection pools.
 
 ## Class with Callable Behavior
 
@@ -165,7 +165,7 @@ The class instance becomes a configurable, reusable dependency.
 
 ### Storing request data on the class
 
-A class dependency is instantiated per request. Storing state on `self` is fine for that request — but never share class-level mutable state across requests unless that is exactly what you want.
+A class dependency is instantiated per request. Storing state on `self` is fine for that request - but never share class-level mutable state across requests unless that is exactly what you want.
 
 ### Forgetting `Depends()`
 
