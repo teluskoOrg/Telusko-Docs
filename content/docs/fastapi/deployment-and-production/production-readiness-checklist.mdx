@@ -1,0 +1,185 @@
+---
+title: Production Readiness Checklist
+---
+
+There's a particular feeling when an app first reaches production. It's not "done" - it's the start of being responsible for it. Real users, real money, real consequences. Most of the difference between "this is going to be fine" and "I'm going to spend my weekend recovering from this" comes down to a small number of habits you either did before you shipped, or didn't.
+
+This page is a checklist. The next five pages go deeper on the items that need it. Treat this one as the table of contents for "is this app actually ready?"
+
+## The checklist
+
+```text
+   ┌─ CONFIG ─────────────────────────────────────────────────────────┐
+   │ ☐ Secrets out of source control, loaded from env                 │
+   │ ☐ Different config per environment (dev / staging / prod)        │
+   │ ☐ DEBUG / reload disabled in production                          │
+   │ ☐ Sensible defaults that fail safe                               │
+   └──────────────────────────────────────────────────────────────────┘
+
+   ┌─ SECURITY ───────────────────────────────────────────────────────┐
+   │ ☐ HTTPS only (HSTS header)                                       │
+   │ ☐ CORS allowlist of real origins (not "*")                       │
+   │ ☐ TrustedHostMiddleware on                                       │
+   │ ☐ Security headers middleware                                    │
+   │ ☐ Rate limits on sensitive endpoints                             │
+   │ ☐ Strong JWT secret loaded from env                              │
+   │ ☐ Passwords hashed with bcrypt/argon2                            │
+   │ ☐ Dependency vulnerabilities scanned (pip-audit, snyk, etc.)     │
+   └──────────────────────────────────────────────────────────────────┘
+
+   ┌─ DATA ───────────────────────────────────────────────────────────┐
+   │ ☐ Migrations run automatically or as a deploy step (Alembic)     │
+   │ ☐ Database backups + a tested restore plan                       │
+   │ ☐ Connection pooling tuned                                       │
+   │ ☐ Slow query log enabled                                         │
+   └──────────────────────────────────────────────────────────────────┘
+
+   ┌─ RUNTIME ────────────────────────────────────────────────────────┐
+   │ ☐ Production ASGI server (uvicorn behind gunicorn, or hypercorn) │
+   │ ☐ Workers sized to the host                                      │
+   │ ☐ Reverse proxy in front (nginx, Caddy, cloud LB)                │
+   │ ☐ TLS termination handled (proxy or platform)                    │
+   │ ☐ Health check endpoint that actually verifies dependencies      │
+   │ ☐ Graceful shutdown wired (SIGTERM handling)                     │
+   └──────────────────────────────────────────────────────────────────┘
+
+   ┌─ OBSERVABILITY ──────────────────────────────────────────────────┐
+   │ ☐ Structured logs going somewhere queryable                      │
+   │ ☐ Request id propagated through logs                             │
+   │ ☐ Error tracking (Sentry, Rollbar, or similar)                   │
+   │ ☐ Metrics scraped (Prometheus / hosted equivalent)               │
+   │ ☐ Alerts on the metrics that matter (error rate, latency, queue) │
+   │ ☐ Uptime check from outside your infra                           │
+   └──────────────────────────────────────────────────────────────────┘
+
+   ┌─ DELIVERY ───────────────────────────────────────────────────────┐
+   │ ☐ Reproducible builds (Docker, lock files committed)             │
+   │ ☐ CI runs tests on every commit                                  │
+   │ ☐ Deploys are scripted, not manual                               │
+   │ ☐ Roll-forward / rollback are equally easy                       │
+   │ ☐ Documented runbook for common incidents                        │
+   └──────────────────────────────────────────────────────────────────┘
+```
+
+If you can tick everything on that list, the app is genuinely production-ready. If you can tick most of them, you're better off than most teams who already ship. If you can tick none, this section is for you.
+
+## The single biggest mistake
+
+By a wide margin: **shipping with the dev configuration in production.**
+
+A few specific things this looks like in the wild:
+
+- `DEBUG = True` (or `app = FastAPI(debug=True)`) - shows tracebacks to anyone who triggers an error.
+- `--reload` flag still in the start command - reimports modules on file change, in production, where no files should be changing.
+- CORS set to `allow_origins=["*"]` because someone "fixed CORS" once and never tightened it.
+- The default SQLite database file from local dev being used in production.
+- A hardcoded `SECRET_KEY = "change-me"` that was never changed.
+
+Every one of those has shipped to production somewhere in a company's history. They're not exotic mistakes; they're the boring ones, the ones that happen because nobody looked.
+
+The single best defense: **a config layer that requires explicit values for production and refuses to start without them.** Page 2 covers this.
+
+## A health check that actually checks
+
+A common pattern that looks fine and isn't:
+
+```python
+@app.get("/health")
+def health():
+    return {"status": "ok"}
+```
+
+This returns 200 regardless of whether the database is reachable, whether Redis is up, whether the disk is full. Your load balancer sees green; your users see 500s.
+
+A better shape:
+
+```python
+@app.get("/health")
+async def health(db: Session = Depends(get_db)):
+    try:
+        db.execute(text("SELECT 1"))
+    except Exception:
+        return JSONResponse({"status": "degraded", "db": "down"}, status_code=503)
+    return {"status": "ok"}
+
+@app.get("/healthz/live")
+def liveness():
+    return {"status": "ok"}
+```
+
+Two endpoints, two purposes:
+
+| Endpoint | Question | Used by |
+|----------|----------|---------|
+| `/healthz/live` | Is the process running at all? | Kubernetes liveness probe - restart if it fails |
+| `/health` (readiness) | Can the process actually serve requests? | Load balancer - stop sending traffic if it fails |
+
+The liveness check should be cheap and almost never fail. The readiness check should fail fast when something downstream is broken. Conflating them leads to restart storms when the database has a hiccup.
+
+## Graceful shutdown
+
+When your deployment process kills the old process to replace it, you don't want to slice in-flight requests in half. uvicorn and FastAPI handle SIGTERM correctly out of the box *if you let them* - but a Docker container or process supervisor that sends SIGKILL too quickly defeats them.
+
+Two things to set:
+
+- A grace period of at least 30 seconds between SIGTERM and SIGKILL.
+- Lifespan/shutdown handlers that drain connections (close DB pools, finish in-flight background tasks, etc.).
+
+```python
+from contextlib import asynccontextmanager
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # startup
+    app.state.pool = await create_pool(...)
+    yield
+    # shutdown - runs on SIGTERM
+    await app.state.pool.close()
+
+app = FastAPI(lifespan=lifespan)
+```
+
+For Kubernetes, `terminationGracePeriodSeconds: 30` on the pod spec. For Docker run, `--stop-timeout 30`. The number that matters is "longer than your longest in-flight request."
+
+## "It works locally" is not a guarantee
+
+A particularly cruel category of bug: the code works on your laptop, passes every test, and breaks the moment it hits production. The usual causes:
+
+- **Different Python version.** Lock it down explicitly (`python: "3.12"` in your config files).
+- **System packages missing.** Image processing libraries, database drivers, fonts.
+- **Filesystem permissions.** Code that writes to `/tmp` works locally, fails on a read-only container.
+- **Time zone.** Your laptop is in your timezone; the server probably isn't. Use UTC everywhere.
+- **Case-sensitivity.** macOS filesystems are usually case-insensitive; Linux is not. `from .Models import ...` works locally, fails on the server.
+- **Outbound network.** Your laptop can reach the open internet; many production servers can't.
+
+The cure is reproducible builds - usually a Docker image that you build once and run everywhere. Page 3 of this section covers that.
+
+## Three habits worth forming before you ship
+
+The ones that pay back over years:
+
+1. **Every secret comes from the environment.** No exceptions, no "just this one." If it's a secret in production, it's a secret in dev too - loaded from a `.env` file that isn't checked in.
+
+2. **Migrations are part of every deploy.** Don't run them by hand "this once." A migration that didn't run is a bug waiting to happen the next time someone deploys after a restart.
+
+3. **Read the logs once a day for the first week.** Not because something's wrong, but because that's when you discover the small unexpected things - a weird user-agent, a slowly-growing error count, a 404 from a typo in a frontend route. Catch them early.
+
+None of these are exciting. All of them save weekends.
+
+## Where this section goes
+
+The next five pages dig into the things this checklist touches but doesn't explain:
+
+- Environment-based configuration done properly.
+- Dockerizing a FastAPI app without footguns.
+- Deploying to a VPS or a cloud platform.
+- Reverse proxy patterns with nginx.
+- Scaling, caching, and pulling in background workers.
+
+By the end of the section, you'll have a deployable, observable, fault-tolerant FastAPI service. Not a hand-wavy "should be fine" one - an actually-fine one.
+
+## The honest truth
+
+Nothing here is hard. There's no advanced technique that separates a production-grade FastAPI app from a Friday-night prototype. The difference is just *whether you did all these small boring things*. Most outages come from skipped items on a checklist like this one, not from exotic edge cases.
+
+If you only do one thing after reading this page: copy the checklist at the top into a markdown file in your repo, tick what you've done, and look at what you haven't.

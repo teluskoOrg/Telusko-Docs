@@ -1,0 +1,309 @@
+---
+title: Dockerizing FastAPI Applications
+---
+
+A Docker image is "your app, plus everything it needs to run, frozen in a single artifact." For a Python web service, that's not optional anymore - it's the unit of deployment almost every platform expects. A good Dockerfile makes the difference between "deploys take 30 seconds and the same artifact runs everywhere" and "deploys take 8 minutes and break differently every Tuesday."
+
+This page is a practical Dockerfile, walked through line by line, with the reasoning that goes into each choice.
+
+## The Dockerfile
+
+```dockerfile
+# syntax=docker/dockerfile:1.7
+FROM python:3.12-slim-bookworm AS base
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
+
+WORKDIR /app
+
+# OS deps that aren't in the slim image
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends \
+        build-essential \
+        libpq-dev \
+ && rm -rf /var/lib/apt/lists/*
+
+# Install Python deps first, cached separately from app code
+COPY requirements.txt .
+RUN pip install -r requirements.txt
+
+# Strip the build-only packages now that wheels are installed
+RUN apt-get purge -y --auto-remove build-essential \
+ && rm -rf /var/lib/apt/lists/*
+
+# Now copy app code (changes most often, so it's last)
+COPY app/ ./app/
+
+# Non-root user
+RUN useradd -r -u 1000 app && chown -R app:app /app
+USER app
+
+EXPOSE 8000
+
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+```
+
+Now the reasoning.
+
+## Line by line, the decisions that matter
+
+### `python:3.12-slim-bookworm`
+
+Three choices baked into one line:
+
+- **Python 3.12** - pin a specific minor version. `python:3` resolves to whatever's latest and changes under your feet.
+- **slim** - about 50 MB instead of 1 GB. Has Python, doesn't have build tools, docs, or most of the OS.
+- **bookworm** - the Debian release. Pinning means the OS-level dependencies don't shift when Debian releases a new version.
+
+Avoid `python:3.12-alpine` unless you have a good reason. Alpine uses musl libc instead of glibc, and a lot of Python wheels don't have musl builds - so `pip install` falls back to compiling from source, which is slow and frequently breaks.
+
+### The env vars
+
+```dockerfile
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+```
+
+The first stops Python from creating `.pyc` files. They're useless in a container (they slow down builds and aren't reused across image layers).
+
+The second forces Python's stdout/stderr to be unbuffered. Without it, your logs appear in chunks (or not at all when the container exits), which makes debugging a special kind of misery.
+
+### Install OS deps explicitly
+
+`libpq-dev` is required to compile `psycopg`. `build-essential` provides `gcc` for any C extensions. The `rm -rf /var/lib/apt/lists/*` clears the apt cache so it doesn't bloat the image.
+
+If your code doesn't need a C extension, drop these lines. The smaller the image, the faster every deploy.
+
+### Layer ordering is the cache trick
+
+Docker builds images in layers and caches them. If a layer hasn't changed, Docker reuses the cache from a previous build - fast. If a layer changes, every layer *after* it is rebuilt.
+
+The order in the Dockerfile reflects how often each thing changes:
+
+```text
+   1. base image          ─── changes rarely
+   2. ENV vars            ─── changes rarely
+   3. OS packages         ─── changes rarely
+   4. requirements.txt    ─── changes when deps change
+   5. pip install         ─── runs only if (4) changed
+   6. app code            ─── changes constantly
+   7. CMD                 ─── practically never
+```
+
+Editing one line of Python doesn't reinstall every dependency. That's the whole trick - and it cuts your typical build time from "go get coffee" to "a few seconds."
+
+### Non-root user
+
+Running a container as root is the default and the wrong choice. If anything in your app is exploited, root inside the container often translates to harm outside it (depending on the runtime). A dedicated unprivileged user is a small line of defense that costs nothing.
+
+### Why not `--reload`?
+
+You'd never run `uvicorn --reload` in a production image. `--reload` watches files and reimports modules - useful for dev, *catastrophic* in production (extra memory, slower startup, security implications). The CMD above runs straight uvicorn, no reload.
+
+## docker-compose for development
+
+A separate file for local dev that brings up the app, a database, and Redis with one command.
+
+```yaml
+# docker-compose.yml
+services:
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql://app:app@db:5432/app
+      REDIS_URL: redis://redis:6379
+      DEBUG: "true"
+    volumes:
+      - ./app:/app/app          # mount source for live edits
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    depends_on:
+      db: { condition: service_healthy }
+      redis: { condition: service_started }
+
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: app
+      POSTGRES_DB: app
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+volumes:
+  db_data:
+```
+
+A few things worth pointing out:
+
+- The volume mount on `./app` is the dev convenience - code changes are picked up instantly by `--reload`. In production, you bake the code into the image instead.
+- `depends_on` with `condition: service_healthy` waits for Postgres to be actually ready, not just started. Without it, the app boots first, fails to connect, and crashes.
+- The database password is hardcoded for local dev. That's fine here, *not* fine in production - production runs the prod image without compose.
+
+`docker compose up` brings the stack up. `docker compose down -v` tears it down and removes volumes (use `-v` carefully; it deletes your dev database).
+
+## Multi-stage builds for a smaller production image
+
+If image size matters (it usually does), a multi-stage build lets you compile in a fat image and ship the result in a slim one.
+
+```dockerfile
+# --- build stage ---
+FROM python:3.12-slim-bookworm AS builder
+
+ENV PIP_NO_CACHE_DIR=1
+WORKDIR /build
+
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends build-essential libpq-dev \
+ && rm -rf /var/lib/apt/lists/*
+
+COPY requirements.txt .
+RUN pip install --prefix=/install -r requirements.txt
+
+# --- runtime stage ---
+FROM python:3.12-slim-bookworm AS runtime
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
+
+WORKDIR /app
+
+# Runtime-only OS deps
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends libpq5 \
+ && rm -rf /var/lib/apt/lists/*
+
+# Copy just the installed packages from the builder
+COPY --from=builder /install /usr/local
+
+COPY app/ ./app/
+
+RUN useradd -r -u 1000 app && chown -R app:app /app
+USER app
+
+EXPOSE 8000
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+```
+
+The build stage has the compiler. The runtime stage doesn't. Final image is noticeably smaller - typically 200-400 MB for a real FastAPI app vs. 600-900 MB single-stage.
+
+## Choosing the server: uvicorn vs gunicorn
+
+A surprisingly common question. The honest answer for most apps:
+
+| Setup | When to use |
+|-------|-------------|
+| `uvicorn` alone | Single-process apps, dev, simple cases |
+| `gunicorn -k uvicorn.workers.UvicornWorker` | Multi-process production with worker management |
+| Behind a separate process supervisor (k8s, systemd) | When the platform handles process management |
+
+If your platform already manages processes (Kubernetes, ECS, Heroku, Fly), one `uvicorn` per container with the platform scaling the container count is the cleanest pattern. If you're running on a single VM and need to use all your cores, `gunicorn` with uvicorn workers is the classic answer:
+
+```dockerfile
+CMD ["gunicorn", "app.main:app", \
+     "-k", "uvicorn.workers.UvicornWorker", \
+     "-w", "4", \
+     "-b", "0.0.0.0:8000", \
+     "--timeout", "60", \
+     "--graceful-timeout", "30"]
+```
+
+`-w 4` gives you four workers. A common formula is `(2 × cores) + 1` for sync workers - for async workers, the right number is more like `cores` since each worker already handles many concurrent requests.
+
+## A .dockerignore is mandatory
+
+Without it, every `docker build` copies your entire repo into the build context - including `node_modules`, `.git`, `__pycache__`, your local `.env`, and gigabytes of `.venv`.
+
+```text
+# .dockerignore
+.git/
+.gitignore
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+.env
+.env.*
+!.env.example
+
+node_modules/
+dist/
+
+tests/
+docs/
+
+Dockerfile*
+docker-compose*.yml
+```
+
+That last group - `tests/`, `docs/`, the dev Dockerfiles - is debatable. Excluding them produces a smaller image. Including them lets you run tests inside the container in CI. Pick based on how you use it.
+
+## Image tagging that you'll thank yourself for
+
+Don't push everything as `:latest`. It's ambiguous, it's racy, and it makes rollback impossible.
+
+A pattern that holds up:
+
+```bash
+docker build -t myapp:$(git rev-parse --short HEAD) .
+docker build -t myapp:latest .
+
+docker push myapp:$(git rev-parse --short HEAD)
+docker push myapp:latest
+```
+
+Now `myapp:a1b2c3d` is a forever-stable reference to a specific commit. `myapp:latest` is the convenience tag. Deploy by SHA, not by `:latest`, so you can roll back to any previous commit by name.
+
+In CI, that becomes one line:
+
+```yaml
+- run: docker build -t myapp:${{ github.sha }} -t myapp:latest .
+```
+
+## Common Dockerfile mistakes
+
+A small but useful list, gathered from real PRs:
+
+- **`pip install` before copying `requirements.txt`** - defeats the cache; every code change reinstalls everything.
+- **No `--no-install-recommends` on apt** - pulls in megabytes of suggested-but-unneeded packages.
+- **No cleanup of `/var/lib/apt/lists/*`** - those lists are pure waste in the image.
+- **Running as root** - already covered, worth saying twice.
+- **`COPY . .` early** - bursts the cache on every code change.
+- **No healthcheck** - Docker has its own healthcheck mechanism (`HEALTHCHECK` directive) that some orchestrators use; consider adding one.
+- **Using `:latest` of the base image** - guarantees that your build "works" today and breaks tomorrow.
+
+## A note on image scanning
+
+Once you have an image, scan it. Free tools:
+
+- `docker scout` (built into Docker Desktop) - quick vulnerability scan.
+- `trivy` - open-source, very comprehensive.
+- GitHub container scanning, if you push to GHCR.
+
+Most scanners will flag a handful of CVEs in the base image you can do nothing about until Debian patches them. That's fine. The signal is the new ones - when an `apt` package you added introduces a critical issue.
+
+## Wrapping up the page
+
+A good Dockerfile is small, fast to build, reproducible, and uneventful. You stop noticing it. Deploys become "build, push, pull, restart" - no surprises, no environment-specific bugs. That's the whole point.
+
+The next page is about the layer above this: actually putting that image somewhere it can serve traffic - on a VPS, on a managed platform, on Kubernetes - and the trade-offs between them.

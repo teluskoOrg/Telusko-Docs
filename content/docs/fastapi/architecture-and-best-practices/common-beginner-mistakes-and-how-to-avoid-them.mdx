@@ -1,0 +1,293 @@
+---
+title: Common Beginner Mistakes and How to Avoid Them
+---
+
+There's a set of mistakes that almost every FastAPI developer makes, in roughly the same order, on the way to being comfortable with the framework. Some come from misunderstanding how FastAPI works. Some come from Python habits that don't translate to web servers. Some are just things nobody warns you about because they look fine until they don't.
+
+This page is a catalog. Not in any particular order - just the ones that keep showing up. Skim it once now. Skim it again in six months, when at least one of them will suddenly resonate.
+
+## The big ones
+
+### Storing state on the module or globally
+
+```python
+# bad
+users_cache = {}
+
+@app.get("/users/{id}")
+def get_user(id: int):
+    if id in users_cache:
+        return users_cache[id]
+    user = db.query(User).get(id)
+    users_cache[id] = user
+    return user
+```
+
+This works on one worker. It "works" in a confusing way on many workers - each one has its own dictionary, so caches go inconsistent. It also leaks memory forever.
+
+The fix: use a real cache (Redis), or accept the database query. Module-level mutable state in a multi-worker web server is almost always a bug waiting to happen.
+
+### Using `requests` (or any blocking I/O) inside an async route
+
+```python
+import requests
+
+@app.get("/weather")
+async def weather():
+    r = requests.get("https://api.example.com/weather")   # blocks the event loop
+    return r.json()
+```
+
+The route is `async`, but `requests.get` is sync - it parks the entire event loop while the HTTP call completes. Throughput collapses under load.
+
+The fix: use `httpx.AsyncClient`, or make the route `def` instead of `async def` (FastAPI will run it in a thread pool).
+
+```python
+import httpx
+
+@app.get("/weather")
+async def weather():
+    async with httpx.AsyncClient() as client:
+        r = await client.get("https://api.example.com/weather")
+    return r.json()
+```
+
+### Forgetting `await` on an async function
+
+Returns a coroutine object instead of a result. Confusing error message ensues.
+
+```python
+@app.get("/me")
+async def me(db: AsyncSession = Depends(get_db)):
+    user = fetch_user(db)        # if fetch_user is async, this is wrong
+    return user
+```
+
+If you see "Object of type coroutine is not JSON serializable", this is the bug. Add the `await`.
+
+### Putting business logic in Pydantic validators
+
+```python
+class UserCreate(BaseModel):
+    email: EmailStr
+
+    @field_validator("email")
+    def check_unique(cls, v):
+        if db.query(User).filter(User.email == v).first():  # ← no, no, no
+            raise ValueError("email taken")
+        return v
+```
+
+Pydantic validators run at request-parsing time, with no clean access to the database or auth context, and they belong to the schema - not the business layer. This couples your input shape to your data layer in painful ways.
+
+The fix: validators check *shape only*. Uniqueness checks belong in the service.
+
+### Using the same Pydantic model for input and output
+
+```python
+class User(BaseModel):
+    id: int
+    email: str
+    hashed_password: str   # ← leaks if used as a response model
+```
+
+It's tempting to have one `User` class. It's also how passwords end up in API responses.
+
+Use separate `UserCreate`, `UserOut`, `UserUpdate`. Three classes. The compiler-level enforcement is worth the extra lines.
+
+## Sneakier ones
+
+### Trusting the client's `Content-Type` or filename
+
+```python
+@app.post("/avatar")
+async def avatar(file: UploadFile = File(...)):
+    save_to_disk(f"uploads/{file.filename}", file)   # path traversal
+    if file.content_type == "image/png":              # client can lie
+        process_as_png(file)
+```
+
+Both are client-supplied. Both can be malicious. Generate filenames server-side (UUIDs). Verify content by reading the bytes (Pillow for images, `python-magic` for general type detection).
+
+### Not setting `expire_on_commit=False` in async SQLAlchemy sessions
+
+In async SQLAlchemy, the default behavior of "expire all loaded attributes on commit" means accessing an attribute after a commit triggers a lazy reload - which fails because the session is closed. Symptoms: `MissingGreenlet` errors, mysterious empty objects.
+
+Set it once on the session maker:
+
+```python
+SessionLocal = async_sessionmaker(bind=engine, expire_on_commit=False)
+```
+
+### Catching `Exception` and silently passing
+
+```python
+try:
+    do_something()
+except Exception:
+    pass
+```
+
+This is the line of code that has eaten more debugging hours than any other in history. If something can fail, *handle the specific failure*. If you genuinely don't care, at least log it.
+
+```python
+try:
+    do_something()
+except SpecificError:
+    log.warning("do_something failed, continuing", exc_info=True)
+```
+
+### Using SQLite in production "for now"
+
+It's almost never just for now. SQLite locks the entire database on writes - fine for one process, terrible for any kind of real concurrency. The transition to a real database is harder later, when there's data in it.
+
+If you're going to deploy anywhere serious, start on Postgres. Even for hobby projects, managed Postgres is essentially free at small scale.
+
+### Putting `if __name__ == "__main__": uvicorn.run(app)` in main.py
+
+Looks innocent. Falls apart the moment you run with workers, use gunicorn, or deploy to anything that runs uvicorn its own way. The Python file you import becomes a process boot script, and you get import-time side effects in places you don't expect.
+
+Run uvicorn from the command line. `main.py` should only define `app`.
+
+### Letting tests share state
+
+```python
+# tests/conftest.py
+client = TestClient(app)
+
+def test_a():
+    client.post("/items", json={"name": "x"})
+
+def test_b():
+    items = client.get("/items").json()
+    assert len(items) == 0    # ← but test_a created one
+```
+
+Tests should be independent. If `test_a` runs first, `test_b` fails. If `test_b` runs first, both pass. That's a flaky test, and flaky tests get disabled.
+
+Use a fixture that gives each test a fresh state (transaction rollback, separate database, fresh in-memory store, whatever).
+
+## Smaller, but worth mentioning
+
+### Importing `app` from inside route modules
+
+```python
+# app/routers/users.py
+from app.main import app    # ← circular import party
+
+@app.get("/users")
+def list_users(): ...
+```
+
+Define an `APIRouter` per file, register them in `main.py`. Don't import `app` upward.
+
+```python
+# app/routers/users.py
+from fastapi import APIRouter
+router = APIRouter(prefix="/users", tags=["users"])
+
+@router.get("/")
+def list_users(): ...
+
+# app/main.py
+from app.routers import users
+app.include_router(users.router)
+```
+
+### Forgetting to set a `response_model`
+
+The route works. The docs lie. The response is whatever your function returns - including any field you accidentally exposed.
+
+`response_model=...` filters the response *and* documents it. Set it. Always.
+
+### Setting `response_model=Schema` and then returning a dict
+
+It works, but you lose all the safety. FastAPI re-validates against the schema, so you've spent two passes through Pydantic to get the same result as just returning the model instance. Either return a real instance, or accept that response_model is doing the heavy lifting and skip the manual dict construction.
+
+### Not using `dependencies=[...]` for auth on routers
+
+Repeating `Depends(get_current_user)` on every route in a router gets old. Push it to the router level:
+
+```python
+router = APIRouter(
+    prefix="/admin",
+    dependencies=[Depends(require_role(Role.ADMIN))],
+)
+```
+
+Now every route in the router gets the check automatically. One place to add, one place to change.
+
+### Using `Body(...)` when you don't need to
+
+```python
+@app.post("/x")
+def x(payload: Item = Body(...)):    # ← Body(...) is redundant
+    ...
+```
+
+A Pydantic model parameter is already inferred as the body. `Body(...)` is only needed in specific cases (multiple body parameters, embedding scalars). Most of the time it's noise.
+
+### Returning `None` from a route
+
+FastAPI happily serializes `None` as `null`. Sometimes that's what you want; often it isn't. For "no content," prefer:
+
+```python
+from fastapi import Response, status
+
+@app.delete("/items/{id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_item(id: int):
+    service.delete(id)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+```
+
+A `204` response should have no body. Saying so explicitly avoids "did this delete succeed or did it find nothing?" confusion on the client.
+
+### Putting `print()` in production code
+
+It works locally. It goes to stdout in production. It's never structured, never has a level, never has context. Worst of all, you forget to remove it.
+
+`logging` is two extra lines and a thousand times more useful. Make it a reflex.
+
+### Importing `os.environ` instead of a settings object
+
+```python
+# scattered
+secret = os.getenv("SECRET_KEY")    # might be None, no type, no validation
+```
+
+A `pydantic-settings` object built once at startup catches missing/wrong values up front. Scattered `os.getenv` calls fail at runtime in the worst possible places.
+
+## The really obvious ones (that still happen)
+
+- Committing `.env` to git.
+- Hardcoding `SECRET_KEY = "change-me"` and never changing it.
+- `DEBUG = True` in production.
+- `allow_origins=["*"]` in production with `allow_credentials=True`.
+- `--reload` in the production start command.
+- No backups on the production database.
+- A health endpoint that returns 200 even when the database is down.
+
+Each one of these has shipped to production at some company, some time. Not because the developer didn't know better - because nothing checked.
+
+The cure is a checklist (the one in the deployment section is fine) and a habit of going through it before every real launch. Not the day before, not the morning of. A week before, so there's time to fix what's broken.
+
+## A small piece of consolation
+
+You'll make most of these mistakes at least once. That's not because you're bad at this - it's because some of them are genuinely non-obvious until you've seen them, and the ones that are obvious are still easy to miss when you're focused on shipping a feature.
+
+The goal isn't to never make these mistakes. The goal is to recognize them quickly when you do, fix them, and add the lesson to your own version of this list. Every senior engineer has a private mental catalog of bugs they once shipped. They're better not because they don't make mistakes, but because the mistakes leave a deeper mark.
+
+## Wrapping up the section, and the docs
+
+This is the last page of the architecture section, and also the last page of these FastAPI docs. The thread that's run through all of it:
+
+- Layers exist so change in one place doesn't ripple into every other place.
+- Names exist so the next reader (you, in six months) doesn't have to guess.
+- Validation exists at the edge so the inside of the code can trust its inputs.
+- Exceptions and responses exist in one shape so clients never have to guess.
+- Roadmaps exist so you don't waste time on the wrong phase.
+- This list of mistakes exists so the same hour of debugging happens to you once and not five times.
+
+A good FastAPI codebase isn't one that follows every rule on every page. It's one where the people working on it can confidently change anything without breaking something else. Get there in your own way. The pages in this section are tools for that, not commandments.
+
+Build something. Ship it. Read the logs. Fix the things that hurt. Repeat. That's the whole craft.

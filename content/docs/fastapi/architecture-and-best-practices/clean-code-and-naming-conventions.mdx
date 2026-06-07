@@ -1,0 +1,323 @@
+---
+title: Clean Code and Naming Conventions
+---
+
+A class of problems in software has nothing to do with algorithms, performance, or architecture. They're problems of *readability* - code that technically works but makes the next person (often future-you) work too hard. Most of those problems trace back to two things: bad names, and small habits that compound.
+
+This page is opinionated. None of it is the law. Most of it will make a FastAPI codebase noticeably more pleasant to live in, and none of it costs much.
+
+## Names do most of the work
+
+The single largest thing you can do to improve a codebase is name things better. A well-named function with a fifty-line body is more readable than a poorly-named function with ten lines and three "helpful" comments.
+
+A few standards worth adopting.
+
+### Pick a verb for functions, a noun for things
+
+```python
+# muddled
+def user(id):           # is this fetching, creating, validating?
+    ...
+
+# clear
+def get_user(id): ...
+def create_user(payload): ...
+def is_valid_user(payload): ...
+```
+
+The naming convention tells you *what kind of thing* this is before you read the body. `get_*` reads. `create_*` writes. `is_*` returns bool. `to_*` converts. `from_*` constructs. Be predictable.
+
+### Consistent vocabulary across the codebase
+
+Pick one word per concept and stick with it. If your code sometimes says `fetch`, sometimes `get`, sometimes `find`, and sometimes `load`, every reader has to figure out whether they mean the same thing. They probably do. So pick one.
+
+| Concept | Pick one |
+|---------|----------|
+| Reading a single item | `get` |
+| Reading many | `list` (not `getAll`, `fetchMany`, `findAll`) |
+| Creating | `create` (not `add`, `new`, `make`) |
+| Updating | `update` |
+| Deleting | `delete` (not `remove`, `destroy`) |
+| Converting | `to_X` / `from_X` |
+| Asking | `is_X` / `has_X` / `can_X` |
+
+Boring is good. Consistency is the entire point.
+
+### Length should match scope
+
+A variable used in three lines can be `i` or `u`. A variable used across a hundred-line function deserves a real name.
+
+```python
+# fine in a small loop
+for u in users:
+    print(u.email)
+
+# at module scope, this would be cryptic
+u = some_function()
+```
+
+Short names in short scopes. Long names in long scopes. The reader's context window shrinks as scope grows.
+
+### Don't repeat the type in the name
+
+```python
+# noisy
+user_dict = {"name": "Alice"}
+products_list = [p1, p2]
+user_obj = User(...)
+
+# better
+user = {"name": "Alice"}
+products = [p1, p2]
+user = User(...)
+```
+
+The type system (and your editor) already knows the type. Saying it twice doesn't help.
+
+### Boolean names should ask a question
+
+```python
+# weak
+flag = check_user(user)
+active = user.active_status
+
+# stronger
+is_active = user.is_active
+can_edit = permission.can_edit(user)
+has_pending_orders = orders.any_pending(user_id)
+```
+
+A reader scanning the code sees `if is_active:` and knows immediately what's being checked. `if flag:` requires going to find what `flag` means.
+
+## Function shape
+
+A function should do one thing. That's the cliché, and it's right.
+
+```python
+# does five things
+def process_order(payload):
+    # 1. validate
+    if not payload.items:
+        raise ValueError("empty")
+    # 2. compute
+    total = sum(i.price * i.qty for i in payload.items)
+    # 3. apply discount
+    if payload.discount_code:
+        total *= 0.9
+    # 4. save
+    db.add(Order(total=total))
+    db.commit()
+    # 5. email
+    send_confirmation(payload.email, total)
+    return total
+```
+
+```python
+# does one thing each
+def validate(payload): ...
+def compute_total(items): ...
+def apply_discount(total, code): ...
+def save_order(total): ...
+def send_confirmation(email, total): ...
+
+def process_order(payload):
+    validate(payload)
+    total = compute_total(payload.items)
+    total = apply_discount(total, payload.discount_code)
+    save_order(total)
+    send_confirmation(payload.email, total)
+    return total
+```
+
+The second version is longer in line count and shorter in cognitive load. Each helper has a clear name and a small body. Reading `process_order` becomes scanning a sentence.
+
+A rough threshold: if a function is more than 20-30 lines, it's probably doing more than one thing. Not always - there are legitimately long algorithms - but it's a flag worth respecting.
+
+## Module shape
+
+A file with one hundred lines is fine. A file with three thousand is not. Some heuristics for when to split:
+
+- **A file should fit roughly on one screen mentally.** When you can't keep the structure in your head while reading, split.
+- **One resource per file in each layer.** `orders.py` for the orders router, `order_repository.py` for orders' data access. Not `everything.py`.
+- **If you find yourself adding comments like "# --- USER STUFF ---" inside a file**, it's time to split.
+
+Some directories that *should* be flat:
+
+- `routers/` - one file per resource family.
+- `services/` - same.
+- `repositories/` - same.
+
+Some directories that *can* nest:
+
+- `models/` if you have a lot of them.
+- `services/` if a single resource has multiple meaningful services (`order_service.py`, `order_pricing_service.py`).
+
+But don't nest for the sake of it. Two levels deep is usually enough. Five levels deep is showing off.
+
+## Imports
+
+A few small habits keep imports calm.
+
+### Group them
+
+Standard library, third-party, local - separated by blank lines.
+
+```python
+import json
+from datetime import datetime
+
+from fastapi import Depends
+from sqlalchemy.orm import Session
+
+from app.database import get_db
+from app.models import User
+```
+
+Most linters can enforce this automatically. Set it up once and forget.
+
+### Prefer absolute imports
+
+```python
+# clear
+from app.services.order_service import OrderService
+
+# fragile
+from ..services.order_service import OrderService
+```
+
+Relative imports break the moment you move a file. Absolute imports are also easier to grep for.
+
+### Don't `import *`
+
+Ever. It hides where names come from, breaks autocomplete, and creates name-collision bugs that are awful to track down.
+
+## Comments
+
+Most comments shouldn't exist. Most code that has comments would be better with rename-the-variable than with add-the-comment.
+
+Bad comment:
+
+```python
+# loop through users and check if active
+for u in users:
+    if u.s == 1:
+        ...
+```
+
+Better code, no comment:
+
+```python
+for user in users:
+    if user.is_active:
+        ...
+```
+
+The fix wasn't to *explain* what `u` and `u.s == 1` meant. It was to rename them.
+
+When a comment is genuinely useful:
+
+- **Explaining *why*, not *what*.** "We special-case .csv here because IE 11 reports it as application/octet-stream" tells you something the code can't.
+- **Marking a hack so it gets fixed.** "TODO: replace with the real lookup once the migration finishes" is a future-self promise.
+- **Linking to context.** "See incident report 2025-03-14 for why this retries 5 times."
+
+That's about it. The rest of "documentation" should be types, names, and tests.
+
+## Type hints
+
+FastAPI thrives on type hints. They're not just decoration:
+
+```python
+def get_user(user_id: int) -> User | None:
+    ...
+```
+
+That signature is documentation, IDE assistance, static analysis, and runtime validation rolled into one. Use them everywhere.
+
+A few habits:
+
+- **Always type function signatures.** Both parameters and return.
+- **Don't over-type internals.** Local variables get inferred fine; you don't need `x: int = 5`.
+- **Reach for `Annotated` when you need extra info.** `Annotated[int, Field(gt=0)]` beats a `validator`.
+- **Use `|` over `Optional`/`Union`** in modern Python. `int | None` is shorter and clearer.
+
+For collections, prefer the generic syntax of modern Python:
+
+```python
+# old
+from typing import List, Dict, Optional
+def f(xs: List[int]) -> Optional[Dict[str, int]]: ...
+
+# modern (Python 3.10+)
+def f(xs: list[int]) -> dict[str, int] | None: ...
+```
+
+## Constants and magic numbers
+
+A magic number is a literal value with non-obvious meaning sitting in your code.
+
+```python
+# what's 86400?
+if seconds_since_login > 86400:
+    require_re_auth()
+```
+
+```python
+# clearer
+SESSION_TIMEOUT_SECONDS = 24 * 60 * 60
+
+if seconds_since_login > SESSION_TIMEOUT_SECONDS:
+    require_re_auth()
+```
+
+The constant name tells the reader what `86400` means. A future change ("let's make this 30 days") happens in one place. Same goes for strings used in more than one place, error codes, status codes, anything else.
+
+## Errors with intent
+
+A small habit: when you raise, raise something *specific*.
+
+```python
+# vague
+raise Exception("Bad input")
+
+# better
+raise ValidationError("price must be positive")
+
+# best
+raise InvalidPrice("price must be positive")
+```
+
+Custom exceptions cost almost nothing (`class InvalidPrice(ValueError): pass`) and they make `try/except` blocks meaningful instead of swallowing everything.
+
+The next page covers this in more depth, including how to map domain exceptions to HTTP responses cleanly.
+
+## Formatting
+
+Run a formatter and stop arguing. The Python community has converged on `black` and `ruff format`. Pick one, configure it once, never think about it again.
+
+A formatter that runs on commit (via `pre-commit` or your editor) prevents an entire category of style discussions from ever needing to happen. Lines of code about indentation don't exist anymore. You're free to think about things that matter.
+
+```bash
+pip install ruff
+ruff check .
+ruff format .
+```
+
+Five minutes of setup. Years of saved disagreement.
+
+## The "boy scout rule"
+
+Leave the code a little better than you found it. Renamed a variable while debugging? Keep the rename. Noticed a misleading comment? Delete or fix it. Saw a function doing five things? Maybe extract one of them.
+
+Done in small doses, this keeps a codebase *improving* over time even when no one explicitly works on "tech debt." Done in large doses, it turns every PR into a rewrite. The right amount is "the kind of cleanup that doesn't need its own paragraph in the PR description."
+
+## A useful exercise
+
+Pick a file from your own codebase that you wrote three months ago. Read it as if you didn't write it. Note every place you had to pause and think *"what does this do?"* - each of those is a place a better name, a smaller function, or a clearer structure would have saved time.
+
+This exercise is humbling. It's also the most reliable way to internalize what "clean code" actually means in your specific context, instead of in some abstract style guide.
+
+## The thread
+
+Clean code isn't a style. It's the thousand small choices that make a future reader's life easier - and that future reader is almost always you. Names that say what they mean. Functions that do one thing. Files that fit on a screen. Imports that are predictable. Constants instead of magic numbers. Types that tell the truth.
+
+None of these are tricks. None of them are clever. They're the boring fundamentals that separate a codebase you enjoy from one you avoid. The next pages keep going in the same direction - how to keep validation, services, and exceptions tidy as the app grows.

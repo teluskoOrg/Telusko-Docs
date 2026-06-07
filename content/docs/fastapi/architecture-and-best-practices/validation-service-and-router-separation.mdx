@@ -1,0 +1,296 @@
+---
+title: Validation, Service, and Router Separation
+---
+
+A common shape in growing FastAPI codebases: the route function starts as ten lines, becomes thirty, and quietly turns into forty lines of validation tangled up with twenty lines of business logic and another fifteen for database calls. Everything still works. Reviewing a change to it is misery.
+
+The fix is a discipline more than a technique: figure out which line of code belongs to which layer, and put it there. This page is about three layers in particular - validation, service, router - and the small but important rules that keep them in their own lanes.
+
+## What each layer is responsible for
+
+```text
+   ┌─ Pydantic schema ──────────────────────────────────┐
+   │  "is this input shaped correctly?"                 │
+   │  types, lengths, formats, ranges                   │
+   │  no database access, no I/O                        │
+   └────────────────────────────────────────────────────┘
+                       │
+                       ▼
+   ┌─ Router (endpoint function) ───────────────────────┐
+   │  "wire HTTP to business logic"                     │
+   │  parse params, call service, shape response        │
+   │  ~5-15 lines is the target                         │
+   └────────────────────────────────────────────────────┘
+                       │
+                       ▼
+   ┌─ Service ──────────────────────────────────────────┐
+   │  "is this allowed, and what happens if it is?"     │
+   │  business rules, cross-record checks               │
+   │  may use repositories, never touches HTTP          │
+   └────────────────────────────────────────────────────┘
+```
+
+If you ever feel torn about *where to put this if-statement*, the answer almost always becomes clear once you ask which question it answers:
+
+| Question the code answers | Layer |
+|---------------------------|-------|
+| "Is this input *shaped* correctly?" | Pydantic schema |
+| "Does the user have permission to even ask?" | Router (via dependency) |
+| "Is this allowed *given the state of the system*?" | Service |
+| "How do we actually do it?" | Service → Repository |
+| "What HTTP shape do we return?" | Router |
+
+The trap is to put cross-record checks in Pydantic ("does this email already exist?"), or put business rules in routers ("if the user is premium, discount 10%"). Both work. Both age badly.
+
+## Validation belongs to Pydantic
+
+Pydantic is excellent at the *shape* questions. Use it ruthlessly for them.
+
+```python
+from pydantic import BaseModel, EmailStr, Field, field_validator
+
+class ProductCreate(BaseModel):
+    name: str = Field(min_length=1, max_length=100)
+    sku: str = Field(pattern=r"^[A-Z0-9-]{4,16}$")
+    price: float = Field(gt=0, le=100_000)
+    description: str | None = Field(default=None, max_length=2000)
+    tags: list[str] = Field(default_factory=list, max_length=10)
+
+    @field_validator("name", "description", mode="before")
+    @classmethod
+    def trim(cls, v):
+        return v.strip() if isinstance(v, str) else v
+```
+
+Everything in that schema is something a *single field* can check without knowing anything about the database. Trim whitespace. Check the SKU format. Reject negative prices. Cap the number of tags.
+
+What does *not* belong here:
+
+- "Does this SKU already exist?" - needs the database.
+- "Is this product allowed under the user's plan?" - needs auth state and business rules.
+- "Should this be discounted?" - same.
+
+All three are *service* concerns. Let Pydantic refuse the obviously-broken input. Let the service refuse the *contextually*-broken input.
+
+## What a clean router actually looks like
+
+A well-shaped router function is small. It reads top-to-bottom in one breath.
+
+```python
+@router.post(
+    "/products",
+    response_model=ProductOut,
+    status_code=status.HTTP_201_CREATED,
+)
+def create_product(
+    payload: ProductCreate,
+    current: User = Depends(get_current_user),
+    service: ProductService = Depends(get_product_service),
+):
+    try:
+        product = service.create(payload, owner=current)
+    except DuplicateSKU as e:
+        raise HTTPException(409, str(e))
+    except ForbiddenForPlan as e:
+        raise HTTPException(403, str(e))
+    return product
+```
+
+That's the whole route. Things to notice:
+
+- The validated payload arrives ready to use. No re-validation inside the route.
+- Auth is a dependency, not an if-statement.
+- The service does the work and *raises domain exceptions*. The route is the place where those exceptions get mapped to HTTP responses.
+- The response model handles serialization. The route doesn't build dicts by hand.
+
+Five-line routes scale. Fifty-line routes don't.
+
+## Why services should not raise HTTPException
+
+A subtle but important rule. The service is supposed to be web-framework-free - that's how it stays testable and reusable. The moment it imports `HTTPException`, it has a hard dependency on FastAPI.
+
+Compare:
+
+```python
+# bad: service knows about HTTP
+class ProductService:
+    def create(self, payload, owner):
+        existing = self.repo.get_by_sku(payload.sku)
+        if existing:
+            raise HTTPException(409, "SKU already exists")
+        ...
+```
+
+```python
+# good: service raises a domain exception
+class ProductService:
+    def create(self, payload, owner):
+        existing = self.repo.get_by_sku(payload.sku)
+        if existing:
+            raise DuplicateSKU(payload.sku)
+        ...
+
+# the route translates
+try:
+    service.create(...)
+except DuplicateSKU as e:
+    raise HTTPException(409, f"SKU {e.sku} already exists")
+```
+
+The service is now:
+
+- Callable from a CLI script (which has no HTTP responses to map to).
+- Callable from a background worker (same).
+- Testable without instantiating an HTTP framework.
+
+The next page (`reusable-exception-and-response-patterns`) covers how to do this mapping centrally so you don't write the try/except over and over.
+
+## Where does authorization live?
+
+Two flavors of authorization, two layers:
+
+| Authorization question | Where |
+|------------------------|-------|
+| "Is the user logged in at all?" | Dependency, at the route level |
+| "Does the user have the right role?" | Dependency, at the route level |
+| "Does this user own this specific record?" | Service, after the record is loaded |
+| "Has this user exceeded their quota?" | Service, with quota state |
+
+The cheap-and-general checks belong as dependencies. The expensive-and-specific ones belong in the service, because they need to look at the actual data.
+
+```python
+@router.delete("/posts/{post_id}", status_code=204)
+def delete_post(
+    post_id: int,
+    current: User = Depends(get_current_user),    # ← cheap auth
+    service: PostService = Depends(get_post_service),
+):
+    try:
+        service.delete(post_id, by=current)        # ← service does ownership check
+    except NotFound:
+        raise HTTPException(404)
+    except NotOwner:
+        raise HTTPException(403, "Not your post")
+```
+
+## A small split: validators that need other fields
+
+Pydantic v2's `model_validator` runs after individual fields are validated, with the whole model available. Useful for cross-field checks that are still purely about shape.
+
+```python
+from pydantic import BaseModel, model_validator
+
+class DateRange(BaseModel):
+    start: datetime
+    end: datetime
+
+    @model_validator(mode="after")
+    def end_after_start(self):
+        if self.end <= self.start:
+            raise ValueError("end must be after start")
+        return self
+```
+
+That's still a *shape* check (the relationship between two fields), not a *business rule* (something that requires looking up other data). It belongs in the schema.
+
+A cross-field check that requires the database (e.g. "the end date can't be after the project's deadline") belongs in the service. The line is "do I need to look up data I don't have?"
+
+## When the service grows: extract domain helpers
+
+Services can themselves get crowded. When they do, look for things that aren't really about *orchestration* but about *rules*, and pull them into small helpers.
+
+```python
+# crowded service
+class OrderService:
+    def place(self, user, payload):
+        total = sum(p.price * i.qty for p, i in zip(products, payload.items))
+        if user.tier == "premium":
+            total *= 0.9
+        elif user.tier == "trial" and total > 50:
+            total *= 0.95
+        if payload.discount_code == "WELCOME10":
+            total *= 0.9
+        ...
+```
+
+```python
+# discount logic lives somewhere it can be tested in isolation
+# app/domain/pricing.py
+def apply_discounts(total: float, *, tier: str, discount_code: str | None) -> float:
+    if tier == "premium":
+        total *= 0.9
+    elif tier == "trial" and total > 50:
+        total *= 0.95
+    if discount_code == "WELCOME10":
+        total *= 0.9
+    return total
+
+# the service stays clean
+class OrderService:
+    def place(self, user, payload):
+        total = sum(p.price * i.qty for p, i in zip(products, payload.items))
+        total = apply_discounts(total, tier=user.tier, discount_code=payload.discount_code)
+        ...
+```
+
+The pricing logic is now a pure function. You can test it with `pytest.mark.parametrize` and a dozen cases in five lines. The service doesn't change when pricing rules change.
+
+## A short test of separation
+
+If you can answer "yes" to these, the boundaries are healthy:
+
+- Can my validation tests run without any imports from `services/` or `routers/`?
+- Can my service tests run without `TestClient` or any FastAPI import?
+- Can my router tests pass by mocking just the service, without setting up a real database?
+
+If the answer is "no" to any, follow the thread back. Something is reaching across a layer it shouldn't.
+
+## Common slip-ups, in one table
+
+| Slip-up | Better version |
+|---------|----------------|
+| Pydantic validator that hits the database | Move to service |
+| Router that builds SQL queries | Move to repository |
+| Service that imports `fastapi` | Domain exception + route-level mapping |
+| Pydantic schema that's a copy of the SQLAlchemy model | Use separate schemas for input, output, and storage |
+| Same Pydantic class for create and update | Make `*Update` a separate schema with optional fields |
+| Repository that raises `HTTPException` | Return None / raise domain exception |
+
+None of these are catastrophes. They're papercuts. Catch them on review and the codebase stays soft.
+
+## A note on Pydantic schemas vs SQLAlchemy models
+
+A common confusion that's worth a paragraph. They look similar; they're not the same.
+
+```python
+# SQLAlchemy: this is the table
+class User(Base):
+    __tablename__ = "users"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    email: Mapped[str] = mapped_column(unique=True)
+    hashed_password: Mapped[str]
+
+# Pydantic: these are the messages
+class UserCreate(BaseModel):
+    email: EmailStr
+    password: str = Field(min_length=8)
+
+class UserOut(BaseModel):
+    id: int
+    email: EmailStr
+    model_config = {"from_attributes": True}
+
+class UserUpdate(BaseModel):
+    email: EmailStr | None = None
+    password: str | None = Field(default=None, min_length=8)
+```
+
+Three different shapes for three different purposes. The temptation to merge them ("just one User class everywhere") causes endless small bugs - passwords leaking into responses, required fields in updates, that sort of thing.
+
+Keep them separate. Yes, you'll write a few extra lines. It's worth it.
+
+## The thread to carry
+
+Each layer has one job. Validation rejects malformed shapes. Services enforce rules and orchestrate work. Routers translate between HTTP and the rest. When a piece of code answers a question that belongs to a different layer, move it.
+
+This discipline isn't about purity. It's about being able to change one layer without rippling the others. That's the whole reward - a codebase you can evolve without touching everything every time.

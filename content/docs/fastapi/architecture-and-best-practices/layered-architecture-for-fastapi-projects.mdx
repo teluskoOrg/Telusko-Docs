@@ -1,0 +1,284 @@
+---
+title: Layered Architecture for FastAPI Projects
+---
+
+The first version of any FastAPI app is a single `main.py` with all the routes in it. That works, until it doesn't - which is usually around the time the file passes 500 lines, or the moment you try to write a test for one route and accidentally pull in half the codebase. The fix isn't more decorators or smarter ORMs. It's *layers*.
+
+This page is about what those layers are, why they exist, and how to apply them without falling into the opposite trap of overengineering a five-route app into something that looks like enterprise Java.
+
+## The layers, named
+
+Different communities use different names, but the same shapes keep showing up. A useful vocabulary:
+
+```text
+   ┌──────────────────────────────────────────────────────────┐
+   │  Router / API layer                                      │
+   │     - HTTP concerns only (path, status code, headers)    │
+   │     - parses request, returns response                   │
+   │     - no business logic                                  │
+   ├──────────────────────────────────────────────────────────┤
+   │  Service layer                                           │
+   │     - business rules                                     │
+   │     - orchestrates multiple repositories                 │
+   │     - knows nothing about HTTP                           │
+   ├──────────────────────────────────────────────────────────┤
+   │  Repository / data access layer                          │
+   │     - database queries                                   │
+   │     - one repository per aggregate (User, Order, ...)    │
+   │     - returns domain objects or rows                     │
+   ├──────────────────────────────────────────────────────────┤
+   │  Model layer                                             │
+   │     - SQLAlchemy models, Pydantic schemas                │
+   │     - data shapes; minimal behavior                      │
+   └──────────────────────────────────────────────────────────┘
+```
+
+Each layer talks **downward** only. The router calls the service. The service calls the repository. The repository touches the database. Going the other way - a model that calls a service, a repository that raises `HTTPException` - is the smell that tells you the layers are leaking.
+
+## A worked example
+
+Take a real-ish "create order" endpoint. Without layers:
+
+```python
+# app/main.py - everything in one place
+@app.post("/orders")
+def create_order(payload: OrderCreate, db: Session = Depends(get_db), current = Depends(get_current_user)):
+    # check inventory
+    for item in payload.items:
+        product = db.get(Product, item.product_id)
+        if product is None:
+            raise HTTPException(404, f"Product {item.product_id} not found")
+        if product.stock < item.quantity:
+            raise HTTPException(409, f"Not enough stock for {product.name}")
+
+    # compute total
+    total = sum(
+        db.get(Product, i.product_id).price * i.quantity
+        for i in payload.items
+    )
+
+    # discount for premium users
+    if current.tier == "premium":
+        total = total * 0.9
+
+    # create order
+    order = Order(user_id=current.id, total=total)
+    db.add(order)
+    db.flush()
+    for i in payload.items:
+        db.add(OrderItem(order_id=order.id, product_id=i.product_id, quantity=i.quantity))
+        product = db.get(Product, i.product_id)
+        product.stock -= i.quantity
+    db.commit()
+    db.refresh(order)
+    return order
+```
+
+This works. It is also:
+
+- Untestable without spinning up the database.
+- Mixing HTTP errors, business rules, inventory checks, and SQL.
+- A magnet for bugs the next time the discount rules change.
+- Impossible to reuse from anywhere except this exact endpoint.
+
+## The same logic, in layers
+
+```python
+# app/repositories/product_repository.py
+class ProductRepository:
+    def __init__(self, db: Session):
+        self.db = db
+
+    def get(self, product_id: int) -> Product | None:
+        return self.db.get(Product, product_id)
+
+    def decrement_stock(self, product_id: int, quantity: int) -> None:
+        product = self.db.get(Product, product_id)
+        product.stock -= quantity
+```
+
+```python
+# app/repositories/order_repository.py
+class OrderRepository:
+    def __init__(self, db: Session):
+        self.db = db
+
+    def create(self, user_id: int, total: float, items: list[OrderItemCreate]) -> Order:
+        order = Order(user_id=user_id, total=total)
+        self.db.add(order)
+        self.db.flush()
+        for item in items:
+            self.db.add(OrderItem(
+                order_id=order.id,
+                product_id=item.product_id,
+                quantity=item.quantity,
+            ))
+        self.db.commit()
+        self.db.refresh(order)
+        return order
+```
+
+```python
+# app/services/order_service.py
+class OrderService:
+    def __init__(self, products: ProductRepository, orders: OrderRepository):
+        self.products = products
+        self.orders = orders
+
+    def place_order(self, user: User, payload: OrderCreate) -> Order:
+        # validate inventory and compute total in one pass
+        total = 0.0
+        for item in payload.items:
+            product = self.products.get(item.product_id)
+            if product is None:
+                raise NotFound(f"Product {item.product_id} not found")
+            if product.stock < item.quantity:
+                raise OutOfStock(product.name)
+            total += product.price * item.quantity
+
+        if user.tier == "premium":
+            total *= 0.9
+
+        order = self.orders.create(user.id, total, payload.items)
+        for item in payload.items:
+            self.products.decrement_stock(item.product_id, item.quantity)
+
+        return order
+```
+
+```python
+# app/routers/orders.py
+@router.post("/orders", response_model=OrderOut, status_code=201)
+def create_order(
+    payload: OrderCreate,
+    current: User = Depends(get_current_user),
+    service: OrderService = Depends(get_order_service),
+):
+    try:
+        return service.place_order(current, payload)
+    except NotFound as e:
+        raise HTTPException(404, str(e))
+    except OutOfStock as e:
+        raise HTTPException(409, str(e))
+```
+
+What changed:
+
+- The route is small. It deals with HTTP and only HTTP.
+- The service is testable without any web framework - pass it a fake repository, call `place_order`, assert.
+- Inventory logic, discount logic, and persistence are each separable concerns in separable files.
+- "Out of stock" is a domain exception, not an HTTP exception. The mapping to a 409 happens at the edge.
+
+## A common file layout
+
+```text
+app/
+  main.py                    # FastAPI instance, middleware, router includes
+  config.py                  # settings (pydantic-settings)
+  database.py                # SQLAlchemy engine, session, Base, get_db
+  dependencies.py            # cross-cutting deps (get_current_user, etc.)
+  exceptions.py              # domain exceptions (NotFound, OutOfStock, ...)
+
+  models/                    # SQLAlchemy models
+    user.py
+    product.py
+    order.py
+
+  schemas/                   # Pydantic models (request/response)
+    user.py
+    product.py
+    order.py
+
+  repositories/              # data access
+    user_repository.py
+    product_repository.py
+    order_repository.py
+
+  services/                  # business logic
+    user_service.py
+    order_service.py
+
+  routers/                   # FastAPI routers (one per resource family)
+    users.py
+    products.py
+    orders.py
+    auth.py
+```
+
+This isn't the only correct shape, but it's a shape that scales well. The principle is "one folder per layer, one file per resource within the layer."
+
+## Wiring it together with dependencies
+
+The service needs repositories; the route needs the service. FastAPI's dependency system stitches them up:
+
+```python
+# app/dependencies.py
+def get_product_repository(db: Session = Depends(get_db)) -> ProductRepository:
+    return ProductRepository(db)
+
+def get_order_repository(db: Session = Depends(get_db)) -> OrderRepository:
+    return OrderRepository(db)
+
+def get_order_service(
+    products: ProductRepository = Depends(get_product_repository),
+    orders: OrderRepository = Depends(get_order_repository),
+) -> OrderService:
+    return OrderService(products, orders)
+```
+
+Now the route declares what it wants, and FastAPI builds the whole graph each request:
+
+```python
+@router.post("/orders")
+def create_order(
+    payload: OrderCreate,
+    service: OrderService = Depends(get_order_service),
+):
+    ...
+```
+
+The thing to notice: nothing in the service or the repositories depends on FastAPI. They're plain Python classes. That's the whole point - they could be reused from a CLI script, a background worker, or a test, without any web framework involved.
+
+## When NOT to use this pattern
+
+A real concern. Adding all these layers to a five-route admin tool is overengineering, and people will rightly mock the result.
+
+The honest threshold:
+
+| Project size | Suggested shape |
+|--------------|-----------------|
+| 1-5 routes, single owner, throwaway | One file. Don't pretend it's bigger. |
+| 5-15 routes, growing | Split routers per resource, keep services inline |
+| 15+ routes, real users, multiple devs | Full layering, as above |
+| Very domain-heavy (banking, scheduling) | Add more layers (domain entities, use cases) |
+
+The wrong move at the right scale costs more than the right move at the wrong scale. If you're a solo developer with three routes, a single `main.py` is genuinely the right answer. If you're a team of eight with eighty routes, the layers earn their keep on every pull request.
+
+## Two anti-patterns
+
+**Anemic services.** A service that just calls a single repository method with no logic of its own is a layer you're paying for and not using. Either it'll grow into having real responsibility, or you should delete it and let the route call the repository directly. Don't keep dead layers around for symmetry.
+
+```python
+# pointless
+class UserService:
+    def __init__(self, repo): self.repo = repo
+    def get(self, id): return self.repo.get(id)
+```
+
+**Leaky abstractions.** A repository that takes a Pydantic schema as input is doing the service's job. A route that builds raw SQL is bypassing the repository. A service that raises `HTTPException` knows too much about the web layer. Each layer has a vocabulary - keep it inside its layer.
+
+## A short test of whether your layers are clean
+
+Three questions. If you can answer "yes" to all three, the layering is doing its job:
+
+1. Can I test the service without starting a web server or a database?
+2. Can the same service be called from a CLI script or a background worker?
+3. If I switch from SQLAlchemy to a different ORM, do my routes and services stay unchanged?
+
+If the answer to any of them is "no," you have a leak. The leak isn't fatal - it's just a flag for "this is where coupling is going to bite you eventually."
+
+## The thread
+
+Layers are a tool for *managing change*. The router changes when the API contract changes. The service changes when business rules change. The repository changes when the database schema changes. The model changes when both do. Separating these means most changes touch one layer, and you can be confident that a change in one layer doesn't break the others.
+
+That's the whole pitch. The next pages drill into the smaller habits - clean naming, exception patterns, separation of validators from services - that keep each layer healthy from the inside.

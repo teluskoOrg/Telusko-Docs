@@ -1,0 +1,195 @@
+---
+title: Building a Complete FastAPI Backend Roadmap
+---
+
+The tutorials end somewhere around "you can make a route and return JSON." A real backend is much further along than that - it has users, persistence, deployment, observability, the works. The distance between those two points isn't a single big leap; it's a sequence of small, well-ordered steps.
+
+This page lays out that sequence. It's not the only path, but it is *a* path that a lot of teams arrive at after trying the wrong orders first. If you're building a real backend and aren't sure what to do next, this is a reasonable map.
+
+## The phases at a glance
+
+```text
+   Phase 0: Hello world          ─── one route returns JSON
+   Phase 1: First real resource  ─── CRUD + database
+   Phase 2: Make it shippable    ─── config, docker, deploy
+   Phase 3: Make it safe         ─── auth, validation, errors
+   Phase 4: Make it observable   ─── logging, metrics, tests
+   Phase 5: Make it scale        ─── caching, workers, background
+   Phase 6: Make it pleasant     ─── architecture, docs, polish
+```
+
+Most projects need most of these eventually. The trick is *not skipping ahead*. Building a perfect observability stack on top of an app that can't authenticate a user is wasted effort.
+
+## Phase 0 - Hello world (Day 1)
+
+You can ignore this if you already have an app. Otherwise:
+
+```python
+# app/main.py
+from fastapi import FastAPI
+
+app = FastAPI(title="My App")
+
+@app.get("/")
+def root():
+    return {"hello": "world"}
+```
+
+Run with `uvicorn app.main:app --reload`. Hit `/`. See JSON. You're done with phase 0.
+
+Don't add anything else yet. Get the loop working: edit a file, see the change, repeat.
+
+## Phase 1 - First real resource (Days 2-3)
+
+Pick one resource - usually `users` or `products` - and build the whole CRUD for it. This forces you to set up:
+
+- The Pydantic schemas (`Create`, `Update`, `Out`).
+- The SQLAlchemy model.
+- The database session and `get_db` dependency.
+- The migrations setup (Alembic), even if there's only one migration to start.
+
+The temptation here is to build *two* resources before either is properly set up. Resist. One resource, fully working, including update and delete with proper status codes, before adding the next. Once the first one is done, the second is mostly copy-paste-and-modify.
+
+A checklist for "the first resource is done":
+
+```text
+   ☐ POST /products          → 201
+   ☐ GET /products           → 200, paginated
+   ☐ GET /products/{id}      → 200 or 404
+   ☐ PATCH /products/{id}    → 200 or 404
+   ☐ DELETE /products/{id}   → 204 or 404
+   ☐ Migration runs cleanly on a fresh database
+   ☐ /docs page shows all five endpoints with correct schemas
+```
+
+If any of those is "kind of works", finish it. The next phases assume the first resource is solid.
+
+## Phase 2 - Make it shippable (Days 4-7)
+
+Before adding features, ship the bare bones somewhere. This is the most-skipped phase and the most regrettable one to skip.
+
+What to set up:
+
+- **A settings layer** with pydantic-settings. `.env` for local, env vars in production. Required values fail at startup.
+- **A Dockerfile.** Small, layered properly. Multi-stage if you care about image size.
+- **docker-compose.yml** for local dev (your app + Postgres + Redis if you'll need it).
+- **A health endpoint.** `/healthz/live` and `/health` (readiness).
+- **Deploy somewhere.** Fly.io, Render, Railway, a VPS - whatever. The app responds on a real URL.
+- **A real database**, not SQLite, even in dev. Catches dialect-specific bugs early.
+
+The reward for doing this now: every future change ships in minutes, not hours, and "works in dev" automatically means "works in prod-like config."
+
+Why now and not later: the more code you accumulate before the first deploy, the larger and scarier the first deploy is. Ship empty, then ship small, then keep shipping. The first production deploy of an app with five routes is uneventful. The first production deploy of an app with fifty routes is a project.
+
+## Phase 3 - Make it safe (Week 2)
+
+Now add the things that turn "an API" into "an API you can trust on the open internet."
+
+- **Authentication.** Password hashing, an `/auth/register` and `/auth/token`, JWT tokens, the `get_current_user` dependency.
+- **Authorization.** At minimum a `require_role` dependency. RBAC if you have actual roles.
+- **CORS** middleware, configured with real origins (not `*`).
+- **TrustedHostMiddleware** in production.
+- **Security headers** middleware (HSTS, X-Content-Type-Options, etc.).
+- **Centralized exception handlers** with a consistent error envelope.
+- **Rate limiting** on the login endpoint at least.
+- **HTTPS** in production (handled by your platform or a reverse proxy).
+
+A useful sub-checklist: protect each endpoint correctly. The product CRUD from phase 1 probably needs auth on writes and ownership checks. Add them now.
+
+By the end of this phase, the API can authenticate a user, refuse unauthorized actions, return consistent error responses, and survive being on the internet without immediately becoming someone else's problem.
+
+## Phase 4 - Make it observable (Week 3)
+
+Once the app is real, you need to see what it's doing.
+
+- **Structured logging.** JSON formatter, levels, request id middleware.
+- **An error tracker** (Sentry is the easy answer). Stack traces with context, no hunting through logs for tracebacks.
+- **Basic metrics**. Even just request rate and latency - `prometheus-fastapi-instrumentator` is two lines.
+- **Tests.** Real ones. Pytest + TestClient. Hit each endpoint, assert on status code and shape, exercise the validation and auth failures.
+- **CI**. Tests run on every push. Block merges that break them.
+
+This phase is the one that turns a one-person hobby into something a team can work on. Without tests, every change is a roll of the dice. With them, refactoring becomes routine.
+
+A useful target: enough tests that you'd be comfortable letting someone you've never met make a non-trivial change.
+
+## Phase 5 - Make it scale (Month 2)
+
+Only when there's actual load (or you can predict it imminently).
+
+- **Caching** for the hottest read paths. Redis with TTL.
+- **Background workers** for slow / unreliable work - emails, exports, image processing.
+- **Indexes** on the database columns your queries actually filter and join on.
+- **Connection pooling**. PgBouncer if you have many app instances.
+- **More than one app instance.** Once you have any kind of shared state, ensure it's actually shared (not just `app.state` per process).
+
+This is also the phase where you might pull WebSockets into the picture if your product needs them. (See the WebSockets section for the realistic answer to "do I actually need WebSockets?")
+
+The single most useful habit here: profile before optimizing. The bottleneck is almost always not where you think.
+
+## Phase 6 - Make it pleasant (Month 3+)
+
+The polish phase. Mostly internal-facing.
+
+- **Layered architecture.** Routers, services, repositories - properly separated.
+- **Clean naming and consistent file structure** across the codebase.
+- **Type hints everywhere.** Run `mypy` or `pyright` in CI.
+- **API documentation** beyond what FastAPI auto-generates. A README that someone could follow to get from zero to running. A page describing the auth flow. A changelog.
+- **Developer experience.** Pre-commit hooks (`ruff format`, `ruff check`). A makefile or task runner. A dev container or docker-compose that brings up the entire stack with one command.
+
+This phase pays dividends slowly but steadily. A codebase that's well-organized and pleasant to work in attracts contributors and keeps the original team happy.
+
+## Things to stop doing at certain points
+
+Some habits are fine early and become problems later.
+
+| Habit | Fine when... | Stop when... |
+|-------|-------------|--------------|
+| Single `main.py` | < 5 routes | You scroll to find anything |
+| SQLite database | Local dev only | You deploy to staging |
+| In-memory rate limits | One worker | You scale beyond one |
+| In-memory cache | One worker | Same |
+| `print()` debugging | Local dev | You ship to prod |
+| `BackgroundTasks` for everything | < 10 RPS, can-be-lost | You need retries or durability |
+| Hardcoded config | Day 1 | Day 2 |
+| No tests | "I'll add them later" | Today, actually |
+
+If you're catching yourself on a "stop when" line, that's the signal to do the upgrade.
+
+## A milestones table you can copy
+
+Some teams find it useful to have explicit milestones to point at.
+
+| Milestone | What it means in practice |
+|-----------|---------------------------|
+| MVP-1 | App is on the internet, has one resource working, deployed once |
+| MVP-2 | Auth works, at least one real user logged in successfully |
+| MVP-3 | A CI pipeline runs tests and builds Docker images |
+| MVP-4 | Errors are tracked, logs are structured, p95 latency is visible |
+| 1.0 | Documented, secure, scalable enough for current load, comfortable to work on |
+
+If you set milestones, set them small. "Ship version 1.0 in 6 months" is too vague to plan. "Have auth working by Friday" is the kind of milestone that drives behavior.
+
+## What this roadmap deliberately avoids
+
+A few things people obsess about that aren't on the list:
+
+- **Microservices** until the team is genuinely too big for a monolith. Most teams aren't.
+- **GraphQL** unless the frontend has a specific reason to want it. REST is fine for almost everything.
+- **Custom protocols** when HTTP would do.
+- **Kubernetes** as a default. Reach for it when the leverage is real.
+- **"Clean architecture" with five layers** when three are enough.
+- **Premature abstraction.** The third occurrence is when you extract, not the second.
+
+Every one of those decisions is reasonable in the right context. Most teams pick them in the wrong context and then live with the cost for years.
+
+## A small reality
+
+A working backend is not a function of how clever the code is. It's a function of whether the boring things - config, deploy, auth, errors, tests, monitoring - are in place. The boring things take more wall-clock time than the interesting ones. Plan for that.
+
+If you only do one thing differently after reading this page: ship something to production this week, however small. The roadmap from there is much easier when you can see your code running on a real URL with real users than when you're still working in localhost.
+
+## The thread
+
+You don't need to do all of this. You need to do enough of it to make the project worth doing. The phases above are an ordering - *if* you do them, do them roughly in this order, because each one becomes easier when the ones before it are done.
+
+The last page in this section is the most useful one if you're new to FastAPI: the mistakes that keep tripping people up, listed plainly so you can recognize them when you see them in your own code.
