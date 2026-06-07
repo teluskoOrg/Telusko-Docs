@@ -4,6 +4,7 @@
         "getting-started.mdx",
         "introduction.mdx",
         "fundamentals",
-        "api-communication"
+        "api-communication",
+        "databases"
     ]
 } 

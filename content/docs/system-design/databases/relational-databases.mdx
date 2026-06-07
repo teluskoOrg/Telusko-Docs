@@ -1,0 +1,361 @@
+---
+title: Relational Databases
+---
+
+<Steps>
+
+
+Data is one of the most valuable assets in any software application. Whether it is a social media platform, an e-commerce website, a banking system, or a learning management platform, all applications need a reliable way to store, organize, and retrieve data.
+
+Broadly, databases can be categorized into two major types:
+
+| Approach  | Database Type                | Examples                              |
+| --------- | ---------------------------- | ------------------------------------- |
+| **SQL**   | Relational Databases (RDBMS) | PostgreSQL, MySQL, Oracle, SQL Server |
+| **NoSQL** | Non-Relational Databases     | MongoDB, Cassandra, Redis, Neo4j      |
+
+Relational databases are among the most widely used storage systems because they provide a structured way of organizing data and maintaining relationships between different entities.
+
+
+---
+
+
+## What is a Relational Database?
+
+A **Relational Database Management System (RDBMS)** stores data in the form of **tables** consisting of rows and columns.
+
+The term *relational* comes from the ability to create relationships between multiple tables.
+
+For example, in a blogging platform:
+
+* Users create posts
+* Posts receive comments
+* Comments are written by users
+
+All these entities are related to one another and can be connected using relational database concepts.
+
+
+---
+
+
+![Relational_Databases](https://dyz1pdcuffwr5.cloudfront.net/System-designs/relational_databases.png)
+
+
+---
+
+
+## Why Relational Databases?
+
+Relational databases are designed to solve common data management challenges:
+
+* Organizing large amounts of structured data
+* Preventing duplicate data
+* Maintaining data consistency
+* Supporting complex relationships
+* Enabling efficient querying
+
+They are ideal when:
+
+* Data has a predefined structure
+* Relationships between data are important
+* Data integrity and consistency are critical
+
+
+---
+
+![Advantages_of_Relational_Database](https://dyz1pdcuffwr5.cloudfront.net/System-designs/relational_database_advantages.png)
+
+---
+
+
+## Core Building Blocks of Relational Databases
+
+Understanding relational databases starts with understanding their fundamental components.
+
+### Entity
+
+An **Entity** represents a real-world object or concept about which information is stored.
+
+Examples:
+
+* User
+* Product
+* Order
+* Employee
+* Student
+* Course
+* Video
+* Comment
+
+In relational databases, each entity is usually represented as a table.
+
+**Example**
+
+Consider a social media application.
+
+Possible entities:
+
+```text
+Users
+Posts
+Comments
+Likes
+Messages
+```
+
+Each of these entities stores a specific type of information.
+
+
+### Table
+
+A **Table** is a collection of related data organized into rows and columns.
+
+Each table represents one entity.
+
+**Example: Users Table**
+
+| id | first_name | last_name | mobile     |
+| -- | ---------- | --------- | ---------- |
+| 1  | Rahul      | Sharma    | 9876543210 |
+| 2  | Priya      | Verma     | 9123456789 |
+| 3  | Amit       | Patel     | 9988776655 |
+
+This table stores information related to users.
+
+
+### Attributes (Columns)
+
+Attributes define the properties of an entity.
+
+They are represented as columns in a table.
+
+**Example**
+
+For a User entity:
+
+| Attribute  |
+| ---------- |
+| id         |
+| first_name |
+| last_name  |
+| mobile     |
+
+Each attribute describes a specific characteristic of a user.
+
+
+**Real-World Analogy**
+
+Consider a student.
+
+A student may have:
+
+* Student ID
+* Name
+* Email
+* Phone Number
+* Date of Birth
+
+These properties become attributes (columns) in a database table.
+
+
+### Records (Rows)
+
+A **Record** represents a complete instance of an entity.
+
+Each row contains values for all attributes.
+
+**Example**
+
+| id | first_name | last_name | mobile     |
+| -- | ---------- | --------- | ---------- |
+| 1  | Rahul      | Sharma    | 9876543210 |
+
+This entire row represents one user record.
+
+
+### Example: Blog Application Database
+
+A blogging platform may contain multiple entities.
+
+**Users Table**
+
+| id | first_name |
+| -- | ---------- |
+| 1  | Rahul      |
+| 2  | Priya      |
+
+
+**Posts Table**
+
+| id | user_id | title                |
+| -- | ------- | -------------------- |
+| 1  | 1       | System Design Basics |
+| 2  | 2       | SQL vs NoSQL         |
+
+
+**Comments Table**
+
+| id | post_id | user_id | comment_text       |
+| -- | ------- | ------- | ------------------ |
+| 1  | 1       | 2       | Great explanation! |
+| 2  | 1       | 1       | Thank you!         |
+
+Each table stores a different type of information while maintaining relationships with other tables.
+
+
+---
+
+
+## Naming Conventions
+
+Following standard naming conventions improves readability and maintainability.
+
+
+### Table Names
+
+Table names are generally written in plural form.
+
+Examples:
+
+```text
+users
+posts
+comments
+orders
+products
+```
+
+Reason:
+
+A table stores multiple records, not a single record.
+
+
+### Column Names
+
+Column names should:
+
+* Be descriptive
+* Use singular form
+* Clearly indicate stored information
+
+Examples:
+
+```text
+first_name
+last_name
+mobile
+created_at
+updated_at
+```
+
+
+### Primary Key
+
+Most tables contain a unique identifier.
+
+Example:
+
+```text
+id
+```
+
+This uniquely identifies every row in the table.
+
+
+---
+
+
+## Relationships in Relational Databases
+
+The most powerful feature of relational databases is the ability to create relationships between entities.
+
+These relationships connect tables and allow data to be linked logically.
+
+
+### Why Relationships Are Needed
+
+Consider a blogging platform.
+
+Questions we may want to answer:
+
+* Which user created a post?
+* Which comments belong to a post?
+* Which user wrote a comment?
+
+Relationships help answer these questions efficiently.
+
+
+---
+
+
+## SQL and Relational Databases
+
+Relational databases use SQL (Structured Query Language) to interact with data.
+
+SQL allows us to:
+
+* Create tables
+* Insert records
+* Retrieve data
+* Update data
+* Delete data
+
+
+### Common SQL Operations
+
+| Operation | Purpose       |
+| --------- | ------------- |
+| CREATE    | Create tables |
+| INSERT    | Add records   |
+| SELECT    | Retrieve data |
+| UPDATE    | Modify data   |
+| DELETE    | Remove data   |
+
+These operations form the foundation of database interactions.
+
+
+---
+
+![SQL_vs_NoSQL](https://dyz1pdcuffwr5.cloudfront.net/System-designs/sql_vs_nosql.png)
+
+---
+
+
+## When to Use Relational Databases? 
+
+Relational databases are preferred when:
+
+* Data is highly structured
+* Relationships are important
+* Data consistency is critical
+* Transactions must be reliable
+* Business rules need strict enforcement
+
+Examples:
+
+* Banking Systems
+* E-commerce Platforms
+* ERP Systems
+* Student Management Systems
+* Inventory Management Applications
+  
+
+---
+
+
+## Summary
+
+* Relational databases organize data into structured tables consisting of rows and columns.
+* An **entity** represents a real-world object and is typically mapped to a database table.
+* **Attributes** define the properties of an entity, while **records** store actual data instances.
+* Table names are generally written in plural form, while columns represent individual fields of the entity.
+* Relationships allow tables to be connected and are categorized as one-to-one, one-to-many, and many-to-many.
+* Foreign keys establish relationships between tables and maintain referential integrity.
+* SQL is the standard language used to create, query, update, and manage relational data.
+* Relational databases are best suited for structured data, strong consistency requirements, and applications with complex relationships.
+
+
+</Steps>
+
+
+Written By: <a href="https://www.linkedin.com/in/muskangarg03/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer"> Muskan Garg <ExternalLink className="w-4 h-4" /></a>
