@@ -1,0 +1,121 @@
+---
+title: "IAM: Root User vs IAM User"
+---
+
+If you remember one thing from this entire course, make it this: **stop using the root user.** Almost every horror story about a hacked AWS account and a five-figure bill starts the same way - root credentials, no MFA, leaked somewhere. IAM is how you avoid being that story.
+
+## What IAM is
+
+**IAM - Identity and Access Management - controls *who* can do *what* in your AWS account.**
+
+It answers two questions for every single action:
+
+1. **Authentication** - who are you? (Are you really `alice`?)
+2. **Authorization** - are you allowed to do this? (Can `alice` delete this S3 bucket?)
+
+IAM is **global** (not tied to a region) and **free**. Every API call you ever make to AWS - through the console, the CLI, or an SDK - passes through IAM, which checks whether you're allowed before letting it through.
+
+```text
+   You click "Terminate instance"
+            │
+            ▼
+   ┌──────────────────┐    Who is this?  ──► authenticated as "alice"
+   │       IAM        │    Allowed to?   ──► check alice's policies
+   └──────────────────┘
+            │
+       ┌────┴────┐
+       ▼         ▼
+     ALLOW      DENY
+   (it runs)  (access denied)
+```
+
+## The root user: the account owner
+
+When you created the account, you created the **root user** - the email and password you signed up with. Root is special: it has **complete, unrestricted access** to everything, and that power can't be taken away.
+
+A few things *only* root can do:
+
+- Change the account name, email, or root password
+- Change or close the account's billing/support plan
+- Close the AWS account entirely
+- A handful of other account-level tasks
+
+That's a short list. For everything else - launching servers, creating buckets, writing code - you should **not** be root.
+
+<Callout type="warn">
+The root user can't have its permissions limited. There's no "oops, root only had read access" safety net. If root is compromised, the whole account is. That's exactly why you lock it away.
+</Callout>
+
+### Locking root down
+
+Right after creating the account you should:
+
+1. **Enable MFA on root** - so a stolen password isn't enough.
+2. **Don't create access keys for root** - and delete any that exist. Root API keys are a disaster waiting to leak.
+3. **Use root only for the rare tasks that require it**, then sign out.
+
+## The IAM user: who you actually work as
+
+An **IAM user** is an identity you create *inside* the account for a person or, occasionally, a long-lived application. Each user gets their own credentials and only the permissions you grant - nothing by default.
+
+You create one IAM user for yourself on day one and do all your real work as that user.
+
+```text
+   AWS Account
+   ┌──────────────────────────────────────────────────────┐
+   │ 👑 root  - full power, kept locked in a drawer       │
+   │                                                      │
+   │ IAM users (you grant each exactly what they need):   │
+   │ 👤 Navin       → admin: broad permissions            │
+   │ 👤 Hyder       → developer: EC2 + S3 only            │
+   │ 👤 Shiva       → ci/cd: deploy pipeline only         │
+   └──────────────────────────────────────────────────────┘
+```
+
+## Root vs. IAM user, side by side
+
+| | Root user | IAM user |
+|---|-----------|----------|
+| **Created** | Automatically, at signup | By you, as needed |
+| **Permissions** | Everything, always | Only what you grant |
+| **Can be limited?** | No | Yes - that's the point |
+| **Login** | Account email + password | Account ID/alias + username + password |
+| **Daily use?** | No - emergencies only | Yes - this is your working identity |
+| **MFA** | Mandatory (do it now) | Strongly recommended |
+
+## How IAM users sign in
+
+IAM users don't log in with an email. They use a special URL tied to your account: `https://<account-id-or-alias>.signin.aws.amazon.com/console`, then a username and password. Setting an **account alias** (e.g. `telusko-learning` instead of a 12-digit number) makes that URL human-friendly - do it once in the IAM dashboard.
+
+## Your first IAM user - the plan
+
+In the next page we'll grant permissions properly with groups and policies, but the shape of it is:
+
+<Steps>
+<Step>
+### Create the user
+
+IAM → Users → Create user. Give it console access and set a password.
+</Step>
+<Step>
+### Grant permissions
+
+Attach permissions (via a group, ideally - see the next page). For your own admin user, the `AdministratorAccess` policy is the usual starting point.
+</Step>
+<Step>
+### Enable MFA
+
+Add an MFA device for this user too. Convenience is not a reason to skip it.
+</Step>
+<Step>
+### Sign out of root, sign in as the new user
+
+From now on, this is who you are. Root goes back in the drawer.
+</Step>
+</Steps>
+
+<Callout type="info">
+"Admin" IAM user vs. root: even an admin IAM user is safer than root, because you *can* revoke or scope it later, it has its own audit trail, and you can have several of them. Root is a single, unrevokable master key - and you only need it a few times a year.
+</Callout>
+
+Next: groups, policies, and roles - the machinery that decides exactly what each user is allowed to do.

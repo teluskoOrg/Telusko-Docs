@@ -37,11 +37,11 @@ The point of multiple AZs is **fault isolation**. If one data centre floods, los
 ```text
    Region: ap-south-1 (Mumbai)
    ┌─────────────────────────────────────────────┐
-   │   AZ-a            AZ-b            AZ-c        │
-   │  ┌──────┐       ┌──────┐       ┌──────┐      │
-   │  │ DC   │◄─────►│ DC   │◄─────►│ DC   │      │
-   │  └──────┘  fast └──────┘  fast └──────┘      │
-   │        private, low-latency links            │
+   │   AZ-a            AZ-b            AZ-c      │
+   │  ┌──────┐       ┌──────┐       ┌──────┐     │
+   │  │ DC   │◄─────►│ DC   │◄─────►│ DC   │     │
+   │  └──────┘  fast └──────┘  fast └──────┘     │
+   │        private, low-latency links           │
    └─────────────────────────────────────────────┘
 ```
 

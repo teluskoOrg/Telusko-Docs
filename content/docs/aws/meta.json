@@ -6,7 +6,7 @@
         "getting-started.mdx",
         "introduction.mdx",
         "cloud-and-aws-fundamentals",
-        "disabled-identity-and-access-management",
+        "identity-and-access-management",
         "disabled-compute-with-ec2",
         "disabled-load-balancing-and-auto-scaling",
         "disabled-storage-and-static-hosting",
