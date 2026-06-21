@@ -6,6 +6,7 @@
         "python",
         "fastapi",
         "spring-ai",
+        "aws",
         "system-design"
     ]
 }

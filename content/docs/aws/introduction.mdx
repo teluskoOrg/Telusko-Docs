@@ -1,0 +1,57 @@
+---
+title: Introduction
+---
+
+Most people meet AWS the wrong way. They open the console, see two hundred services, panic, and conclude that "the cloud" is impossibly complicated. It isn't. Almost everything you'll build for years rests on a small handful of services: a server to run code (EC2), a place to store files (S3), a network to put them in (VPC), a way to control who can touch what (IAM), and a managed database (RDS). Learn those five well and the other 195 services start to look like variations on ideas you already understand.
+
+This series takes that route deliberately. We start from "what is a cloud, really" and end with a containerized Java app running on AWS, deployed the way teams actually deploy.
+
+## What is AWS
+
+AWS - Amazon Web Services - is a collection of on-demand computing services you rent over the internet, billed by usage. Instead of buying a server, racking it in a building, cooling it, and replacing its disks at 2 a.m., you ask Amazon for a server and one exists a minute later. When you stop needing it, you turn it off and stop paying.
+
+That single shift - from *owning* infrastructure to *renting* it on demand - is the whole idea. Everything else is detail.
+
+```text
+   Old way (on-premises)              AWS way (cloud)
+   ─────────────────────             ────────────────
+   buy hardware up front       →     rent capacity by the hour
+   guess capacity for 3 yrs    →     scale up/down in minutes
+   you fix the broken disk     →     Amazon fixes the hardware
+   weeks to get a server       →     a server in ~60 seconds
+   big cheque, then it's yours →     pay only for what you use
+```
+
+## Why AWS specifically
+
+It was first. AWS launched in 2006, years ahead of competitors, and that head start compounded into the largest service catalogue, the most regions, and the deepest documentation pool on the internet. For a learner that last point matters more than it sounds: when you hit an error at 11 p.m., someone has already hit it, asked about it, and answered it.
+
+<Callout type="info">
+Azure and Google Cloud are excellent and the *concepts* transfer almost perfectly - a virtual machine is a virtual machine everywhere. We use AWS because it's the most common in job listings and has the gentlest free-tier on-ramp, not because the others are wrong.
+</Callout>
+
+## How this series is organized
+
+The path is roughly the order you'd build a real system in:
+
+| Stage | What you learn | The "aha" |
+|-------|----------------|-----------|
+| Fundamentals | Cloud models, regions, accounts, the console | Where your stuff physically lives |
+| IAM | Users, roles, policies | *Who* is allowed to do *what* |
+| EC2 | Virtual servers, storage, networking basics | Running your own machine in the cloud |
+| Load balancing & scaling | ALB, target groups, Auto Scaling | Surviving traffic without manual work |
+| S3 & static hosting | Object storage, website hosting, Amplify | Storing and serving files cheaply |
+| RDS | Managed databases | Letting Amazon babysit your MySQL |
+| VPC & Route 53 | Private networks, DNS | Designing the network your app lives in |
+| Monitoring, CLI, IaC | CloudWatch, AWS CLI, CloudFormation | Operating and automating it all |
+| Projects | Beanstalk, ECS + ECR | Shipping real apps end to end |
+
+## A word on cost before you touch anything
+
+The cloud bills you for what you leave running, not what you intended to use. The single most common beginner mistake is launching resources to experiment, forgetting them, and getting a surprise invoice. We'll set up a **billing alarm** early, lean on the **free tier**, and the habit throughout this series will be the same: *if you started it for a demo, tear it down when the demo's over.*
+
+<Callout type="warn">
+Treat your AWS root account email and password like your bank login. A leaked AWS key can be used by attackers to spin up expensive resources on your dime within minutes. The IAM section is not optional reading.
+</Callout>
+
+Start with [What is Cloud Computing?](/docs/aws/cloud-and-aws-fundamentals/what-is-cloud-computing) and work down the sidebar in order. Each page assumes the one before it.

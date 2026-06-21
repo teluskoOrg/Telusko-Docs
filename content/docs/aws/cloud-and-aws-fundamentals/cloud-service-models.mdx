@@ -1,0 +1,95 @@
+---
+title: Cloud Service Models Explained
+---
+
+Every cloud service answers one question: **how much of the stack do you want to manage, and how much do you want to hand off?**
+
+That's the entire idea behind IaaS, PaaS, and SaaS. They're not three different technologies - they're three points on a sliding scale of "who's responsible for what."
+
+## The stack, and who manages each layer
+
+A running application sits on a tower of layers. On-premises, you own all of them. As you move toward managed services, AWS takes over more of the tower from the bottom up.
+
+```text
+                  On-Prem    IaaS      PaaS      SaaS
+                 ┌────────┬─────────┬─────────┬─────────┐
+   Application   │  YOU   │   YOU   │   YOU   │   AWS   │
+   Data          │  YOU   │   YOU   │   YOU   │   AWS   │
+   Runtime       │  YOU   │   YOU   │   AWS   │   AWS   │
+   Middleware    │  YOU   │   YOU   │   AWS   │   AWS   │
+   OS            │  YOU   │   YOU   │   AWS   │   AWS   │
+   Virtualization│  YOU   │   AWS   │   AWS   │   AWS   │
+   Servers       │  YOU   │   AWS   │   AWS   │   AWS   │
+   Storage       │  YOU   │   AWS   │   AWS   │   AWS   │
+   Networking    │  YOU   │   AWS   │   AWS   │   AWS   │
+                 └────────┴─────────┴─────────┴─────────┘
+                  more control  ◄─────────►  less work
+```
+
+Read it left to right: the more you move right, the less infrastructure you babysit - and the less you can customize.
+
+## IaaS - Infrastructure as a Service
+
+**You rent the raw building blocks: virtual servers, storage, networks. You install and manage everything above the operating system.**
+
+This is the closest cloud equivalent to having your own machines, minus the physical hardware. AWS gives you a bare virtual server; *you* pick the OS, install the runtime, deploy the app, patch it, and secure it.
+
+- **AWS examples:** EC2 (virtual servers), EBS (disks), VPC (networking)
+- **You manage:** OS, runtime, app, data, security config
+- **AWS manages:** the physical hardware, virtualization, the data centre
+- **Best when:** you need full control over the environment, or you're migrating an existing app that expects a specific OS setup
+
+Most of this course lives here, because IaaS teaches you what the cloud is actually made of.
+
+## PaaS - Platform as a Service
+
+**You bring your code; the platform runs it. No servers to patch, no OS to configure.**
+
+You hand AWS a deployable artifact (a JAR, a zip, a container) and it provisions the servers, installs the runtime, balances load, and handles scaling - all behind the scenes. You think in terms of "my application," not "my fleet of servers."
+
+- **AWS examples:** Elastic Beanstalk, AWS Lambda (serverless), App Runner
+- **You manage:** your application code and its data
+- **AWS manages:** OS, runtime, scaling, load balancing, patching
+- **Best when:** you want to ship features fast and don't want to be in the server-management business
+
+The Elastic Beanstalk project later in this course is PaaS in action.
+
+## SaaS - Software as a Service
+
+**You don't manage anything. You just use finished software over the internet.**
+
+There's no deployment, no servers, no code - someone built the application and you log in and use it. You're the end user, not the operator.
+
+- **Examples:** Gmail, Slack, Salesforce, Dropbox; on AWS itself, services like Amazon WorkMail or QuickSight
+- **You manage:** your data and your settings, nothing more
+- **The provider manages:** literally everything else
+- **Best when:** the software does what you need and building it yourself would be a waste
+
+## The pizza test
+
+The classic way to feel the difference - imagine you want pizza for dinner:
+
+| Approach | Cloud model | What you do | What's handled for you |
+|----------|-------------|-------------|------------------------|
+| Make it from scratch at home | On-premises | Everything | Nothing |
+| Buy a frozen pizza, bake it | IaaS | Oven, baking, serving | Dough, toppings made for you |
+| Order delivery | PaaS | Provide the table and drinks | Cooking and delivery |
+| Go to a restaurant | SaaS | Show up and eat | Everything |
+
+Same dinner, wildly different amounts of work - chosen based on how much you care to control.
+
+## How to actually choose
+
+<Callout type="info">
+The right model isn't the "most managed" one or the "most control" one - it's the one that hands off the work you don't want while keeping the control you need.
+</Callout>
+
+A practical rule of thumb:
+
+- Reach for **SaaS** when finished software already solves your problem. Don't rebuild Gmail.
+- Reach for **PaaS** when you have custom code but no desire to manage servers. This is the default for most web apps today.
+- Reach for **IaaS** when you need specific control - a particular OS, special networking, or a legacy app with fussy requirements.
+
+Real systems mix all three: a PaaS-hosted app, talking to a SaaS payment provider, with one IaaS server for that one weird legacy job. The models are tools, not teams to join.
+
+Next: where all of this physically runs - regions and availability zones.

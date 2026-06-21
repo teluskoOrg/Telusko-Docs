@@ -1,0 +1,66 @@
+---
+title: Getting Started
+icon: Sparkles
+---
+
+This AWS course takes you from "I've never opened the console" to deploying a containerized Java application on AWS the way real teams do it.
+
+It is built around doing, not reading. Nearly every section pairs a concept with a hands-on demo - launch the server, attach the volume, build the network, push the image. You learn the cloud by breaking and fixing things in a free-tier account, not by memorizing service names.
+
+By the end you will be able to:
+
+* Explain what the cloud is, how AWS charges, and where your resources physically run
+* Secure an account properly with IAM users, groups, roles, and least-privilege policies
+* Launch, configure, and connect to EC2 servers, and manage their storage with EBS
+* Put servers behind a load balancer and scale them automatically with traffic
+* Store and serve files with S3, and host static sites and front-ends
+* Run managed databases with RDS
+* Design a private network with VPC and route traffic with Route 53
+* Monitor with CloudWatch, automate with the AWS CLI, and define infrastructure as code with CloudFormation
+* Deploy real applications with Elastic Beanstalk and with ECS + ECR
+
+## 01 - Cloud & AWS Fundamentals
+
+What the cloud actually is, the IaaS/PaaS/SaaS models, how regions and availability zones keep things fast and durable, creating your account safely, and finding your way around the console.
+
+## 02 - Identity & Access Management (IAM)
+
+The difference between the root user and IAM users, how groups, policies, and roles fit together, and what good access control looks like once real people and real apps are involved.
+
+## 03 - Compute with EC2
+
+Renting virtual servers, security groups and the IP address zoo (private, public, Elastic), block storage with EBS, snapshots for backups, bootstrapping with user-data scripts, and hosting a site on Nginx.
+
+## 04 - Load Balancing & Auto Scaling
+
+Why one server is never enough, how load balancers spread traffic, the OSI layers that matter in AWS, Application Load Balancers with target groups, and Auto Scaling groups that add and remove servers on their own.
+
+## 05 - Storage & Static Hosting
+
+Amazon S3 from the ground up - buckets, versioning, object lock, and the feature set - plus hosting a static website on S3 and shipping a front-end with Amplify.
+
+## 06 - Managed Databases with RDS
+
+Letting AWS run your relational database: provisioning a MySQL instance, connecting to it, and what "managed" buys you over running a database yourself.
+
+## 07 - Networking with VPC & Route 53
+
+The network your resources live in: VPC components, CIDR sizing and security, building a custom VPC from scratch, peering two VPCs, and DNS with Route 53 - including pointing a domain at a load balancer.
+
+## 08 - Monitoring, CLI & Infrastructure as Code
+
+Watching your systems with CloudWatch and getting alerted via SNS, driving AWS from the terminal with the CLI, defining infrastructure as code with CloudFormation, and a simple CodePipeline / CodeBuild deployment.
+
+## 09 - Project: Deploying with Elastic Beanstalk
+
+A full walkthrough - a web app, a Spring Boot app with a database, an RDS instance, and deploying it all on Elastic Beanstalk without hand-managing servers.
+
+## 10 - Project: Containers with ECS & ECR
+
+The container path: storing images in ECR, configuring the CLI, creating an ECS cluster and tasks, running MySQL, pushing your app's Docker image, and running a Java app as a task.
+
+<Callout type="info">
+You only need two things to follow along: a credit/debit card to create the account (the free tier covers most of what we do) and a terminal. Everything else gets installed as we need it.
+</Callout>
+
+Head to the [Introduction](/docs/aws/introduction) for the big picture, then start the fundamentals.

@@ -1,0 +1,113 @@
+---
+title: Creating an AWS Account
+---
+
+Creating an AWS account takes about ten minutes and a payment card. Doing it *safely* takes five more - and those five minutes are the difference between a relaxed first month and a panicked email about a $4,000 bill from crypto miners who found your leaked keys.
+
+This page walks the signup, then the three things you must do immediately after.
+
+## What you need before you start
+
+- An email address (use one you check - billing alerts go here)
+- A phone number for verification
+- A credit or debit card (the free tier covers most of this course, but a card is required to register; small verification charges may appear and reverse)
+
+## Signing up
+
+<Steps>
+<Step>
+### Go to the signup page
+
+Visit [aws.amazon.com](https://aws.amazon.com) and choose **Create an AWS Account**. Enter your email and an account name (e.g. `your-name-learning`).
+</Step>
+
+<Step>
+### Verify your email and set the root password
+
+AWS sends a verification code. Enter it, then set a **strong, unique password**. This is your **root user** - the all-powerful owner of the account. Treat its password like your bank login.
+</Step>
+
+<Step>
+### Choose account type and enter contact details
+
+Pick **Personal** (vs. Business) for a learning account. Fill in your name, address, and phone number.
+</Step>
+
+<Step>
+### Add a payment method
+
+Enter your card. AWS may place a small temporary authorization charge to confirm the card is valid; it reverses automatically.
+</Step>
+
+<Step>
+### Verify your identity
+
+Confirm your phone number via SMS or a call, and enter the code.
+</Step>
+
+<Step>
+### Pick a support plan
+
+Choose **Basic Support - Free**. It's all you need. You can upgrade later if you ever run production workloads.
+</Step>
+</Steps>
+
+That's it - you can now sign in to the console. **But don't start launching things yet.** Do the three safety steps below first.
+
+## The three things to do immediately
+
+A fresh account is functional but not safe. New users skip these and regret it.
+
+### 1. Enable MFA on the root user
+
+Multi-factor authentication means a stolen password alone can't get in - the attacker also needs the code from your phone.
+
+- In the console, go to **IAM → Security credentials** for the root user.
+- Add an MFA device (an authenticator app like Google Authenticator or Authy is perfect).
+
+<Callout type="warn">
+The root account can do *anything* - close the account, delete everything, change billing. If its password leaks and there's no MFA, the attacker owns your account. MFA on root is non-negotiable.
+</Callout>
+
+### 2. Set up a billing alarm
+
+This is the safety net against surprise bills. You tell AWS "email me if my spend crosses ₹X," so a forgotten resource can't quietly run up a fortune.
+
+- Go to **Billing → Billing Preferences** and turn on **Receive billing alerts**.
+- In **CloudWatch**, create a billing alarm with a threshold that makes you nervous - say $5 or $10 for a learning account - and an email to notify.
+
+```text
+   You launch a demo server  ──► forget about it
+                                      │
+   Daily cost ticks up ...            │
+                                      ▼
+   Spend crosses your threshold ──► CloudWatch fires ──► email lands
+                                      │
+   You log in and shut it down  ◄─────┘   (crisis averted)
+```
+
+### 3. Stop using the root user for daily work
+
+The root user should be locked in a drawer and used only for the rare tasks that *require* it (like changing the account's support plan or closing the account). For everything else, you create an **IAM user** - that's the entire next section.
+
+<Callout type="info">
+Think of root as the building's master key and IAM users as individual office keys. You don't carry the master key around to unlock your own office every morning. You use it once to hand out the keys you actually need, then put it away.
+</Callout>
+
+## Free tier: what it actually covers
+
+The AWS Free Tier comes in three shapes - know which is which so you don't get surprised:
+
+| Type | Meaning | Example |
+|------|---------|---------|
+| **12-months free** | Free for a year from signup, up to a limit | 750 hours/month of a `t2.micro`/`t3.micro` EC2 instance |
+| **Always free** | Free forever, up to a limit | 1 million Lambda requests/month |
+| **Trials** | Free for a short period after you first use a service | Some short-term service trials |
+
+The "750 hours/month" sounds generous, and it is - but it's **750 instance-hours total**, not 750 hours *per server*. Run one server all month (≈730 hours) and you're fine; run two servers all month and you've blown past it. Watch the meter.
+
+<Callout type="warn">
+"Free tier eligible" is not the same as "free no matter what." Pick instance types and storage marked free-tier-eligible, stay within the limits, and **delete what you're not using.** The billing alarm from step 2 is your backstop when you forget.
+</Callout>
+
+With the account created and secured, the next page tours the console you just unlocked - then we go straight into IAM to set up that first non-root user.

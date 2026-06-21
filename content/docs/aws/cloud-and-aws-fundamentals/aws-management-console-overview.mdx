@@ -1,0 +1,89 @@
+---
+title: AWS Management Console Overview
+---
+
+The console is the web dashboard where you click buttons instead of typing commands. It's where almost everyone starts, and it's the fastest way to *understand* a service - you can see every option laid out. (Later you'll automate with the CLI and CloudFormation, but seeing it by hand first makes the automation make sense.)
+
+Here's a tour of the parts you'll touch every day.
+
+## The layout
+
+```text
+ ┌───────────────────────────────────────────────────────────────┐
+ │ [☰] AWS  🔍 Search services    [Region ▾]  [⚙]  [🔔]  [Account ▾]│  ← top bar
+ ├───────────────────────────────────────────────────────────────┤
+ │                                                               │
+ │     Recently visited        Service widgets / Health          │
+ │     ┌────────┐ ┌────────┐                                     │
+ │     │  EC2   │ │  S3    │    Cost summary, alerts, shortcuts   │
+ │     └────────┘ └────────┘                                     │
+ │                                                               │
+ └───────────────────────────────────────────────────────────────┘
+```
+
+Four things in that top bar matter more than the rest.
+
+### 1. The search bar - your real navigation
+
+Forget memorizing menus. Click the search box, type `EC2`, `S3`, `IAM`, hit enter. The search bar is the fastest path to any of the 200+ services, and it also finds features, docs, and even your own resources. Most experienced users navigate almost entirely through it.
+
+### 2. The Region selector - check this constantly
+
+The dropdown in the top-right (e.g. **Mumbai `ap-south-1`**) controls which region you're working in. This is the single biggest source of "where did my server go?" confusion.
+
+<Callout type="warn">
+Regional resources only appear when you're viewing their region. If you launched an EC2 instance in Mumbai but the selector says N. Virginia, the instance list looks empty. **Always glance at the region before you panic.** Set it to your closest region and leave it there.
+</Callout>
+
+Note that a few services - IAM, billing, Route 53 - are **global** and will show the region as "Global." That's expected, not a bug.
+
+### 3. The account menu - billing and credentials
+
+The top-right account dropdown is where you reach:
+
+- **Billing & Cost Management** - your spend, the place to check *before* it surprises you
+- **Security credentials** - access keys, MFA
+- **Account settings** and **sign out**
+
+Make checking the billing dashboard a weekly habit while you're learning.
+
+### 4. Notifications and settings
+
+The bell shows service health and account notifications; the gear lets you change the console's appearance (including dark mode and default region).
+
+## Finding your way around a service
+
+Open any service and the pattern repeats, so learning one teaches you all of them:
+
+| Element | Where | What it does |
+|---------|-------|--------------|
+| **Left navigation** | Left side | Sub-sections of the service (e.g. EC2 → Instances, Volumes, Security Groups) |
+| **Resource list** | Center | A table of what you've created, with filters and search |
+| **Create button** | Top-right of the list | Launches the wizard to make a new resource |
+| **Details pane** | Click any resource | Tabs with its config, monitoring, tags, and actions |
+
+Once you've clicked through EC2, the S3, RDS, and VPC consoles feel familiar - same skeleton, different nouns.
+
+## Tag everything (start the habit now)
+
+Most "create" wizards include a **Tags** step - key/value labels like `Name = web-server` or `Project = aws-course`. They're optional and easy to skip. Don't.
+
+- Tags are how you *find* resources later in a cluttered account.
+- They're how billing gets broken down by project.
+- The `Name` tag is what shows up in resource lists - an untagged fleet of EC2 instances is a guessing game.
+
+<Callout type="info">
+A tiny habit that pays off: give every resource a `Name` tag the moment you create it. Future-you, staring at six identical unnamed instances, will be grateful.
+</Callout>
+
+## Console vs. CLI vs. IaC - when to use which
+
+The console isn't the only way in, and it's not always the best one:
+
+- **Console** - best for *learning*, exploring options, and one-off tasks. Visual, forgiving, slow to repeat.
+- **AWS CLI** - best for *scripting* and quick repeatable commands from the terminal. (Covered later.)
+- **Infrastructure as Code** (CloudFormation) - best for *reproducible, version-controlled* infrastructure you build once and recreate reliably. (Also covered later.)
+
+You'll use all three. Start in the console because it shows you what exists; graduate to the CLI and IaC when clicking the same buttons twice gets old.
+
+That's the cockpit. With the account created, secured, and a feel for the console, the next section tackles the most important topic in all of AWS: **IAM** - deciding who is allowed to do what.
