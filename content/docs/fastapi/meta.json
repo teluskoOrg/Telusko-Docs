@@ -1,7 +1,7 @@
 {
     "root": false,
     "title": "FastAPI",
-    "icon": "CodeXml",
+    "icon": "Zap",
     "pages": [
         "getting-started.mdx",
         "introduction.mdx",
