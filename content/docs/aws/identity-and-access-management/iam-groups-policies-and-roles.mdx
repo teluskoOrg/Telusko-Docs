@@ -78,7 +78,7 @@ Roles are how you answer: *"How does my EC2 server get permission to read an S3 
 The wrong way (don't do this):
 
 ```text
-   ❌ Put your access key + secret in a file on the EC2 server
+      Put your access key + secret in a file on the EC2 server
       → if the server is compromised, the keys leak
       → keys are long-lived, so the damage lasts
 ```
