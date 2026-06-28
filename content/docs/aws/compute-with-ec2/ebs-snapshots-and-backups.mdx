@@ -1,0 +1,103 @@
+---
+title: "EBS Snapshots & Backups"
+---
+
+A volume that exists in only one place is one hardware fault, one bad deploy, or one `rm -rf` away from gone. **Snapshots** are how you back up EBS - point-in-time copies stored safely in S3, from which you can rebuild a volume any time. They're cheap, incremental, and the single most useful safety habit in EC2.
+
+## What a snapshot is
+
+A **snapshot** is a point-in-time backup of an EBS volume, stored in **Amazon S3** (managed by AWS - you don't see the bucket). From a snapshot you can create a brand-new volume that's an exact copy of the original at the moment the snapshot was taken.
+
+```text
+   EBS volume  ──snapshot──►  Snapshot (stored in S3, durable)
+                                  │ create volume
+                                  ▼
+                              New EBS volume (identical copy)
+```
+
+The new volume is independent - you can attach it to any instance (even in a different AZ), resize it, or change its type.
+
+## The killer feature: incremental snapshots
+
+Snapshots are **incremental**. The first snapshot copies the whole volume. Every snapshot after that copies **only the blocks that changed** since the previous one - yet each snapshot still restores the *full* volume.
+
+```text
+   Snapshot 1:  ████████████  (full - all blocks)
+   Snapshot 2:  ██░░░░░░░░░░  (only changed blocks stored)
+   Snapshot 3:  ░░░██░░░░░░░  (only changed blocks stored)
+
+   Yet restoring ANY of them gives you a complete volume.
+```
+
+This makes snapshots cheap to take often: you're billed only for the unique changed data across them, not a full copy every time.
+
+<Callout type="info">
+Because they're incremental, frequent snapshots cost far less than you'd expect. Deleting one snapshot doesn't break the others either - AWS keeps whatever blocks later snapshots still depend on. You can safely delete old snapshots without corrupting newer ones.
+</Callout>
+
+## Taking a snapshot
+
+<Steps>
+<Step>
+### (Best practice) quiesce the data
+
+For a clean backup, pause writes if you can - flush the application, or briefly stop a database. For a root volume of a running app, stopping the instance gives the most consistent snapshot. Snapshots of a live, busy volume can be "crash-consistent" but not application-consistent.
+</Step>
+<Step>
+### Create the snapshot
+
+EC2 → **Volumes** → select the volume → **Actions → Create snapshot.** Add a description and a `Name` tag so you can find it later.
+</Step>
+<Step>
+### Wait for completion
+
+The first one takes a while (full copy); later ones are fast (incremental). You can keep using the volume while it runs.
+</Step>
+</Steps>
+
+## Restoring from a snapshot
+
+You don't restore "into" the old volume - you create a **new** volume from the snapshot:
+
+```text
+   Snapshot ──► Create Volume ──► attach to an instance ──► mount it
+```
+
+This is also how you **move a volume between Availability Zones** (volumes are AZ-locked, but snapshots aren't): snapshot in AZ-a, create a volume from it in AZ-b. And how you **copy across regions**: copy the snapshot to another region, then create a volume there.
+
+## Snapshots do more than backups
+
+A few things snapshots quietly enable:
+
+| Use | How |
+|-----|-----|
+| **Backup / disaster recovery** | Snapshot regularly; restore when something breaks |
+| **Move a volume across AZs** | Snapshot → create volume in the target AZ |
+| **Copy data across regions** | Copy snapshot to another region → create volume |
+| **Create an AMI** | An AMI is essentially a snapshot of a root volume plus metadata |
+| **Clone an environment** | Restore the same snapshot many times for identical disks |
+
+## Automate it - don't rely on memory
+
+Manual snapshots are fine for learning, but real backups must be automatic. AWS gives you **Data Lifecycle Manager (DLM)** / **AWS Backup** to do this:
+
+- Define a **policy**: "snapshot these volumes every day at 2 a.m."
+- Set **retention**: "keep 7 daily and 4 weekly, delete the rest."
+- Walk away - AWS takes and prunes snapshots on schedule.
+
+<Callout type="warn">
+A backup you have to *remember* to take is a backup you won't have when you need it. Set up an automated snapshot policy for anything that matters. And periodically **test a restore** - an untested backup is just a hope. The number of teams who discover their backups never actually worked *during* an outage is too high.
+</Callout>
+
+## Cost note
+
+You pay for the storage your snapshots consume in S3 (the unique, changed blocks), which is inexpensive - but it isn't free, and it accumulates if you never clean up.
+
+- Old, unneeded snapshots quietly add to the bill. Retention policies prune them automatically.
+- Deleting a volume does **not** delete its snapshots - they live on independently until you remove them.
+
+## The one-line takeaway
+
+Snapshots are incremental, S3-backed, point-in-time copies of EBS volumes: cheap to take, easy to restore from, region- and AZ-portable, and the foundation of every EC2 backup strategy. Take them automatically, retain them sensibly, and test that you can actually restore.
+
+Next: making an instance configure *itself* at launch with a **user-data script**.

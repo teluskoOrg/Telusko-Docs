@@ -1,0 +1,98 @@
+---
+title: "Private IP vs Public IP vs Elastic IP"
+---
+
+You restart your EC2 instance, come back the next morning, and your SSH command fails. Nothing's broken - your instance's **public IP changed**. Understanding why is the difference between fighting AWS networking and working with it.
+
+There are three kinds of IP address in play, each with a different job.
+
+## The three addresses at a glance
+
+| Address | Reachable from | Changes? | Costs? |
+|---------|----------------|----------|--------|
+| **Private IP** | Inside the VPC only | Stays for the instance's life | Free |
+| **Public IP** | The internet | New one on stop/start | Free (while attached) |
+| **Elastic IP** | The internet | Fixed - yours until you release it | Free *while in use*, charged if idle |
+
+## Private IP - the instance's internal address
+
+Every instance gets a **private IP** (like `10.0.1.25`) from its VPC's address range. This is how resources inside your network talk to each other - your web server to your database, for example. It's:
+
+- Only reachable **within the VPC** (and peered/connected networks).
+- **Stable** - it stays the same for the life of the instance, even across stop/start.
+- Free.
+
+```text
+   VPC  10.0.0.0/16
+   ┌──────────────────────────────────────────┐
+   │  web server          database              │
+   │  10.0.1.25  ───────►  10.0.2.40            │
+   │      (talk via private IPs, never leave VPC)│
+   └──────────────────────────────────────────┘
+```
+
+Because private IPs are stable, internal communication should use them - not public IPs.
+
+## Public IP - the instance's internet address
+
+A **public IP** (like `54.221.10.8`) is what makes your instance reachable *from the internet*. AWS assigns one from its own pool when the instance launches (if the subnet is configured for it).
+
+The catch that bites everyone:
+
+<Callout type="warn">
+A standard public IP is **not permanent.** Stop and start the instance and AWS gives it back to the pool - your instance gets a *different* public IP next time. (A reboot keeps it; a stop/start does not.) Any DNS record, SSH config, or bookmark pointing at the old IP now points at nothing.
+</Callout>
+
+```text
+   Day 1:  stop/start  →  public IP = 54.221.10.8
+   Day 2:  stop/start  →  public IP = 3.108.55.2   ← different!
+           your SSH command and DNS now break
+```
+
+For throwaway experiments this is fine. For anything you want to reliably reach, you need a *fixed* address - which is exactly what an Elastic IP is.
+
+## Elastic IP - a public IP that stays put
+
+An **Elastic IP (EIP)** is a public IPv4 address that **you own** within your account and can keep as long as you want. You allocate one, then **associate** it with an instance. It does not change on stop/start, and you can move it from one instance to another.
+
+```text
+   Elastic IP  13.232.0.50  (yours, fixed)
+        │  associate
+        ▼
+   ┌──────────┐        instance dies / you replace it
+   │ Instance │  ──►   re-associate the SAME EIP to the new one
+   └──────────┘        clients never notice - address unchanged
+```
+
+That last property is the real value: if an instance fails, you can point the same EIP at a replacement and everything that knew the old address still works.
+
+### The billing gotcha
+
+Elastic IPs are free **only while associated with a running instance**. AWS charges for an EIP that you've allocated but left **unattached** (or attached to a stopped instance) - precisely to discourage people from hoarding scarce IPv4 addresses.
+
+<Callout type="warn">
+If you allocate an Elastic IP and don't attach it - or you stop the instance it's on - you start paying a small hourly charge for the idle address. When you're done with an EIP, **release it** (not just disassociate). An unreleased, unused EIP is a classic line item on surprise bills.
+</Callout>
+
+## When do you actually need an Elastic IP?
+
+Often you don't. Reach for the right tool:
+
+| Need | Use |
+|------|-----|
+| A stable public address for a single long-lived server | **Elastic IP** |
+| A stable address for a *fleet* behind a load balancer | The **load balancer's** DNS name (no EIP needed) |
+| A friendly name instead of an IP at all | **Route 53** DNS pointing at the resource |
+| Internal service-to-service traffic | **Private IP** (or internal DNS) |
+
+<Callout type="info">
+In modern architectures you reach for Elastic IPs less than you'd think. The common pattern is to put servers behind a **load balancer** and point a **Route 53 domain name** at it - so individual instances can come and go (and change public IPs freely) without anyone noticing. EIPs shine for single, pet servers that must keep one fixed address.
+</Callout>
+
+## Quick mental model
+
+- **Private IP** = your house's room number - only meaningful inside the building (VPC).
+- **Public IP** = a hotel room AWS assigns you - you might get a different one each stay (stop/start).
+- **Elastic IP** = a permanent street address you rent - yours until you give it back, movable between buildings.
+
+With addressing clear, the next pages turn to the instance's disk - **EBS** - starting with what the root volume actually is.

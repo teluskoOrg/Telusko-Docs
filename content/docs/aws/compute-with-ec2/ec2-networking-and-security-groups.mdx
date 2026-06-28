@@ -1,0 +1,110 @@
+---
+title: "EC2 Networking & Security Groups"
+---
+
+Every EC2 instance sits behind a **security group** - a virtual firewall that decides which traffic reaches it and which traffic leaves. Misunderstand it and you'll either lock yourself out or, worse, leave the door open to the entire internet. It's the first thing to get right on any server.
+
+## What a security group is
+
+A **security group** is a set of rules controlling **inbound** (incoming) and **outbound** (outgoing) traffic for one or more instances. Think of it as a bouncer with a guest list: traffic is checked against the rules, and anything not explicitly allowed is dropped.
+
+```text
+        Internet
+           │
+           ▼
+   ┌───────────────────┐   inbound rules:  what's allowed IN
+   │  Security Group    │   ─ SSH (22) from my IP
+   │   (the firewall)   │   ─ HTTP (80) from anywhere
+   └───────────────────┘   outbound rules: what's allowed OUT
+           │
+           ▼
+      EC2 instance
+```
+
+## The rules that matter most
+
+A rule has four parts: type, protocol, port, and source (for inbound) or destination (for outbound).
+
+| Type | Port | Typical source | Lets in |
+|------|------|----------------|---------|
+| **SSH** | 22 | *Your* IP only | Terminal login (Linux) |
+| **RDP** | 3389 | *Your* IP only | Remote desktop (Windows) |
+| **HTTP** | 80 | `0.0.0.0/0` (anywhere) | Web traffic |
+| **HTTPS** | 443 | `0.0.0.0/0` (anywhere) | Secure web traffic |
+| **Custom TCP** | e.g. 8080 | Depends | Your app's port |
+
+`0.0.0.0/0` means "any IP address in the world." It's correct for a public website on ports 80/443. It is **dangerous** for SSH.
+
+<Callout type="warn">
+Never open **SSH (port 22) to `0.0.0.0/0`.** That invites the entire internet to brute-force your login around the clock. Restrict port 22 to your own IP address (the console offers "My IP" as a source - use it). The same goes for database ports like 3306 - never expose them to the world.
+</Callout>
+
+## The two rules that trip everyone up
+
+Security groups behave differently from a normal firewall in two important ways.
+
+### 1. They are "allow only" - there are no deny rules
+
+You can only write rules that **permit** traffic. Anything you don't explicitly allow is denied automatically. So you never "block" a port; you simply don't open it. (If you need explicit *deny*, that's a Network ACL at the subnet level - a later topic.)
+
+### 2. They are stateful
+
+This is the big one. **Stateful** means: if you allow traffic *in*, the response is automatically allowed *out* - and vice versa. You don't need a matching rule for return traffic.
+
+```text
+   Request comes IN on port 80   ── allowed by your inbound rule
+   Response goes back OUT         ── automatically allowed (stateful)
+                                     even with NO outbound rule for it
+```
+
+This is why the default outbound rule ("allow all outbound") is usually fine and you rarely touch it - return traffic is handled for you, and your instance can reach the internet to download updates.
+
+## Default behaviour to remember
+
+When you create a fresh security group:
+
+- **Inbound:** nothing is allowed. You must add rules to let traffic in.
+- **Outbound:** everything is allowed by default (the instance can reach out anywhere).
+
+So a brand-new instance can download packages and call APIs, but nobody can reach *it* until you open an inbound port.
+
+## Security groups vs. NACLs
+
+You'll see Network ACLs (NACLs) mentioned alongside security groups. They're related but operate at different levels:
+
+| | Security Group | Network ACL (NACL) |
+|---|----------------|---------------------|
+| **Attached to** | The instance (its network interface) | The subnet (everything in it) |
+| **Rules** | Allow only | Allow *and* deny |
+| **State** | Stateful (return traffic auto-allowed) | Stateless (must allow both directions) |
+| **Use** | Your everyday firewall | Coarse subnet-wide guardrails |
+
+For nearly everything you do, **security groups are the tool you reach for.** NACLs are a secondary, subnet-wide layer most people leave at their defaults until they have a specific need.
+
+## A sensible starter security group
+
+For a typical learning web server:
+
+```text
+   Inbound:
+     SSH   (22)   ← My IP            (so only you can log in)
+     HTTP  (80)   ← 0.0.0.0/0        (so the world can see the site)
+     HTTPS (443)  ← 0.0.0.0/0        (once you add TLS)
+   Outbound:
+     All traffic  → 0.0.0.0/0        (default; leave it)
+```
+
+<Callout type="info">
+Security group changes take effect **immediately** - no reboot needed. That makes them safe to tweak: if you can't reach a new service on your instance, the first thing to check is whether its port is open inbound. Nine times out of ten, that's the problem.
+</Callout>
+
+## A practical debugging instinct
+
+When "I can't connect to my instance" happens, walk this short list:
+
+1. Is the instance **running**? (Not stopped.)
+2. Does the **security group** allow that port from your source IP?
+3. Are you using the **public IP** (not the private one) from outside AWS?
+4. Is the **app actually listening** on that port inside the instance?
+
+Most connection failures are #2. Now that traffic control makes sense, the next page untangles the IP addresses themselves - private, public, and Elastic.

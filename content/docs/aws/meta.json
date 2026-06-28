@@ -7,7 +7,7 @@
         "introduction.mdx",
         "cloud-and-aws-fundamentals",
         "identity-and-access-management",
-        "disabled-compute-with-ec2",
+        "compute-with-ec2",
         "disabled-load-balancing-and-auto-scaling",
         "disabled-storage-and-static-hosting",
         "disabled-databases-with-rds",

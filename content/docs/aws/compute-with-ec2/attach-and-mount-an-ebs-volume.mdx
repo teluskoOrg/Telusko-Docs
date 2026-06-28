@@ -1,0 +1,124 @@
+---
+title: "Attach & Mount an Extra EBS Volume"
+---
+
+Creating a volume in the AWS console does *not* make it usable inside your instance. Attaching is only half the job - the operating system still needs to format and mount it before you can write a single file there. This is the step that confuses people: the volume shows up in AWS but seems to "do nothing." Here's the full path, console to working directory.
+
+## The mental model first
+
+There are two worlds, and a volume has to cross both:
+
+```text
+   AWS side (the console)          OS side (inside the instance)
+   ─────────────────────          ─────────────────────────────
+   1. Create the volume     ──►    3. Format it (make a filesystem)
+   2. Attach to instance    ──►    4. Mount it (give it a folder)
+                                   5. (Optional) auto-mount on reboot
+```
+
+Steps 1-2 happen in AWS. Steps 3-5 happen over SSH, inside Linux. Forget 3-5 and the disk is attached but unusable.
+
+## Part 1 - Create and attach (in AWS)
+
+<Steps>
+<Step>
+### Create the volume
+
+EC2 → **Volumes** → Create volume. Pick the type (`gp3`), a size (e.g. 5 GB), and - critically - the **same Availability Zone as your instance.** A volume can only attach to an instance in its own AZ.
+</Step>
+<Step>
+### Attach it to the instance
+
+Select the new volume → **Actions → Attach volume** → choose your instance. AWS suggests a device name like `/dev/sdf` (Linux may show it as `/dev/xvdf` or an NVMe name).
+</Step>
+</Steps>
+
+<Callout type="warn">
+The most common mistake here is creating the volume in the **wrong AZ.** If your instance is in `ap-south-1a`, the volume must be in `ap-south-1a` too, or it won't appear as an attach target. Check the AZ before you click create.
+</Callout>
+
+## Part 2 - Format and mount (inside the instance)
+
+SSH into your instance, then become root or use `sudo`.
+
+<Steps>
+<Step>
+### Find the new disk
+
+List block devices:
+
+```bash
+lsblk
+```
+
+You'll see your root disk (with partitions and a mount point) and the **new disk with no mountpoint** - often `xvdf` or `nvme1n1`. The one with empty `MOUNTPOINT` and no children is your new volume.
+</Step>
+<Step>
+### Check whether it has a filesystem
+
+```bash
+sudo file -s /dev/xvdf
+```
+
+If it replies `/dev/xvdf: data`, the disk is **blank** and needs formatting. If it names a filesystem (like `XFS` or `ext4`), it already has one - **skip the format step** or you'll erase it.
+</Step>
+<Step>
+### Create a filesystem (only if blank)
+
+```bash
+sudo mkfs -t xfs /dev/xvdf
+```
+
+This writes a fresh XFS filesystem. (`ext4` is also fine: `mkfs -t ext4`.) **This erases the disk** - only do it on a new, empty volume.
+</Step>
+<Step>
+### Make a mount point and mount it
+
+```bash
+sudo mkdir /data
+sudo mount /dev/xvdf /data
+```
+
+Now `/data` *is* your new disk. Confirm with `df -h` - you should see `/dev/xvdf` mounted on `/data` with your chosen size.
+</Step>
+</Steps>
+
+## Part 3 - Make it survive reboots
+
+If you stop here, the mount disappears on the next reboot - the disk stays attached, but Linux forgets to mount it. Fix that by adding it to `/etc/fstab`.
+
+<Callout type="warn">
+Use the volume's **UUID**, not the device name, in `/etc/fstab`. Device names like `/dev/xvdf` can change between reboots or when you add more disks; the UUID is stable. A wrong fstab entry can even prevent the instance from booting - edit carefully.
+</Callout>
+
+```bash
+# get the UUID of the volume
+sudo blkid /dev/xvdf
+# → /dev/xvdf: UUID="abcd-1234" TYPE="xfs"
+
+# append a line to /etc/fstab (use YOUR uuid)
+echo 'UUID=abcd-1234  /data  xfs  defaults,nofail  0  2' | sudo tee -a /etc/fstab
+
+# test the fstab entry without rebooting
+sudo umount /data
+sudo mount -a      # if this errors, fix fstab BEFORE rebooting
+```
+
+The `nofail` option is a safety net: if the volume is ever missing, the instance still boots instead of hanging.
+
+## The whole flow on one page
+
+```text
+   AWS console                 │  Inside the instance (SSH)
+   ───────────────────────────│──────────────────────────────────
+   create volume (same AZ)     │  lsblk            (find the disk)
+   attach to instance          │  file -s /dev/xvdf (blank? then:)
+                               │  mkfs -t xfs /dev/xvdf  (format)
+                               │  mkdir /data; mount /dev/xvdf /data
+                               │  add UUID to /etc/fstab (persist)
+                               │  mount -a          (verify)
+```
+
+<Callout type="info">
+Why bother with a separate data volume at all? Because it lets you **keep data independent of the instance.** Terminate the instance and this volume (with `Delete on Termination` off) survives - you can attach it to a replacement and your files are right where you left them. It's also easy to snapshot on its own. That separation is the next page's topic: snapshots and backups.
+</Callout>
