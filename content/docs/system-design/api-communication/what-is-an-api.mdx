@@ -17,7 +17,7 @@ title: What is an API
 - Critical data might accidentally get deleted, affecting all applications using the same database.
 - Each new consumer would need to understand the internal database schema.
 
-### The Solution — APIs
+### The Solution - APIs
 
 - The existing application exposes **endpoints** that provide controlled access to its data.
 - New applications call these endpoints to **read, write, or modify** data safely.
@@ -64,7 +64,7 @@ Similarly:
 <Step>
 ### REST API
 
-**REST** — Representational State Transfer
+**REST** - Representational State Transfer
 
 | Aspect | Detail |
 |--------|--------|
@@ -81,7 +81,7 @@ Similarly:
 <Step>
 ### SOAP
 
-**SOAP** — Simple Object Access Protocol
+**SOAP** - Simple Object Access Protocol
 
 | Aspect | Detail |
 |--------|--------|
@@ -97,7 +97,7 @@ Similarly:
 <Step>
 ### GraphQL
 
-**GraphQL** — Graph Query Language
+**GraphQL** - Graph Query Language
 
 | Aspect | Detail |
 |--------|--------|
@@ -114,7 +114,7 @@ Similarly:
 <Step>
 ### gRPC
 
-**gRPC** — Google Remote Procedure Call
+**gRPC** - Google Remote Procedure Call
 
 | Aspect | Detail |
 |--------|--------|
@@ -124,14 +124,14 @@ Similarly:
 
 - Protocol Buffers are significantly **smaller and faster** than both JSON and XML.
 - Ideal for **microservice-to-microservice communication** where low latency is critical.
-- In microservice architectures, multiple sub-applications communicate frequently — gRPC enables this internal communication to be fast and efficient.
+- In microservice architectures, multiple sub-applications communicate frequently and gRPC enables this internal communication to be fast and efficient.
 
 </Step>
 
 <Step>
 ### WebSockets
 
-**WebSockets** — Persistent bidirectional communication channel
+**WebSockets** - Persistent bidirectional communication channel
 
 | Aspect | Detail |
 |--------|--------|
@@ -165,10 +165,10 @@ Similarly:
 
 - APIs provide **controlled, secure access** to application data without exposing the database directly.
 - **REST** is the most widely used API type due to its simplicity and JSON-based communication.
-- **SOAP** is legacy and uses verbose XML — mostly found in older enterprise systems.
+- **SOAP** is legacy and uses verbose XML, mostly found in older enterprise systems.
 - **GraphQL** solves over-fetching and under-fetching by letting clients request exactly what they need through a single endpoint.
-- **gRPC** uses Protocol Buffers for ultra-fast, lightweight communication — ideal for internal microservice calls.
-- **WebSockets** enable real-time, bidirectional communication — essential for chat, notifications, and live updates.
+- **gRPC** uses Protocol Buffers for ultra-fast, lightweight communication, ideal for internal microservice calls.
+- **WebSockets** enable real-time, bidirectional communication, essential for chat, notifications, and live updates.
 
 </Steps>
 

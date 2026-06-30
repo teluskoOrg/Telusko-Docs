@@ -8,7 +8,7 @@ title: REST API Requests
 **REST** (Representational State Transfer) is a standard format for transferring data between a client and a server. It uses **JSON** (JavaScript Object Notation) as the data exchange format.
 
 
-## JSON — The Data Format
+## JSON - The Data Format
 
 JSON structures data as **key-value pairs** using objects and arrays.
 
@@ -47,8 +47,8 @@ Every endpoint consists of two parts:
 
 > **Endpoint = HTTP Method + Path**
 
-- **Method** — Defines the operation (GET, POST, PUT, PATCH, DELETE)
-- **Path** — The URL through which data is accessed or submitted
+- **Method** - Defines the operation (GET, POST, PUT, PATCH, DELETE)
+- **Path** - The URL through which data is accessed or submitted
 
 ### Endpoint Structure:
 
@@ -146,7 +146,7 @@ Replaces the **entire resource**. Any field not included in the request body wil
 // PUT request body (only sending username)
 { "username": "muskan_new" }
 
-// Result — other fields lost
+// Result - other fields lost
 { "id": 1, "name": null, "username": "muskan_new", "age": null }
 ```
 
@@ -158,7 +158,7 @@ Updates **only the specified fields**. All other fields remain unchanged.
 // PATCH request body
 { "username": "muskan_new" }
 
-// Result — only username changes
+// Result - only username changes
 { "id": 1, "name": "Muskan", "username": "muskan_new", "age": 20 }
 ```
 
@@ -172,7 +172,7 @@ Updates **only the specified fields**. All other fields remain unchanged.
 
 When entities have relationships (e.g., users, blogs, comments), APIs can be structured using **nesting** to express those relationships clearly.
 
-### Example — Blog Application
+### Example - Blog Application
 
 | Endpoint | Method | Purpose |
 |----------|--------|---------|

@@ -1,6 +1,6 @@
 {   "title":"Databases",
     "pages":[
-        "relational-databases.mdx"
-        
+        "relational-databases.mdx",
+        "db-constraints.mdx"    
     ]
 }

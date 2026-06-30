@@ -40,8 +40,8 @@ A well-designed API response improves:
 
 When a client sends a request to a REST API, the server returns a **response** that consists of two key parts:
 
-1. **Status Code** — A numerical code indicating the result of the request
-2. **Response Body** — The actual data returned (in JSON format)
+1. **Status Code** - A numerical code indicating the result of the request
+2. **Response Body** - The actual data returned (in JSON format)
 
 
 ---
@@ -71,7 +71,7 @@ They help frontend applications understand:
 
 Status codes are standardized indicators that tell the client whether a request succeeded, failed, or requires further action. They are grouped into categories by their first digit.
 
-### 2xx — Success
+### 2xx - Success
 
 | Code | Name | Meaning |
 |------|------|---------|
@@ -80,7 +80,7 @@ Status codes are standardized indicators that tell the client whether a request 
 | `204` | No Content | Request was successful, but there is no data to return |
 
 
-### 3xx — Redirection
+### 3xx - Redirection
 
 | Code | Name | Meaning |
 |------|------|---------|
@@ -88,7 +88,7 @@ Status codes are standardized indicators that tell the client whether a request 
 | `302` | Temporary Redirect | The resource is temporarily available at a different URL |
 
 
-### 4xx — Client Errors
+### 4xx - Client Errors
 
 | Code | Name | Meaning |
 |------|------|---------|
@@ -98,15 +98,15 @@ Status codes are standardized indicators that tell the client whether a request 
 | `404` | Not Found | The requested resource does not exist |
 
 
-#### 401 vs 403 — Key Distinction
+#### 401 vs 403 - Key Distinction
 
 | Code | Scenario |
 |------|----------|
-| `401` | "Who are you?" — Identity not verified |
-| `403` | "I know who you are, but you're not allowed." — Insufficient permissions |
+| `401` | "Who are you?" - Identity not verified |
+| `403` | "I know who you are, but you're not allowed." - Insufficient permissions |
 
 
-### 5xx — Server Errors
+### 5xx - Server Errors
 
 | Code | Name | Meaning |
 |------|------|---------|
@@ -201,7 +201,7 @@ It is recommended to return the response wrapped inside an **object** rather tha
 | Adding new fields (like pagination metadata) requires changing the entire response structure | New fields can be added alongside `data` with minimal frontend changes |
 | Breaking change for all consumers | Backward-compatible extension |
 
-### Example — Object-Wrapped Response
+### Example - Object-Wrapped Response
 
 ```json
 {
@@ -228,7 +228,7 @@ It is recommended to return the response wrapped inside an **object** rather tha
 
 ## Summary
 
-- **Status codes** communicate the outcome of a request — always return the appropriate code.
+- **Status codes** communicate the outcome of a request, always return the appropriate code.
 - **2xx** means success, **4xx** means the client made an error, **5xx** means the server failed.
 - **401** is about identity (not authenticated), **403** is about permission (not authorized).
 - **500 errors** should be logged internally and never expose sensitive server details to the client.

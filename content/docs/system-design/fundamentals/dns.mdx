@@ -29,8 +29,8 @@ title: What is DNS?
 
 There are more than **350 million domains** registered on the internet. Storing all of them directly in the browser is impractical because:
 
-1. **Storage Limitation** — Browsers would need massive storage to maintain a mapping of all domains to IP addresses, degrading performance.
-2. **Dynamic IP Changes** — IP addresses for domains can change at any time, and updating every browser individually is not feasible.
+1. **Storage Limitation** - Browsers would need massive storage to maintain a mapping of all domains to IP addresses, degrading performance.
+2. **Dynamic IP Changes** - IP addresses for domains can change at any time, and updating every browser individually is not feasible.
 
 DNS solves this by acting as a **centralized lookup service** that resolves domain names to their current IP addresses on demand.
 
@@ -48,14 +48,14 @@ When you type a URL (e.g., `telusko.com`) into your browser, the following proce
 #### 1. DNS Resolver (via ISP)
 
 - Your machine connects to the internet through an **Internet Service Provider (ISP)**.
-- The ISP has a **DNS Resolver** — the component responsible for finding the correct IP address for any domain you request.
+- The ISP has a **DNS Resolver** , the component responsible for finding the correct IP address for any domain you request.
 
 #### 2. Root Server
 
 - The DNS Resolver first contacts a **Root Server**.
 - There are **13 root servers** worldwide, named `a.root-server.net` through `m.root-server.net`.
 - These 13 servers are owned and operated by various organizations.
-- The root server does **not** know the final IP address — it directs the resolver to the appropriate **TLD server**.
+- The root server does **not** know the final IP address - it directs the resolver to the appropriate **TLD server**.
 
 #### 3. TLD Server (Top-Level Domain)
 
@@ -75,7 +75,7 @@ When you type a URL (e.g., `telusko.com`) into your browser, the following proce
 #### 4. Authoritative Name Server
 
 - This server holds the **actual DNS records** for the domain.
-- It contains **zones** — each zone manages a specific domain and all its subdomains.
+- It contains **zones** , each zone manages a specific domain and all its subdomains.
 - Returns the final IP address of the requested domain to the DNS Resolver.
 
 #### 5. Browser Receives the IP
@@ -87,27 +87,7 @@ When you type a URL (e.g., `telusko.com`) into your browser, the following proce
 ---
 
 
-## DNS Resolution
-
-```
-User types: telusko.com
-        |
-        v
-   DNS Resolver (ISP)
-        |
-        v
-   Root Server (a–m.root-server.net)
-        |  Returns: IP of .com TLD server
-        v
-   TLD Server (.com)
-        |  Returns: IP of Authoritative Name Server
-        v
-   Authoritative Name Server
-        |  Returns: IP of telusko.com
-        v
-   Browser connects to IP → Webpage loads
-```
-
+![DNS_Resolution_proccess](https://dyz1pdcuffwr5.cloudfront.net/System-designs/dns_resolution_process.png)
 
 ---
 
@@ -138,7 +118,7 @@ The entire DNS resolution process happens **only once** for a given domain. On s
 - Each zone is dedicated to a specific domain.
 - A zone contains records for the **main domain and all its subdomains**.
 
-**Example — Zone for `telusko.com`:**
+**Example - Zone for `telusko.com`:**
 
 ```
 telusko.com        →  93.184.216.34
@@ -171,7 +151,7 @@ courses.telusko.com →  93.184.216.36
 - There are **13 root servers** (A through M) managed by different organizations worldwide.
 - DNS results are **cached** at multiple levels (browser, OS, resolver) to improve performance.
 - Each authoritative server manages **zones**, where each zone holds a domain and all its subdomains.
-- This entire lookup happens only on the **first visit** — subsequent requests are served from cache.
+- This entire lookup happens only on the **first visit** - subsequent requests are served from cache.
 
 
 </Steps>

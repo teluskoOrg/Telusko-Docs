@@ -33,10 +33,10 @@ The **database** is responsible for storing and retrieving data. It is the persi
 
 - Represented by cylindrical figures in architecture diagrams.
 - Categorized into two major types:
-  - **SQL** (Relational) — e.g., MySQL, PostgreSQL
-  - **NoSQL** (Non-Relational) — e.g., MongoDB, Cassandra
+  - **SQL** (Relational) - e.g., MySQL, PostgreSQL
+  - **NoSQL** (Non-Relational) - e.g., MongoDB, Cassandra
 
-The choice between SQL and NoSQL depends on the specific requirements (structure, scalability, consistency needs), but the core purpose remains the same — **store and retrieve data reliably**.
+The choice between SQL and NoSQL depends on the specific requirements (structure, scalability, consistency needs), but the core purpose remains the same - **store and retrieve data reliably**.
 
 </Step>
 
@@ -55,7 +55,7 @@ The application code acts as a **middle layer** that hides the complexity of dea
 - Through **IP addresses**
 - Using protocols like **TCP** or **HTTP**
 
-> Users don't write complex database queries — they simply hit an API endpoint, and the application handles the rest.
+> Users don't write complex database queries, they simply hit an API endpoint, and the application handles the rest.
 
 **APIs (Application Programming Interfaces)**
 
@@ -68,7 +68,7 @@ APIs are endpoints through which clients communicate with the backend applicatio
 | Create order  | `/createOrder` |
 | Delete post   | `/deletePost`  |
 
-**Data Format — JSON:**
+**Data Format - JSON:**
 - APIs send and receive data in **JSON** (JavaScript Object Notation) format.
 - JSON provides a standardized, lightweight structure for data exchange between client and server.
 
@@ -140,7 +140,7 @@ A **load balancer** distributes incoming requests evenly across multiple servers
 
 A **message queue** is a broker that sits between services, enabling **asynchronous communication**.
 
-**Real-World Example — Order Service:**
+**Real-World Example - Order Service:**
 
 When an order is placed, multiple tasks follow:
 - Inventory must be updated
@@ -164,7 +164,7 @@ If all tasks happen immediately in sequence, the response becomes slow.
 4. The queue handles **retries** if a request fails
 5. It may send a **batch summary** (fulfilled/unfulfilled requests) back to the order service at the end of the day
 
-> The order service is no longer responsible for tracking individual notifications — the message queue takes full ownership.
+> The order service is no longer responsible for tracking individual notifications, the message queue takes full ownership.
 
 </Step>
 
@@ -214,5 +214,3 @@ If all tasks happen immediately in sequence, the response becomes slow.
 </Steps>
 
 Written By: <a href="https://www.linkedin.com/in/muskangarg03/" className="text-blue-600 dark:text-blue-400 hover:opacity-80 no-underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer"> Muskan Garg <ExternalLink className="w-4 h-4" /></a>
-
-https://dyz1pdcuffwr5.cloudfront.net/SpringAI/
