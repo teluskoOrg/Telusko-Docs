@@ -1,0 +1,309 @@
+---
+title: Reverse Proxy with nginx
+---
+
+In production, almost no FastAPI app is exposed directly to the internet. There's something in front of it - nginx, Caddy, a cloud load balancer, Cloudflare - handling TLS, routing, static files, and the rough edges of being a public service. nginx is the one you'll meet most often because it's been the default for two decades.
+
+This page is the practical configuration: a working setup, why each piece is there, and the gotchas that bite people once.
+
+## Why a reverse proxy at all?
+
+A FastAPI process is good at serving JSON. It is not good at:
+
+- Terminating TLS efficiently for thousands of connections.
+- Serving static files at maximum disk throughput.
+- Buffering slow clients so they don't tie up a worker.
+- Routing different paths to different services on the same hostname.
+- Failing over between multiple application processes.
+- Surviving when one of those application processes restarts.
+
+A reverse proxy is good at all of those. It sits between the public internet and your app, doing the network-layer work that Python shouldn't have to.
+
+```text
+   internet ───► nginx ───► uvicorn (your FastAPI app)
+                  │
+                  │  (also serves /static directly)
+                  │  (also terminates TLS)
+                  │  (also rate-limits abusive clients)
+                  ▼
+                disk / cache
+```
+
+## A working nginx config
+
+For a typical Dockerized FastAPI app behind nginx on a VPS:
+
+```nginx
+# /etc/nginx/sites-available/api.example.com
+upstream fastapi_app {
+    server 127.0.0.1:8000;
+    keepalive 32;
+}
+
+server {
+    listen 80;
+    server_name api.example.com;
+
+    # ACME challenge for Let's Encrypt
+    location /.well-known/acme-challenge/ {
+        root /var/www/certbot;
+    }
+
+    # Everything else redirects to HTTPS
+    location / {
+        return 301 https://$host$request_uri;
+    }
+}
+
+server {
+    listen 443 ssl http2;
+    server_name api.example.com;
+
+    ssl_certificate     /etc/letsencrypt/live/api.example.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/api.example.com/privkey.pem;
+
+    # Modern TLS only
+    ssl_protocols       TLSv1.2 TLSv1.3;
+    ssl_ciphers         HIGH:!aNULL:!MD5;
+    ssl_prefer_server_ciphers on;
+
+    # HSTS
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+
+    # Body size - match your app's expectation
+    client_max_body_size 10M;
+
+    # Don't buffer requests forever
+    proxy_read_timeout    60s;
+    proxy_connect_timeout 10s;
+    proxy_send_timeout    60s;
+
+    # Static files served directly by nginx
+    location /static/ {
+        alias /srv/app/static/;
+        expires 30d;
+        access_log off;
+    }
+
+    # WebSocket upgrade - only for the WS endpoints
+    location /ws/ {
+        proxy_pass http://fastapi_app;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_read_timeout 3600s;
+    }
+
+    # Everything else to FastAPI
+    location / {
+        proxy_pass http://fastapi_app;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_buffering on;
+    }
+}
+```
+
+Walk through the parts.
+
+### The upstream block
+
+```nginx
+upstream fastapi_app {
+    server 127.0.0.1:8000;
+    keepalive 32;
+}
+```
+
+Lists one or more backend servers. Right now it's just the local uvicorn. If you scale to multiple processes or hosts, you list them all here and nginx round-robins between them.
+
+`keepalive 32` keeps up to 32 idle connections to the backend, which avoids the overhead of opening a new TCP connection per request. Small but real win.
+
+### The HTTP-to-HTTPS redirect
+
+The first `server` block listens on 80 and redirects to 443. The exception is `/.well-known/acme-challenge/`, which Let's Encrypt uses to prove you own the domain. That has to stay reachable over plain HTTP.
+
+### The HTTPS server block
+
+Three groups of directives matter most:
+
+| Directives | Purpose |
+|------------|---------|
+| `ssl_certificate*`, `ssl_protocols`, `ssl_ciphers` | TLS configuration |
+| `add_header Strict-Transport-Security` | Forces HTTPS for future visits |
+| `client_max_body_size`, `proxy_*_timeout` | Size and time limits |
+
+The `proxy_set_header` lines are the ones that catch people out - covered next.
+
+## The forwarded-headers gotcha
+
+When nginx proxies to FastAPI, the request that reaches FastAPI looks like it came from `127.0.0.1` (nginx) over HTTP (the internal connection). Your app has no way to know it actually came from a real user over HTTPS - unless nginx tells it.
+
+```nginx
+proxy_set_header X-Real-IP $remote_addr;
+proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+proxy_set_header X-Forwarded-Proto $scheme;
+proxy_set_header Host $host;
+```
+
+These four headers carry the original information forward. Your FastAPI app then needs `--proxy-headers` to actually trust them:
+
+```bash
+uvicorn app.main:app --host 0.0.0.0 --port 8000 \
+    --proxy-headers \
+    --forwarded-allow-ips "127.0.0.1"
+```
+
+Without `--proxy-headers`, `request.client.host` is `127.0.0.1` for every user and the scheme is always `http`. That breaks rate limiting (everyone shares one IP) and breaks any code that builds URLs from `request.url` (they all come out as `http://`).
+
+`--forwarded-allow-ips` is the safety: only trust forwarded headers from IPs you control. If you trust headers from anywhere, anyone on the internet can spoof their IP.
+
+## WebSockets need their own block
+
+The `location /ws/` block above is not identical to the main one. Two reasons:
+
+```nginx
+proxy_http_version 1.1;
+proxy_set_header Upgrade $http_upgrade;
+proxy_set_header Connection "upgrade";
+proxy_read_timeout 3600s;
+```
+
+`proxy_http_version 1.1` plus the `Upgrade`/`Connection` headers are what permit the protocol switch from HTTP to WebSocket. Without them, the upgrade silently fails.
+
+`proxy_read_timeout 3600s` extends the default 60-second timeout. A WebSocket that idles for more than 60 seconds (no data either direction) would otherwise get dropped by nginx - which from the client's perspective looks like a random disconnect.
+
+The application-level pings from the WebSockets section help here, but giving nginx a longer timeout is the belt to that suspenders.
+
+## Static files: let nginx do it
+
+```nginx
+location /static/ {
+    alias /srv/app/static/;
+    expires 30d;
+    access_log off;
+}
+```
+
+Three things going on:
+
+- Files in `/srv/app/static/` are served directly by nginx, never touching FastAPI.
+- `expires 30d` adds caching headers so browsers reuse files.
+- `access_log off` cuts down log noise - every CSS request would otherwise be a log line.
+
+If you'd rather serve everything through FastAPI for simplicity, the `StaticFiles` mount from the files section works fine. But for serious traffic, letting nginx serve bytes from disk is a meaningful efficiency win.
+
+## A few other useful patterns
+
+### Rate limiting at the proxy
+
+nginx can rate-limit without your app being involved:
+
+```nginx
+limit_req_zone $binary_remote_addr zone=auth:10m rate=5r/m;
+
+server {
+    location /auth/token {
+        limit_req zone=auth burst=10 nodelay;
+        proxy_pass http://fastapi_app;
+    }
+}
+```
+
+That's a 5-requests-per-minute cap on the login endpoint, with a burst of 10. Cheaper than doing it in Python, and it stops the request before it ever reaches your app.
+
+### Returning early for known-bad paths
+
+```nginx
+location ~* /(wp-login|wp-admin|xmlrpc) {
+    return 444;
+}
+```
+
+If you're not a WordPress site, you don't need every WordPress-scanning bot eating your logs. `444` is nginx's "close connection without a response" - cheap, silent, irritating to scanners.
+
+### Custom error pages
+
+```nginx
+error_page 502 503 504 /maintenance.html;
+location = /maintenance.html {
+    root /srv/app/static;
+    internal;
+}
+```
+
+When your app is restarting (or worse, down), the user sees something meaningful instead of a bare nginx error page.
+
+## TLS with Let's Encrypt and certbot
+
+For the certificate itself, `certbot` is the standard tool:
+
+```bash
+sudo apt install certbot python3-certbot-nginx
+sudo certbot --nginx -d api.example.com
+```
+
+`certbot` reads your nginx config, gets a certificate, modifies the config to use it, and sets up a cron job for renewal. The whole process is five minutes and then mostly invisible - until the day renewal fails, at which point you want a monitoring alert on cert expiry.
+
+A simpler alternative worth knowing about: **Caddy**. It does TLS automatically, the config is friendlier, and it handles renewal without certbot. nginx is the dominant choice mostly because of inertia; for a new project, Caddy is genuinely worth considering.
+
+## The "I'm already behind a cloud load balancer" case
+
+If you're on AWS behind an Application Load Balancer, on GCP behind a Cloud Load Balancer, or on a PaaS, you may not need nginx at all. The cloud LB does TLS termination, the forwarded headers, and the routing. Adding nginx between the LB and your app is double the proxy work for no extra benefit.
+
+The decision tree:
+
+```text
+   What's in front of your app?
+        │
+        ├── Nothing (raw VPS) ────────► nginx (or Caddy)
+        │
+        ├── Cloud load balancer ──────► usually skip nginx; LB does its job
+        │
+        ├── Cloudflare (proxied DNS) ─► sometimes skip nginx, sometimes layer both
+        │
+        └── Platform handles it (PaaS) ► definitely skip nginx
+```
+
+Layer only what's actually needed. Each layer is one more thing that can break.
+
+## A small testing habit
+
+After any nginx config change:
+
+```bash
+sudo nginx -t      # syntax check
+sudo systemctl reload nginx
+```
+
+The `-t` is non-optional. A typo in a config file can keep nginx from restarting, and "I can't restart nginx" at 11 PM is exactly the kind of incident you want to avoid. Always test first.
+
+## Reading the access log
+
+A surprising amount of operational signal lives in the access log.
+
+```text
+192.0.2.10 - - [25/May/2026:14:32:17 +0000] "POST /auth/token HTTP/2" 200 312 ...
+192.0.2.11 - - [25/May/2026:14:32:18 +0000] "GET /products?limit=50 HTTP/2" 200 8421 ...
+192.0.2.99 - - [25/May/2026:14:32:18 +0000] "GET /admin.php HTTP/1.1" 444 0 ...
+```
+
+A few minutes of skimming tells you:
+
+- What endpoints are getting the most traffic.
+- Whether 4xx and 5xx rates are climbing.
+- Which IPs are scanning you (and what they're scanning for).
+- Whether anyone's getting through to paths that shouldn't exist.
+
+A daily `tail -f /var/log/nginx/access.log` for the first week of a new deployment is a cheap and informative habit.
+
+## In short
+
+nginx is a sharp tool that does a small number of things very well - TLS, static, proxying, simple routing, rate limiting. Configure it once with care, leave it alone, and it disappears into the background of your stack. The page after this one looks at the moment when even nginx + uvicorn + Postgres isn't enough: scaling, caching, and pulling the background-worker pieces into the deployment picture.

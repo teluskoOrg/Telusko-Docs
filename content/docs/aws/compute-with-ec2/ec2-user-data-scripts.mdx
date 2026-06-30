@@ -1,0 +1,104 @@
+---
+title: "EC2 User Data Scripts"
+---
+
+Launching a server and then SSHing in to run the same ten setup commands by hand is fine once. Do it for the tenth server and you'll make a typo, forget a step, and end up with snowflakes - servers that are all subtly different. **User data** fixes this: a script that runs automatically the first time an instance boots, so the server configures itself.
+
+## What user data is
+
+**User data is a script you hand to an instance at launch.** EC2 runs it automatically, as root, during the **first boot** - before you ever log in. By the time the instance is "running," your software can already be installed, configured, and serving traffic.
+
+```text
+   Launch instance  ──►  EC2 runs your user-data script on first boot
+                              │
+                              ├─ update packages
+                              ├─ install nginx
+                              ├─ write a config file
+                              └─ start the service
+                         ──►  instance is "running" AND ready
+```
+
+This is **bootstrapping** - turning a blank OS into a working server with zero manual steps.
+
+## A first script
+
+User data for a Linux instance is just a shell script starting with a shebang:
+
+```bash title="user-data.sh"
+#!/bin/bash
+# update the system
+yum update -y
+# install nginx
+yum install -y nginx
+# start it now and on every future boot
+systemctl enable nginx
+systemctl start nginx
+# drop in a simple home page
+echo "<h1>Hello from $(hostname -f)</h1>" > /usr/share/nginx/html/index.html
+```
+
+Paste this into the **Advanced details → User data** box in the launch wizard. When the instance comes up, nginx is already running and serving that page - no SSH required.
+
+<Callout type="info">
+The `$(hostname -f)` trick is a neat demo: launch several instances from the same script behind a load balancer and each page shows a different hostname, so you can *see* the load balancer spreading requests across them. We'll use exactly this later.
+</Callout>
+
+## The rules that trip people up
+
+### It runs once, on first boot, by default
+
+User data executes on the **first** boot only. Reboot or stop/start, and it does **not** run again. This is usually what you want (you don't want to reinstall everything on every reboot), but it surprises people expecting it to re-run.
+
+### It runs as root, non-interactively
+
+There's no terminal, no prompts, no human. Commands that ask a question or wait for input will hang or fail. Use non-interactive flags (`-y`, `--quiet`, etc.) everywhere.
+
+### Order matters, and so does logging
+
+The script runs top to bottom. If something fails silently, you need the logs:
+
+```bash
+# where the output goes (Amazon Linux / most distros)
+sudo cat /var/log/cloud-init-output.log
+```
+
+<Callout type="warn">
+When a user-data script "didn't work," the answer is almost always in **`/var/log/cloud-init-output.log`.** Check it before guessing. Common culprits: a package name that differs by distro (`nginx` vs `nginx1`), a service that isn't enabled, or a command that needed `sudo` you assumed was implicit (it's already root, so that's rarely it) - read the log and you'll see the real error.
+</Callout>
+
+## Distro differences to watch
+
+The same script won't run unchanged everywhere - package managers differ:
+
+| Distro | Install command | Notes |
+|--------|-----------------|-------|
+| **Amazon Linux / RHEL** | `yum install -y ...` / `dnf` | `yum` works on AL2; AL2023 uses `dnf` |
+| **Ubuntu / Debian** | `apt-get update && apt-get install -y ...` | Update first, or installs fail |
+
+Match the script to the AMI you chose, or it'll fail at the first install line.
+
+## Why this matters beyond convenience
+
+User data is the gateway to treating servers as **disposable and reproducible**:
+
+```text
+   Snowflake servers (bad)          Reproducible servers (good)
+   ─────────────────────          ───────────────────────────
+   set up by hand, each unique  →  defined by a script, all identical
+   "works on that one box"      →  any new box boots the same way
+   scaling = manual setup       →  scaling = launch with the script
+```
+
+This is the same idea that powers **Auto Scaling** (later in this course): when traffic spikes, AWS launches new instances from a template - and the user-data script ensures each one comes up fully configured and ready to serve, with no human in the loop.
+
+## When to outgrow user data
+
+User data is perfect for small bootstrapping. For anything bigger, you graduate to:
+
+- **Custom AMIs** - bake the software into the image so boot is instant (no install-on-launch wait).
+- **Configuration tools** - Ansible, or AWS Systems Manager, for ongoing management.
+- **Containers** - package the app once, run it anywhere (the ECS path later).
+
+But the concept stays: define how a server should be set up *as code*, not as a memory of commands you typed once.
+
+Next, let's put it together and actually host a website - on Nginx, on EC2.

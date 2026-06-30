@@ -1,0 +1,243 @@
+---
+title: Scaling, Caching and Background Workers
+---
+
+"Scale" is a word that gets thrown around a lot, often before it's actually needed. For a FastAPI app, the truth is that one well-sized server can comfortably serve millions of requests a day - provided you've avoided the cliffs. This page is about the cliffs, and the few specific moves (caching, workers, sharding the right things) that buy real headroom.
+
+## The order of operations
+
+Before you scale *out*, scale *up* and scale *smart*. The order matters because the wrong move at the wrong time is expensive in both money and complexity.
+
+```text
+   1. Make a slow endpoint fast      (one bad query can fake a need to scale)
+   2. Add a cache where it pays back (orders of magnitude, sometimes)
+   3. Move slow work off the request (background workers)
+   4. Vertical scaling (bigger box)  (the cheapest hardware fix)
+   5. Horizontal scaling (more pods) (when one is no longer enough)
+   6. Database scaling               (the last one, usually the most complex)
+```
+
+Most teams reach for step 5 when step 1 would have done it. Profile first.
+
+## Vertical scaling: the underrated answer
+
+A single $40/month VPS with 4 cores and 8 GB of RAM can serve a *lot* of traffic if your code isn't doing anything silly. Before adding instances:
+
+- Did you tune the worker count? `(2 × cores) + 1` is the gunicorn rule of thumb for sync workers; for async uvicorn workers, `cores` is closer to right.
+- Are workers actually doing async I/O, or sitting on blocking calls?
+- Is your database the bottleneck? Adding app workers won't help if Postgres is saturated.
+
+A $400/month machine with 32 cores and 64 GB of RAM is often a better investment than a Kubernetes cluster with the same total resources spread across pods. Less complexity, less network latency, fewer moving parts. The disadvantage - single point of failure - is mitigated by having a second one as warm standby.
+
+## Horizontal scaling: when one isn't enough
+
+The moment a single instance isn't enough, you add more behind a load balancer. The hard part isn't running multiple FastAPI processes - that's trivial. The hard part is making sure your code is *prepared* for there to be more than one.
+
+A short checklist of things that break when you add a second instance:
+
+| Pattern | Why it breaks |
+|---------|---------------|
+| In-memory caches | Each instance has its own; data inconsistent across them |
+| In-memory rate limits | Each instance counts separately; limits become "per instance" |
+| In-process background tasks | Lost on instance shutdown; not balanced across instances |
+| Sticky session assumptions | Same user routed to different instances |
+| WebSocket registries | Each instance only knows its own connections (covered in the WS section) |
+| Local file uploads | Files exist on one instance; other instances can't find them |
+| `app.state` for shared data | Not shared. At all. Just per-process state with a misleading name. |
+
+The fix for all of these is the same: move shared state to a place that's outside any single process. Usually that means Redis, Postgres, or object storage.
+
+```text
+   ┌─ instance 1 ─┐         ┌─ instance 2 ─┐
+   │  FastAPI     │         │  FastAPI     │
+   └──────┬───────┘         └──────┬───────┘
+          │                        │
+          └──────────┬─────────────┘
+                     ▼
+         ┌──────────────────────────┐
+         │  Redis   (cache, rate    │
+         │           limits, queue) │
+         │  Postgres (data)         │
+         │  S3       (files)        │
+         └──────────────────────────┘
+```
+
+Two instances become twenty instances with no code change, once the shared-state assumption is right.
+
+## Caching: order-of-magnitude wins
+
+A well-placed cache can turn a 200ms endpoint into 5ms. It's also the thing most likely to be wrong - caches are famously hard. A few patterns that hold up.
+
+### What to cache
+
+| Good candidates | Bad candidates |
+|-----------------|----------------|
+| Slow read-only lookups that don't change often | Personalized data with high read-after-write requirements |
+| External API responses | Anything that must always be the very latest |
+| Expensive computed values | Tiny, fast values where the cache itself isn't faster than the original |
+| Public catalog data, config | Anything containing secrets unless the cache is access-controlled |
+
+### A simple Redis cache wrapper
+
+```python
+import json
+import redis.asyncio as redis
+from functools import wraps
+from typing import Callable, Any
+
+cache = redis.from_url("redis://localhost:6379")
+
+def cached(prefix: str, ttl: int):
+    def decorator(fn: Callable):
+        @wraps(fn)
+        async def wrapper(*args, **kwargs):
+            key = f"{prefix}:" + ":".join(map(str, args)) + ":" + ":".join(f"{k}={v}" for k, v in kwargs.items())
+
+            hit = await cache.get(key)
+            if hit is not None:
+                return json.loads(hit)
+
+            value = await fn(*args, **kwargs)
+            await cache.set(key, json.dumps(value), ex=ttl)
+            return value
+        return wrapper
+    return decorator
+```
+
+```python
+@cached("user-profile", ttl=300)
+async def fetch_user_profile(user_id: int) -> dict:
+    # an expensive query
+    ...
+```
+
+Five-minute cache. First request hits the DB; the next 200 requests in the next five minutes get the cached value. A real measurement on a typical app: 90%+ cache hit rate, response time down by 10-50x for cached endpoints.
+
+### Cache invalidation
+
+The famous hard problem. Two strategies that work in practice:
+
+- **TTL-only.** Set a short TTL (60s, 5min) and accept that data can be stale for that long. Simplest. Right answer for catalog data, profile pages, anything where "a few minutes behind" is fine.
+- **Explicit invalidation on write.** When data changes, delete the cache key. Harder because you have to track which keys to invalidate, but necessary for things that *must* update immediately.
+
+```python
+async def update_user_profile(user_id: int, payload: dict):
+    db.update(...)
+    await cache.delete(f"user-profile:{user_id}")
+```
+
+Stick to one strategy per cache key, document it, and be honest about the trade-off.
+
+### Cache the response, not just the data
+
+For pure read endpoints, you can cache the whole HTTP response at the proxy layer. nginx supports this. Cloudflare does it well. A `Cache-Control: public, max-age=60` header on a `GET /products` endpoint lets the CDN serve it from edge locations without touching your server at all. For high-traffic public endpoints, this is the biggest possible win.
+
+```python
+@app.get("/products")
+def list_products():
+    return Response(
+        content=...,
+        media_type="application/json",
+        headers={"Cache-Control": "public, max-age=60"},
+    )
+```
+
+## Background workers: the architecture, deployed
+
+The earlier section covered the application code for background tasks and Arq workers. In production, the worker is *its own deployment*. Same Docker image, different command:
+
+```yaml
+# docker-compose.prod.yml (excerpt)
+services:
+  api:
+    image: yourorg/yourapp:${TAG}
+    command: gunicorn app.main:app -k uvicorn.workers.UvicornWorker -w 4 -b 0.0.0.0:8000
+
+  worker:
+    image: yourorg/yourapp:${TAG}    # same image
+    command: arq app.worker.WorkerSettings
+    deploy:
+      replicas: 2                     # scale workers independently of web
+
+  redis:
+    image: redis:7-alpine
+    volumes:
+      - redis_data:/data
+```
+
+Notes worth flagging:
+
+- **Same image, different command.** This is the right shape. One artifact, multiple roles.
+- **Workers scale separately from web.** A burst of background work shouldn't slow down API requests, and vice versa.
+- **Redis is now the queue too**, not just a cache. Using one Redis for both is fine for moderate workloads; for serious volume, run separate Redis instances for cache (volatile) and queue (durable).
+
+### Worker health and graceful shutdown
+
+The same shutdown discipline applies to workers as to the web app. When SIGTERM arrives, an in-flight job should be allowed to finish before the process exits. Arq handles this by default - it stops accepting new jobs and waits for the current one. Set a sensible `terminationGracePeriodSeconds` (or `stop_grace_period` in compose) to give it room to finish.
+
+Worker health checks are different from web health checks. A worker doesn't serve HTTP, so there's no `/health` to probe. Some platforms support TCP-level checks; others expect you to write a tiny health endpoint into the worker itself (a separate FastAPI app on a different port). The simpler answer is to monitor the worker's *output* - if the job-completion rate drops to zero while jobs are pending, the worker is dead.
+
+## Database scaling
+
+The hardest one, kept short here because it deserves its own series.
+
+The usual progression, in order of typical adoption:
+
+```text
+   1. Indexes              ── fixes 80% of "slow database" problems
+   2. Connection pooling   ── PgBouncer in front of Postgres
+   3. Read replicas        ── route read-only queries elsewhere
+   4. Caching at the app   ── covered above
+   5. Vertical scaling     ── a bigger database server
+   6. Sharding             ── last resort; major architectural change
+```
+
+Most apps never need step 6. Many never need step 3. Step 1 is the one that gets skipped most.
+
+A specific Postgres tip: install `pg_stat_statements` and look at the top 20 queries by total time. The biggest cost is almost never where you'd guess.
+
+```sql
+SELECT query, calls, total_exec_time, mean_exec_time
+FROM pg_stat_statements
+ORDER BY total_exec_time DESC
+LIMIT 20;
+```
+
+That query alone has saved more weekends than any specific scaling architecture.
+
+## A small monitoring kit
+
+Once you have multiple components (web, worker, cache, queue), you need to know they're all healthy. The minimal kit:
+
+| Layer | What to watch | Where |
+|-------|---------------|-------|
+| Web | Request rate, error rate, p95 latency | Prometheus + Grafana |
+| Worker | Job rate, failure rate, queue depth | Same |
+| Redis | Memory used, hit rate, evictions | Redis exporter for Prometheus |
+| Database | Connections, slow queries, replication lag | DB-specific exporter |
+| Process | CPU, memory, restart count | Platform-native (k8s, ECS, etc.) |
+
+Alert on: error rate > 1% for 5 minutes, p95 latency > 1s for 5 minutes, queue depth growing for 10 minutes, any worker restart loop. Tune the numbers to your app's tolerance.
+
+## The "scaling is a problem you want to have" reminder
+
+Almost everything in this page is the kind of thing that doesn't matter until it does. Don't optimize for a million users before you have a hundred. The patterns matter; you don't need to *deploy* all of them on day one.
+
+A reasonable progression for a real project:
+
+| Stage | What's deployed |
+|-------|-----------------|
+| Day 1 | One container, one VPS, SQLite or small Postgres |
+| First real users | Move to managed Postgres, add nginx for TLS |
+| First real load | Add Redis for cache, run multiple uvicorn workers |
+| First background features | Add a worker process (same image, different command) |
+| Multiple instances needed | Move in-memory state to Redis, add load balancer |
+| Genuine scale | Read replicas, CDN, dedicated workers per queue |
+
+You will know when each step is needed because something will hurt. Don't preemptively build for the next stage; understand what each one solves so you recognize the symptoms when they arrive.
+
+## Closing the deployment section
+
+We started this section with a production-readiness checklist and ended with the patterns that keep an app fast under load. The thread through all six pages: a real production deployment isn't a single decision - it's a stack of small, boring, correct choices. Pick the right hosting tier. Use a real config system. Ship a clean Docker image. Put a proxy in front. Cache the slow reads. Move slow work to workers. Watch what's happening.
+
+None of it is hard. All of it adds up. A FastAPI service that does these six things well will handle far more traffic than most teams expect, with far less drama than most teams fear.

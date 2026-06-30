@@ -1,0 +1,118 @@
+---
+title: "IAM in the Real World"
+---
+
+The tutorials show you a clean `Allow s3:GetObject` policy and move on. Real accounts are messier - dozens of users, services talking to services, a contractor who needed access for one week eight months ago and still has it. This page is the ground reality: how IAM actually goes wrong, and the handful of habits that keep it from biting you.
+
+## The cardinal rule: least privilege
+
+**Grant the minimum permissions needed to do the job - nothing more.**
+
+It sounds obvious and it's violated constantly, because the lazy path always works:
+
+```text
+   App needs to read one S3 bucket.
+   Easy fix (wrong):   attach AdministratorAccess   it works!
+   Right fix:          attach read-only on that one bucket
+```
+
+The "easy fix" works *and* means a single leaked credential can now delete your databases, spin up servers, and run up a bill. Least privilege is annoying in the moment and priceless the day something leaks.
+
+<Callout type="warn">
+The most common real-world IAM failure isn't a clever attack - it's **over-permissioning**. Someone grants `*:*` "just to get it working" and never tightens it. Months later that over-broad credential leaks, and the blast radius is the entire account.
+</Callout>
+
+## How to actually reach least privilege
+
+You don't have to write perfect policies from memory:
+
+1. **Start from an AWS-managed policy** that's close (e.g. `AmazonS3ReadOnlyAccess`).
+2. **Run the workload** and see what it actually needs.
+3. **Tighten** - scope to specific buckets/resources, drop unused actions.
+4. **Use IAM Access Analyzer** - AWS can generate a policy based on the access an identity *actually used*, so you grant what's real, not what you guessed.
+
+The goal isn't a perfect policy on day one; it's a policy that gets *narrower* over time, not broader.
+
+## Humans get users; machines get roles
+
+A clean account divides identities by what they are:
+
+| Identity type | Use | Credentials |
+|---------------|-----|-------------|
+| **Real people** | IAM users (in groups), ideally via SSO | Password + MFA |
+| **EC2 / Lambda / ECS** | IAM roles attached to the service | Temporary, automatic |
+| **CI/CD pipelines** | IAM roles (or OIDC federation) | Temporary |
+| **Third-party tools** | Cross-account roles with conditions | Temporary, scoped |
+
+<Callout type="info">
+If you find yourself copying an **access key and secret** into a config file, a `.env`, or - worst of all - source code, stop. That's the exact pattern roles exist to eliminate. A server should get its permissions from an attached role, not from keys on disk.
+</Callout>
+
+## The access-key leak - the classic disaster
+
+Long-lived access keys are the number-one way accounts get compromised:
+
+```text
+   Developer commits  AWS_SECRET_ACCESS_KEY=...  to a public GitHub repo
+            │
+   Bots scanning GitHub find it in  < 5 minutes
+            │
+   Attacker launches dozens of GPU instances to mine crypto
+            │
+   You wake up to a $20,000 bill
+```
+
+This is not hypothetical - it happens daily. Defenses, in order of impact:
+
+- **Don't create long-lived keys** when a role will do. No key, nothing to leak.
+- **Never commit secrets.** Use `.gitignore`, secret scanners, and tools like AWS Secrets Manager.
+- **Rotate keys** that must exist, and **delete keys you're not using.**
+- **Set a billing alarm** so the damage is caught in hours, not at month-end.
+- If a key leaks, **deactivate it immediately**, then investigate.
+
+## MFA everywhere that matters
+
+Multi-factor authentication turns a stolen password into a non-event. At minimum:
+
+- **Root** - mandatory.
+- **Any user with broad or admin permissions** - mandatory.
+- **Everyone else** - strongly recommended, and you can *enforce* it with a policy that denies actions unless the request is MFA-authenticated.
+
+## Audit: assume you'll need to answer "who did that?"
+
+When something breaks or looks suspicious, you'll want a record. AWS gives you the tools - turn them on before you need them:
+
+- **CloudTrail** - logs every API call: who, what, when, from where. The account's flight recorder.
+- **IAM Access Analyzer** - flags resources shared outside your account and helps right-size policies.
+- **Credential report** - a downloadable list of every user, their keys, key age, and MFA status. Run it occasionally and clean up what it reveals.
+
+## A real-world IAM checklist
+
+The habits that separate a safe account from a scary one:
+
+<Cards>
+  <Card title="Lock down root">
+    MFA on, no access keys, used only for the few tasks that require it.
+  </Card>
+  <Card title="Groups over user policies">
+    Permissions flow through groups by job role, not ad-hoc per person.
+  </Card>
+  <Card title="Roles over keys">
+    Apps and services assume roles; no long-lived keys on servers.
+  </Card>
+  <Card title="Least privilege, always">
+    Start narrow, widen only when something genuinely needs it.
+  </Card>
+  <Card title="MFA on privileged users">
+    Anyone who can do real damage needs a second factor.
+  </Card>
+  <Card title="Audit and clean up">
+    CloudTrail on, credential report reviewed, stale users/keys removed.
+  </Card>
+</Cards>
+
+<Callout type="info">
+None of this needs to be perfect on day one of a learning account. But building these reflexes now means that when you're handed a real production account, you already think in terms of least privilege, roles, and MFA - instead of learning it the expensive way.
+</Callout>
+
+That's identity handled. Next we rent our first actual server: **EC2**.

@@ -1,0 +1,13 @@
+{
+    "title": "Compute with EC2",
+    "pages": [
+        "introduction-to-ec2.mdx",
+        "ec2-networking-and-security-groups.mdx",
+        "ip-addresses-private-public-elastic.mdx",
+        "ebs-basics-and-root-volume.mdx",
+        "attach-and-mount-an-ebs-volume.mdx",
+        "ebs-snapshots-and-backups.mdx",
+        "ec2-user-data-scripts.mdx",
+        "host-a-static-website-with-nginx.mdx"
+    ]
+}

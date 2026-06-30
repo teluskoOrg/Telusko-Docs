@@ -1,0 +1,103 @@
+---
+title: What is Cloud Computing?
+---
+
+You don't run a diesel generator in your basement to power your fridge. You plug into the wall and pay for the electricity you use. Someone else builds the power plants, maintains the grid, and worries about demand at 6 p.m. on a hot day. You just get a socket and a monthly bill.
+
+Cloud computing is that same arrangement for servers, storage, databases, and networking.
+
+## The definition, minus the jargon
+
+**Cloud computing is renting computing resources over the internet and paying only for what you use.**
+
+That's it. Instead of buying physical machines, you request virtual ones from a provider like AWS. They run in Amazon's data centres; you reach them over the internet; you're billed by the hour, the gigabyte, or the request.
+
+## The problem it solves
+
+Picture launching a website the old way:
+
+```text
+1. Estimate traffic for the next 3 years   (you will be wrong)
+2. Buy servers to match the estimate        (₹ big cheque, up front)
+3. Wait weeks for delivery and setup
+4. Rack them, cool them, secure the room
+5. Traffic spikes  → site falls over (not enough servers)
+   Traffic is low  → servers idle  (money burning)
+6. A disk dies at 2 a.m.            → that's your problem now
+```
+
+Every step is slow, expensive, or risky. You pay for peak capacity you rarely use, and you're stuck if you guess wrong in either direction.
+
+The cloud collapses that list into: *ask for a server, get it in a minute, turn it off when you're done.*
+
+## Capital expense vs. operating expense
+
+This is the shift that makes finance teams care.
+
+| | On-premises (CapEx) | Cloud (OpEx) |
+|---|---------------------|--------------|
+| **Payment** | Large up-front purchase | Pay-as-you-go |
+| **Capacity** | Fixed, guessed in advance | Elastic, changes on demand |
+| **Idle cost** | You bought it, it costs the same idle | Turn it off, stop paying |
+| **Maintenance** | Your team, your nights | Provider's problem |
+| **Time to launch** | Weeks to months | Seconds to minutes |
+
+You trade a big bet on the future for a meter that tracks reality.
+
+## The five traits that make it "cloud"
+
+Not every rented server is cloud computing. The accepted definition (from NIST, the body that standardized the term) hangs on five characteristics:
+
+<Cards>
+  <Card title="On-demand self-service">
+    You provision resources yourself, instantly, without filing a ticket or waiting for a human.
+  </Card>
+  <Card title="Broad network access">
+    Reachable over the internet from anywhere, on any device.
+  </Card>
+  <Card title="Resource pooling">
+    The provider's hardware is shared across many customers; you get a slice, isolated from the rest.
+  </Card>
+  <Card title="Rapid elasticity">
+    Scale up for a traffic spike, scale down when it passes - in minutes, automatically.
+  </Card>
+  <Card title="Measured service">
+    Everything is metered. You see and pay for exactly what you consumed.
+  </Card>
+</Cards>
+
+## Where the cloud lives: the deployment models
+
+"The cloud" isn't one thing. There are a few flavours of *where* the infrastructure runs:
+
+- **Public cloud** - shared infrastructure owned by a provider (AWS, Azure, GCP). What we use in this course. Cheapest, fastest to start.
+- **Private cloud** - cloud-style infrastructure dedicated to one organization, often for strict compliance or control. More expensive, more control.
+- **Hybrid cloud** - a mix: some workloads on-premises or in a private cloud, some in the public cloud, connected together. Common in large enterprises mid-migration.
+
+<Callout type="info">
+"The cloud is just someone else's computer" is a popular joke, and it's literally true - but it undersells things. The value isn't the borrowed hardware; it's the *self-service, elastic, metered* layer Amazon wraps around it. That layer is what you're really paying for.
+</Callout>
+
+## What you stop worrying about
+
+The honest pitch for the cloud is the list of problems that simply stop being yours:
+
+- Buying and depreciating hardware
+- Data-centre power, cooling, and physical security
+- Replacing failed disks, fans, and power supplies
+- Guessing capacity years ahead
+- The lead time between "we need a server" and "we have a server"
+
+You move up the stack and spend your time on the application instead of the plumbing.
+
+## The trade-offs (because there always are some)
+
+The cloud is not free magic:
+
+- **Cost can creep.** Pay-as-you-go cuts both ways - forgotten resources keep billing. You manage cost actively, or it manages you.
+- **You depend on a provider.** Their outage is your outage; their pricing changes are your pricing changes.
+- **Some control is gone.** You can't walk into the data centre. For most apps that's fine; for some regulated workloads it isn't.
+
+None of these outweigh the benefits for the vast majority of projects - which is why nearly every new company starts in the cloud by default. But knowing the trade-offs is what separates someone who *uses* the cloud from someone who just heard it was cool.
+
+Next: the three service models - IaaS, PaaS, and SaaS - and how much of the stack you hand off in each.

@@ -1,0 +1,105 @@
+---
+title: "Regions, Availability Zones & Core Services"
+---
+
+"The cloud" sounds like it floats. It doesn't. Every server you launch sits in a specific building, in a specific city, on a specific continent. AWS gives you direct control over *where* - and that choice affects your app's speed, its cost, what's legal, and how it survives disasters.
+
+## The geography, from big to small
+
+AWS organizes its hardware in a strict hierarchy:
+
+```text
+   Region (a city / area)
+   └── Availability Zone (one or more data centres)
+       └── Data centre (an actual building full of servers)
+           └── Your EC2 instance, your S3 data, ...
+```
+
+### Regions
+
+A **Region** is a geographic area where AWS has clustered its infrastructure - `ap-south-1` (Mumbai), `us-east-1` (N. Virginia), `eu-west-1` (Ireland), and dozens more. Each region is isolated from the others by design: an outage in Mumbai doesn't touch Ireland.
+
+You pick a region for three reasons:
+
+| Reason | Why it matters |
+|--------|----------------|
+| **Latency** | Closer region = faster responses. Serve Indian users from Mumbai, not Virginia. |
+| **Cost** | The *same* service can be priced differently per region. |
+| **Compliance** | Some data legally must stay within a country's borders. The region is how you guarantee that. |
+| **Service availability** | The newest services launch in big regions first; not every region has every service. |
+
+### Availability Zones (AZs)
+
+Inside each region are multiple **Availability Zones** - named like `ap-south-1a`, `ap-south-1b`, `ap-south-1c`. Each AZ is one or more physically separate data centres with its own power, cooling, and networking, but all the AZs in a region are linked by fast, private, low-latency connections.
+
+The point of multiple AZs is **fault isolation**. If one data centre floods, loses power, or catches fire, the others keep running.
+
+```text
+   Region: ap-south-1 (Mumbai)
+   ┌─────────────────────────────────────────────┐
+   │   AZ-a            AZ-b            AZ-c      │
+   │  ┌──────┐       ┌──────┐       ┌──────┐     │
+   │  │ DC   │◄─────►│ DC   │◄─────►│ DC   │     │
+   │  └──────┘  fast └──────┘  fast └──────┘     │
+   │        private, low-latency links           │
+   └─────────────────────────────────────────────┘
+```
+
+<Callout type="warn">
+The number-one rule of high availability on AWS: **spread across at least two AZs.** A single server in a single AZ has a single point of failure. Two servers in two AZs survive an entire data centre going dark. We'll do exactly this when we get to load balancing.
+</Callout>
+
+### Edge locations (a quick mention)
+
+Beyond regions and AZs, AWS has hundreds of **edge locations** worldwide - small sites used by the CDN (CloudFront) to cache content close to users. They don't run your servers; they cache copies of your content so a user in Delhi gets a file from Delhi instead of Virginia. More on these much later.
+
+## Choosing a region: a worked example
+
+You're building an app for users in India:
+
+1. **Latency** → Mumbai (`ap-south-1`) is closest. 
+2. **Cost** → check Mumbai pricing; it's competitive for the region.
+3. **Compliance** → Indian user data staying in India? Mumbai satisfies it.
+4. **Services** → everything in this course is available in Mumbai.
+
+Verdict: `ap-south-1`. The reasoning, not the answer, is the lesson - run the same four checks for any project.
+
+## Global vs. regional services
+
+Here's a subtlety that trips up beginners: some AWS services are **regional** (they live in one region and you pick which), and a few are **global** (they exist once for your whole account).
+
+| Scope | Examples | What it means |
+|-------|----------|---------------|
+| **Regional** | EC2, S3 (bucket lives in a region), RDS, VPC | You choose the region; resources are isolated per region |
+| **Global** | IAM, Route 53, CloudFront, billing | One set of resources spanning all regions |
+
+A practical consequence: if you launch a server and later "can't find it," check the region selector in the top-right of the console first. You're almost certainly looking at the wrong region.
+
+## The core services worth knowing on day one
+
+AWS has 200+ services. You can ignore almost all of them at the start. These are the load-bearing few this course is built on:
+
+<Cards>
+  <Card title="EC2 - Compute">
+    Virtual servers you rent by the second. The workhorse for running code.
+  </Card>
+  <Card title="S3 - Storage">
+    Durable object storage for files of any size - images, backups, static sites.
+  </Card>
+  <Card title="VPC - Networking">
+    Your own private network inside AWS, where your resources live.
+  </Card>
+  <Card title="IAM - Identity">
+    Controls who can do what. Global, free, and foundational to security.
+  </Card>
+  <Card title="RDS - Databases">
+    Managed relational databases (MySQL, PostgreSQL, and more) without the admin grind.
+  </Card>
+  <Card title="Route 53 - DNS">
+    Turns domain names into addresses and routes users to your app.
+  </Card>
+</Cards>
+
+Learn these six and you can build a real, production-shaped application. Everything else in the catalogue is a specialization you adopt when a specific need shows up.
+
+Next: let's create the account these services will live in - safely.

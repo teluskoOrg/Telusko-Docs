@@ -1,0 +1,17 @@
+{
+    "root": false,
+    "title": "AWS",
+    "icon": "Cloud",
+    "pages": [
+        "getting-started.mdx",
+        "introduction.mdx",
+        "cloud-and-aws-fundamentals",
+        "identity-and-access-management",
+        "compute-with-ec2",
+        "disabled-load-balancing-and-auto-scaling",
+        "disabled-storage-and-static-hosting",
+        "disabled-databases-with-rds",
+        "disabled-networking-vpc-and-route53",
+        "disabled-monitoring-cli-and-iac"
+    ]
+}

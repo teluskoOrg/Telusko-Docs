@@ -1,0 +1,137 @@
+---
+title: "Introduction to EC2"
+---
+
+EC2 - **Elastic Compute Cloud** - is the service most people picture when they think "the cloud." It's a computer you rent by the second: pick how powerful, pick the operating system, and a minute later you can SSH in and it's yours. No hardware, no data centre, no waiting.
+
+If S3 is the cloud's hard drive, EC2 is its CPU.
+
+## What an EC2 instance actually is
+
+An **instance** is a virtual server running on Amazon's physical hardware. One big physical machine in a data centre is sliced - by a hypervisor - into many isolated virtual servers, and you rent one slice. To you it behaves exactly like a dedicated machine: it has its own OS, memory, disk, and network.
+
+```text
+   One physical server in an AWS data centre
+   ┌───────────────────────────────────────────┐
+   │   Hypervisor (carves it into slices)        │
+   │  ┌─────────┐ ┌─────────┐ ┌─────────┐        │
+   │  │Instance │ │Instance │ │Instance │  ...   │
+   │  │  yours  │ │ someone │ │ someone │        │
+   │  │         │ │  else's │ │  else's │        │
+   │  └─────────┘ └─────────┘ └─────────┘        │
+   └───────────────────────────────────────────┘
+```
+
+The "Elastic" in the name is the point: you can launch one instance or a hundred, keep them for an hour or a year, and resize them as needs change.
+
+## The choices you make when launching
+
+Launching an instance is mostly answering five questions. Every EC2 launch wizard is these in order:
+
+| Choice | What it decides | Example |
+|--------|-----------------|---------|
+| **AMI** | The OS + pre-installed software | Amazon Linux 2023, Ubuntu, Windows Server |
+| **Instance type** | CPU, RAM, network capacity | `t2.micro` (1 vCPU, 1 GB) → `m5.large` → huge |
+| **Key pair** | How you'll log in securely | An SSH key you download once |
+| **Network & security group** | Where it lives and what traffic is allowed | A VPC + a firewall rule for SSH/HTTP |
+| **Storage** | The disk(s) attached | An EBS root volume, e.g. 8 GB |
+
+### AMI - Amazon Machine Image
+
+An **AMI** is a template for the instance's disk: the operating system and anything pre-baked into it. Choosing `Ubuntu 22.04` vs `Amazon Linux 2023` here is choosing what your server boots into. You can also create your *own* AMI from a configured instance, so the next launch already has your software installed.
+
+### Instance type - the t/m/c/r families
+
+Instance types are grouped into families tuned for different jobs. The letter tells you the focus:
+
+| Family | Optimized for | Use it for |
+|--------|---------------|------------|
+| **t** (e.g. `t3.micro`) | Burstable, general purpose, cheap | Dev, small web apps, learning |
+| **m** (e.g. `m5.large`) | Balanced CPU/memory | General production workloads |
+| **c** (e.g. `c5.large`) | Compute (CPU-heavy) | Batch processing, gaming servers |
+| **r** (e.g. `r5.large`) | Memory-heavy | In-memory caches, big databases |
+
+The number is the generation (newer = faster/cheaper), and the suffix (`micro`, `large`, `xlarge`) is the size. For this whole course, **`t2.micro` or `t3.micro`** is what you want - it's free-tier eligible.
+
+<Callout type="info">
+Don't overthink the instance type while learning. Start with a free-tier `t2.micro`. If it's too small for something later, you can stop the instance, change the type, and start it again - resizing takes a couple of minutes, not a purchase order.
+</Callout>
+
+## The key pair: how you log in
+
+When you launch an instance you attach a **key pair** - a public key AWS keeps on the server and a private key (`.pem` file) you download. You connect with:
+
+```bash
+ssh -i my-key.pem ec2-user@<public-ip>
+```
+
+The private key is the *only* way in via SSH, and AWS does **not** keep a copy.
+
+<Callout type="warn">
+Download the `.pem` file when you create the key pair and store it safely - you cannot download it again. Lose it and you lose SSH access to instances that use it. Also `chmod 400 my-key.pem` on Linux/Mac, or SSH will refuse to use a world-readable key.
+</Callout>
+
+## Pricing models: how you pay for compute
+
+You don't have to pay the same way for every instance. Matching the pricing model to the workload is where real money is saved:
+
+| Model | What it is | Best for |
+|-------|------------|----------|
+| **On-Demand** | Pay per second, no commitment | Short-term, unpredictable, learning |
+| **Reserved / Savings Plans** | Commit 1-3 years for a big discount | Steady, always-on production |
+| **Spot** | Bid on spare capacity, up to ~90% off, can be reclaimed | Fault-tolerant batch jobs |
+| **Dedicated Hosts** | A whole physical server for you | Licensing/compliance needs |
+
+For learning, you're on **On-Demand** and the **free tier** - which gives 750 instance-hours/month of a micro instance for the first 12 months.
+
+## The instance lifecycle
+
+An instance moves through states, and the difference between **stop** and **terminate** is one beginners get wrong painfully:
+
+```text
+   launch ──► pending ──► running ──┬──► stop ──► stopped ──► start ──► running
+                                    │
+                                    └──► terminate ──► terminated  (gone forever)
+```
+
+| Action | What happens | Billing |
+|--------|--------------|---------|
+| **Stop** | Shuts down; EBS disk persists; can start again | No compute charge; small EBS storage charge |
+| **Reboot** | Restarts; keeps everything, keeps its IP | Charged normally |
+| **Terminate** | Deletes the instance; root volume usually deleted too | Stops entirely; **not recoverable** |
+
+<Callout type="warn">
+**Stop ≠ Terminate.** Stop is "pause and come back later" - your data survives. Terminate is "destroy it" - by default the root disk is wiped with it. When you're done experimenting for the day, *stop* the instance to avoid charges; *terminate* it only when you truly don't need it.
+</Callout>
+
+## Launching your first instance - the flow
+
+<Steps>
+<Step>
+### Open EC2 and click Launch Instance
+
+Make sure your region (top-right) is the one you want.
+</Step>
+<Step>
+### Name it, pick an AMI
+
+Give it a `Name` tag. Choose Amazon Linux 2023 or Ubuntu (free-tier eligible).
+</Step>
+<Step>
+### Pick `t2.micro` and a key pair
+
+Free-tier instance type; create or select an SSH key pair and save the `.pem`.
+</Step>
+<Step>
+### Configure network & security group
+
+Leave the default VPC; create a security group allowing SSH (port 22) from your IP. (Next page covers this in depth.)
+</Step>
+<Step>
+### Launch, then connect
+
+Wait for "running," copy the public IP, and SSH in.
+</Step>
+</Steps>
+
+You now have a real Linux server in the cloud. The next pages make it useful and safe - starting with the firewall in front of it: **security groups**.

@@ -1,0 +1,356 @@
+---
+title: Reusable Exception and Response Patterns
+---
+
+Every FastAPI codebase ends up with some version of "raise an HTTPException with the right status code." The version most people write the first time looks like a sprawl of `try/except` blocks scattered across routes, each catching slightly different things and producing slightly different responses. The version that ages well is small, centralized, and disappears into the background.
+
+This page is about getting from the first version to the second.
+
+## The shape we're aiming for
+
+In a healthy codebase:
+
+- **Services raise domain exceptions** (`NotFound`, `Forbidden`, `OutOfStock`, etc.). They never import `HTTPException`.
+- **Exception handlers map domain exceptions to HTTP responses**, in one place.
+- **Routes never write `try/except HTTPException`**. They're not the right place for that logic.
+- **Response shapes are consistent** across the whole API - same fields, same names, same envelope.
+
+The result: routes get shorter, error responses become uniform, and adding a new exception type takes one line of mapping code instead of an audit of every route.
+
+## Step 1: a small hierarchy of domain exceptions
+
+Start with a base, then add the kinds you actually need.
+
+```python
+# app/exceptions.py
+class DomainError(Exception):
+    """Base for anything raised by the domain layer."""
+
+class NotFound(DomainError):
+    def __init__(self, resource: str, identifier: str | int):
+        self.resource = resource
+        self.identifier = identifier
+        super().__init__(f"{resource} {identifier} not found")
+
+class AlreadyExists(DomainError):
+    def __init__(self, resource: str, identifier: str):
+        self.resource = resource
+        self.identifier = identifier
+        super().__init__(f"{resource} {identifier} already exists")
+
+class Forbidden(DomainError):
+    pass
+
+class ValidationFailed(DomainError):
+    def __init__(self, message: str, field: str | None = None):
+        self.field = field
+        super().__init__(message)
+
+class OutOfStock(DomainError):
+    def __init__(self, sku: str):
+        self.sku = sku
+        super().__init__(f"Out of stock: {sku}")
+```
+
+Two things going on:
+
+- Each exception carries the structured data it needs (resource + identifier, sku, etc.). Don't lose information by squishing it into a string.
+- Everything inherits from `DomainError` so you can catch them as a group when you need to.
+
+Use them naturally from services:
+
+```python
+class ProductService:
+    def get(self, product_id: int) -> Product:
+        product = self.repo.get(product_id)
+        if product is None:
+            raise NotFound("Product", product_id)
+        return product
+
+    def create(self, payload: ProductCreate) -> Product:
+        if self.repo.get_by_sku(payload.sku):
+            raise AlreadyExists("Product", payload.sku)
+        return self.repo.create(payload)
+```
+
+No HTTP in sight. The service is honest about what went wrong; how that becomes a status code is somebody else's problem.
+
+## Step 2: one place that maps them to responses
+
+```python
+# app/exception_handlers.py
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
+
+from .exceptions import (
+    DomainError, NotFound, AlreadyExists, Forbidden,
+    ValidationFailed, OutOfStock,
+)
+
+def register_exception_handlers(app: FastAPI) -> None:
+
+    @app.exception_handler(NotFound)
+    async def handle_not_found(request: Request, exc: NotFound):
+        return JSONResponse(
+            status_code=404,
+            content=error_body("not_found", str(exc), resource=exc.resource, id=exc.identifier),
+        )
+
+    @app.exception_handler(AlreadyExists)
+    async def handle_already_exists(request: Request, exc: AlreadyExists):
+        return JSONResponse(
+            status_code=409,
+            content=error_body("already_exists", str(exc), resource=exc.resource, id=exc.identifier),
+        )
+
+    @app.exception_handler(Forbidden)
+    async def handle_forbidden(request: Request, exc: Forbidden):
+        return JSONResponse(status_code=403, content=error_body("forbidden", str(exc)))
+
+    @app.exception_handler(ValidationFailed)
+    async def handle_validation(request: Request, exc: ValidationFailed):
+        return JSONResponse(
+            status_code=422,
+            content=error_body("validation_failed", str(exc), field=exc.field),
+        )
+
+    @app.exception_handler(OutOfStock)
+    async def handle_out_of_stock(request: Request, exc: OutOfStock):
+        return JSONResponse(status_code=409, content=error_body("out_of_stock", str(exc), sku=exc.sku))
+
+    @app.exception_handler(DomainError)
+    async def handle_unknown_domain_error(request: Request, exc: DomainError):
+        # catch-all for domain errors we haven't explicitly mapped
+        return JSONResponse(status_code=400, content=error_body("bad_request", str(exc)))
+
+
+def error_body(code: str, message: str, **extras) -> dict:
+    body = {"error": {"code": code, "message": message}}
+    if extras:
+        body["error"].update(extras)
+    return body
+```
+
+Then `main.py` wires it up once:
+
+```python
+from app.exception_handlers import register_exception_handlers
+
+app = FastAPI()
+register_exception_handlers(app)
+```
+
+The result: routes lose all their `try/except`. They just call the service and trust the handlers.
+
+```python
+@router.post("/products", response_model=ProductOut, status_code=201)
+def create_product(payload: ProductCreate, service: ProductService = Depends(get_product_service)):
+    return service.create(payload)
+```
+
+If `service.create` raises `AlreadyExists`, the handler turns it into a 409. The route doesn't know and doesn't need to.
+
+## Step 3: one envelope for error responses
+
+The body returned by `error_body` looks like:
+
+```json
+{
+  "error": {
+    "code": "not_found",
+    "message": "Product 42 not found",
+    "resource": "Product",
+    "id": 42
+  }
+}
+```
+
+Same shape everywhere. Frontend code can have one error-handling function that pulls `error.code` and `error.message` from every response. Compare to a codebase where one endpoint returns `{"detail": "..."}`, another returns `{"error": "..."}`, and a third returns `"plain string"`. The frontend has to special-case all three.
+
+Pick a shape. Document it. Apply it everywhere.
+
+## A custom HTTPException replacement
+
+For the cases where you want a more direct shortcut (without inventing a new domain exception for a one-off message), it's worth having a small wrapper:
+
+```python
+class APIError(HTTPException):
+    def __init__(self, status_code: int, code: str, message: str, **extras):
+        super().__init__(
+            status_code=status_code,
+            detail={"code": code, "message": message, **extras},
+        )
+
+# now:
+raise APIError(422, "invalid_argument", "limit must be between 1 and 100", field="limit")
+```
+
+And register a handler so it also gets the consistent envelope:
+
+```python
+@app.exception_handler(APIError)
+async def handle_api_error(request: Request, exc: APIError):
+    return JSONResponse(status_code=exc.status_code, content={"error": exc.detail})
+```
+
+`APIError` is a small concession to convenience. Use it when raising a domain exception would be overkill. Don't use it as a way to put HTTP details into services - it still belongs in the route or middleware layer.
+
+## Handling Pydantic validation errors
+
+FastAPI's default 422 response from Pydantic is technically correct but doesn't match the envelope above:
+
+```json
+{
+  "detail": [
+    {"type": "missing", "loc": ["body", "price"], "msg": "Field required"}
+  ]
+}
+```
+
+Wrap it to match:
+
+```python
+from fastapi.exceptions import RequestValidationError
+
+@app.exception_handler(RequestValidationError)
+async def handle_validation_error(request: Request, exc: RequestValidationError):
+    return JSONResponse(
+        status_code=422,
+        content={
+            "error": {
+                "code": "validation_failed",
+                "message": "Request validation failed",
+                "details": exc.errors(),
+            }
+        },
+    )
+```
+
+Now every error response - domain, validation, fallback - has the same outer shape. The frontend has exactly one error path.
+
+## The catch-all for the unexpected
+
+A handler for `Exception` itself acts as a final safety net. The earlier debugging page covered the shape; here it is again with the envelope:
+
+```python
+import uuid
+import logging
+
+log = logging.getLogger("app")
+
+@app.exception_handler(Exception)
+async def handle_unexpected(request: Request, exc: Exception):
+    error_id = uuid.uuid4().hex[:8]
+    log.exception("unhandled exception", extra={"error_id": error_id, "path": request.url.path})
+    return JSONResponse(
+        status_code=500,
+        content={"error": {"code": "internal_error", "message": "An unexpected error occurred", "id": error_id}},
+    )
+```
+
+The client sees a short opaque id. Logs contain the full traceback. The two meet through grep.
+
+## Responses, not just errors
+
+The same "consistent envelope" idea can extend to success responses, but here you should be more conservative. A common shape:
+
+```json
+{ "data": { ... actual response body ... } }
+```
+
+Some teams swear by this - every response has a top-level `data` key, errors have a top-level `error` key, and the frontend never has to type-check.
+
+Other teams find the extra nesting annoying and prefer letting success bodies be the actual resource. There's no objectively right answer.
+
+What is objectively right: **pick one and stick with it across the API**. Inconsistency is the cost. The shape itself is taste.
+
+If you do want the wrapper, it's easy with a custom response model:
+
+```python
+from typing import Generic, TypeVar
+from pydantic import BaseModel
+
+T = TypeVar("T")
+
+class Envelope(BaseModel, Generic[T]):
+    data: T
+
+# usage
+@router.get("/products/{product_id}", response_model=Envelope[ProductOut])
+def get_product(product_id: int, service: ProductService = Depends(get_product_service)):
+    product = service.get(product_id)
+    return Envelope(data=product)
+```
+
+Or, if you'd rather not write the wrap at every route, a middleware that wraps everything 2xx in `{"data": ...}` works too - but it gets fiddly with streaming responses, file responses, and exception handlers. The explicit wrapper is more honest.
+
+## Repeated patterns deserve constants
+
+A small but useful habit: when the same status-code-plus-error-code combination shows up in three places, extract it.
+
+```python
+# constants.py
+RESOURCE_NOT_FOUND = (404, "not_found")
+DUPLICATE_RESOURCE = (409, "already_exists")
+FORBIDDEN          = (403, "forbidden")
+
+# in code
+status_code, code = RESOURCE_NOT_FOUND
+raise APIError(status_code, code, f"Product {id} not found")
+```
+
+This is the kind of thing that doesn't matter for a small app and is a quiet lifesaver in a big one. Don't preemptively extract - wait for the third occurrence, then pull it up.
+
+## A consistent OpenAPI
+
+Documenting error responses in OpenAPI helps frontend developers know what to expect. Without it, the docs only show the happy path.
+
+```python
+@router.post(
+    "/products",
+    response_model=ProductOut,
+    status_code=201,
+    responses={
+        409: {"description": "SKU already exists"},
+        422: {"description": "Validation failed"},
+    },
+)
+def create_product(...):
+    ...
+```
+
+Or, if you're feeling ambitious, register the actual response schemas:
+
+```python
+class ErrorResponse(BaseModel):
+    error: dict
+
+@router.post(
+    "/products",
+    response_model=ProductOut,
+    responses={409: {"model": ErrorResponse}, 422: {"model": ErrorResponse}},
+)
+def create_product(...):
+    ...
+```
+
+The `/docs` page now shows the error shapes alongside the success shape. Less guessing for everyone.
+
+## A quick recap, as a table
+
+| Concern | Where it lives |
+|---------|----------------|
+| Defining domain failures | `exceptions.py` |
+| Raising domain failures | Services |
+| Mapping failures to HTTP | One file of exception handlers |
+| Shape of error bodies | One helper (`error_body`) |
+| Shape of success bodies | An `Envelope` model, or just resources |
+| Fallback for unexpected failures | One `Exception` handler with an error id |
+
+Six places. Done once. The rest of the codebase stays clean because of them.
+
+## The thread
+
+Exceptions and responses are infrastructure. They should be set up once, in a small number of files, and never thought about again. Routes should be short. Services should not know about HTTP. The shape of errors should be the same wherever a client sees one. Get this right early - much later, and you're rewriting frontends to match.
+
+The next page steps back from the code itself and looks at the bigger picture: a roadmap of what to build, in what order, on the way from "first FastAPI tutorial" to "complete production backend."

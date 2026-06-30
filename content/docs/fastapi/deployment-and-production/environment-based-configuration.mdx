@@ -1,0 +1,261 @@
+---
+title: Environment-based Configuration
+---
+
+A FastAPI app runs in several places over its life - your laptop, CI, staging, production, possibly a colleague's laptop too. The code is the same. The *configuration* is what changes: which database to connect to, which secret to sign tokens with, whether debug mode is on, whether emails actually get sent.
+
+Get this right and switching environments is a single environment variable away. Get it wrong and the same app accidentally talks to prod from staging, or ships with a hardcoded test API key.
+
+## The twelve-factor rule
+
+The principle is old and still right: **store config in the environment**. Not in code. Not in a committed file. In environment variables that the runtime sets when it starts the app.
+
+Why the environment?
+
+- It's universal. Every container runtime, every shell, every CI system knows about env vars.
+- It's separable. Code goes through git, config goes through your secret manager. They have different audit trails for a reason.
+- It's safe in logs. Most logging systems won't auto-capture env vars (unlike, say, function arguments).
+- It survives restarts and respawns naturally.
+
+```text
+   Same code  ──► Different config per environment
+                    │
+                    ├── dev:     LOCAL_DB_URL,  DEBUG=true,  EMAIL=mailhog
+                    ├── staging: STAGING_DB,    DEBUG=false, EMAIL=sandbox
+                    └── prod:    PROD_DB,       DEBUG=false, EMAIL=real
+```
+
+## Don't read os.environ everywhere
+
+The naive approach scatters `os.getenv("...")` calls throughout the codebase. That works until:
+
+- A required variable is missing and you only find out at the moment the obscure code path runs.
+- A typo (`DATBASE_URL` instead of `DATABASE_URL`) silently uses a default value for weeks.
+- Type coercion (`int(os.getenv("PORT"))`) crashes the app at startup, but only sometimes.
+- You can't easily see what configuration the app actually needs.
+
+The right pattern is a single, typed, validated **settings object** built once at startup. `pydantic-settings` is the standard tool for this.
+
+## A working settings file
+
+```bash
+pip install pydantic-settings
+```
+
+```python
+# app/config.py
+from functools import lru_cache
+from pydantic import Field, PostgresDsn
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+class Settings(BaseSettings):
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=False,
+        extra="ignore",
+    )
+
+    # required - app refuses to start without these
+    secret_key: str
+    database_url: PostgresDsn
+
+    # optional with sensible defaults
+    debug: bool = False
+    log_level: str = "INFO"
+    cors_origins: list[str] = []
+
+    # JWT
+    jwt_algorithm: str = "HS256"
+    jwt_access_minutes: int = 30
+    jwt_refresh_days: int = 7
+
+    # External services
+    redis_url: str | None = None
+    sendgrid_api_key: str | None = None
+
+
+@lru_cache
+def get_settings() -> Settings:
+    return Settings()
+```
+
+Two important details in there:
+
+- **Required fields have no default.** If `SECRET_KEY` is missing from the environment, Pydantic raises at import time. The app refuses to start. That is exactly what you want - better than starting and quietly using a placeholder.
+- **`@lru_cache` makes it a singleton.** First call builds the settings; every subsequent call returns the same object. Cheap and predictable.
+
+## Using settings via dependency
+
+The cleanest way to get settings into a route is the same as everything else - a dependency.
+
+```python
+from fastapi import Depends
+from .config import Settings, get_settings
+
+@app.get("/info")
+def info(settings: Settings = Depends(get_settings)):
+    return {"version": settings.app_version, "debug": settings.debug}
+```
+
+The bonus: in tests, you can override `get_settings` the same way you override anything else. No special handling needed.
+
+```python
+def override_settings():
+    return Settings(secret_key="test", database_url="postgresql://test/test")
+
+app.dependency_overrides[get_settings] = override_settings
+```
+
+## The .env file (and the one you don't commit)
+
+For local development, a `.env` file in the project root holds your local values.
+
+```bash
+# .env (DO NOT COMMIT)
+SECRET_KEY=local-dev-secret-not-for-production
+DATABASE_URL=postgresql://app:app@localhost:5432/app_dev
+DEBUG=true
+LOG_LEVEL=DEBUG
+```
+
+Two file patterns are worth standardizing on:
+
+| File | Purpose | Committed? |
+|------|---------|-----------|
+| `.env` | Your actual local values | **No** - add to `.gitignore` immediately |
+| `.env.example` | Template showing what variables are needed | **Yes** - new contributors copy it to `.env` |
+
+`.env.example` is a tiny piece of self-documentation that prevents the "new dev tries to run the app and nothing works" experience.
+
+```bash
+# .env.example
+SECRET_KEY=             # generate with: openssl rand -hex 32
+DATABASE_URL=           # postgresql://user:pass@host:5432/db
+DEBUG=true
+LOG_LEVEL=INFO
+REDIS_URL=
+SENDGRID_API_KEY=
+```
+
+## Where production settings come from
+
+In production, **don't use a .env file.** Use whatever secret-injection your platform offers:
+
+| Platform | How secrets reach the app |
+|----------|---------------------------|
+| Docker / docker-compose | `environment:` block in the compose file (or `--env-file`) |
+| Kubernetes | `Secret` objects mounted as env vars |
+| Heroku, Render, Fly.io | Dashboard → environment variables |
+| AWS ECS / Fargate | Task definition `secrets` from Secrets Manager / Parameter Store |
+| Hashicorp Vault, Doppler, etc. | Sidecar or init container injects them |
+
+The `pydantic-settings` code stays exactly the same. It reads from env vars; how those env vars arrive is the platform's job.
+
+## Differentiating environments
+
+A common pattern is one environment variable that selects which "profile" to load:
+
+```python
+class Settings(BaseSettings):
+    environment: str = "development"
+
+    @property
+    def is_production(self) -> bool:
+        return self.environment == "production"
+```
+
+Then code can branch on it where genuinely needed:
+
+```python
+if settings.is_production:
+    app.add_middleware(HTTPSRedirectMiddleware)
+    app.add_middleware(TrustedHostMiddleware, allowed_hosts=settings.allowed_hosts)
+```
+
+Use this sparingly. The more your code looks like `if production: do X else: do Y`, the more two versions of the app you're maintaining. Prefer letting environment variables drive behavior (`allowed_hosts`, `cors_origins`) over branching on the name of the environment.
+
+## A few things people get wrong
+
+**Hardcoded fallbacks for required values.**
+
+```python
+# BAD
+SECRET_KEY = os.getenv("SECRET_KEY") or "dev-secret"
+```
+
+This makes the app silently start with a known-bad secret in production. Better to crash than to ship with `"dev-secret"` signing your tokens.
+
+**Treating booleans as strings.**
+
+`os.getenv("DEBUG")` returns `"true"` or `"false"` (or `None`) - both truthy strings. `if settings.debug:` always evaluates True. Use a real type:
+
+```python
+# pydantic-settings handles the string-to-bool coercion correctly
+debug: bool = False
+```
+
+**Reading config inside hot paths.**
+
+```python
+# BAD - re-parses env on every request
+@app.get("/x")
+def x():
+    if os.getenv("FEATURE_FLAG") == "on":
+        ...
+```
+
+```python
+# GOOD - settings built once, accessed cheaply
+@app.get("/x")
+def x(settings: Settings = Depends(get_settings)):
+    if settings.feature_flag:
+        ...
+```
+
+**Stringly-typed booleans in CI.** Some CI systems (looking at you, certain older ones) pass env values as the literal string `"False"` regardless of how you set them. Pydantic handles the common cases, but for anything weird, prefer explicit on/off values like `0/1` or `yes/no` and parse them yourself.
+
+## Secrets management, beyond .env
+
+For real apps, a flat .env file in production is the bare minimum. Better setups:
+
+- **Secret manager** (AWS Secrets Manager, GCP Secret Manager, Azure Key Vault, HashiCorp Vault, Doppler, Infisical). The app pulls secrets from the manager at startup or via a sidecar. Rotation, audit logs, and access control come for free.
+- **Encrypted .env in git** (SOPS, age, git-crypt). Secrets travel through git but are encrypted; only people with the key can decrypt. Good for small teams who don't yet need a secret manager.
+- **Just-in-time secret rotation.** Tokens that expire daily, rotated by a job. Reduces the blast radius of a leak.
+
+The right level of paranoia depends on what you're protecting. A side project doesn't need Vault. A fintech app does.
+
+## Feature flags, briefly
+
+Feature flags are config too, but they change more often than environment-level settings. For just a handful of flags, a few boolean settings work fine. For more (or for runtime toggles without redeploying), reach for a flag service - LaunchDarkly, Unleash, Flagsmith, or a small home-built table-backed system.
+
+The point: don't let `settings.py` grow into a 100-field god-object that mixes "environment URL" with "is the new checkout enabled this week." Those are different concerns with different lifecycles.
+
+## One more pattern: separate settings per concern
+
+Once your config grows, split it:
+
+```python
+class DatabaseSettings(BaseSettings):
+    model_config = SettingsConfigDict(env_prefix="DATABASE_")
+    url: PostgresDsn
+    pool_size: int = 5
+    pool_overflow: int = 10
+
+class JWTSettings(BaseSettings):
+    model_config = SettingsConfigDict(env_prefix="JWT_")
+    algorithm: str = "HS256"
+    access_minutes: int = 30
+    refresh_days: int = 7
+
+class Settings(BaseSettings):
+    db: DatabaseSettings = DatabaseSettings()
+    jwt: JWTSettings = JWTSettings()
+    debug: bool = False
+```
+
+Env vars become `DATABASE_URL`, `DATABASE_POOL_SIZE`, `JWT_ALGORITHM`, etc. The Python side gains structure; the operational side stays flat key-value. Best of both.
+
+## Closing this page
+
+Configuration is unglamorous and disproportionately important. A FastAPI app with a clean settings layer is easy to test, easy to deploy, and hard to misconfigure. Spend the half-hour to set this up properly before you need to. The version of you that ships to staging will thank the version that wrote the config layer.

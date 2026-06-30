@@ -1,7 +1,7 @@
 {
     "root": false,
     "title": "FastAPI",
-    "icon": "CodeXml",
+    "icon": "Zap",
     "pages": [
         "getting-started.mdx",
         "introduction.mdx",
@@ -18,7 +18,7 @@
         "files-forms-and-background-tasks",
         "websockets-and-real-time",
         "testing-and-debugging",
-        "DISABLED-deployment-and-production",
-        "DISABLED-architecture-and-best-practices"
+        "deployment-and-production",
+        "architecture-and-best-practices"
     ]
 }

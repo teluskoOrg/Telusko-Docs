@@ -1,0 +1,136 @@
+---
+title: "IAM Groups, Policies & Roles"
+---
+
+IAM has four building blocks, and beginners constantly mix up the last two. Here's the whole model in one breath: **policies** are documents that say what's allowed; you attach them to **users**, bundle users into **groups**, and hand temporary access to apps and services with **roles**.
+
+Get those four straight and IAM stops being scary.
+
+## Policies: the rulebook
+
+A **policy** is a JSON document listing permissions - what actions are allowed (or denied) on which resources. Nothing in IAM grants access except policies; users, groups, and roles are just things you *attach policies to*.
+
+```json title="A minimal IAM policy"
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": ["s3:GetObject", "s3:PutObject"],
+      "Resource": "arn:aws:s3:::my-app-bucket/*"
+    }
+  ]
+}
+```
+
+Read it as a sentence: *Allow the actions `s3:GetObject` and `s3:PutObject` on any object inside the bucket `my-app-bucket`.*
+
+| Field | Meaning |
+|-------|---------|
+| `Effect` | `Allow` or `Deny` |
+| `Action` | The API operations (`s3:GetObject`, `ec2:StartInstances`, …) |
+| `Resource` | Which resources, identified by their ARN |
+| `Condition` *(optional)* | Extra rules - e.g. only from a certain IP, only with MFA |
+
+### Two kinds of policy
+
+- **AWS-managed policies** - ready-made, maintained by AWS (`AdministratorAccess`, `AmazonS3ReadOnlyAccess`, `AmazonEC2FullAccess`). Great for getting started.
+- **Customer-managed policies** - ones you write for your exact needs, like the JSON above.
+
+<Callout type="info">
+Explicit **Deny always wins.** If one policy allows an action and another denies it, the action is denied. This is how organizations enforce hard guardrails no permission grant can override.
+</Callout>
+
+## Groups: permissions by job, not by person
+
+A **group** is a collection of users that share a set of policies. Instead of attaching policies to each person one by one, you attach them to the group and drop users in.
+
+```text
+   Group: Developers ── policies: EC2FullAccess, S3FullAccess
+   ├── 👤 bob
+   ├── 👤 carol
+   └── 👤 dave        (all three get the group's permissions)
+
+   Group: Admins ── policy: AdministratorAccess
+   └── 👤 alice
+```
+
+Why this matters the day someone joins or leaves:
+
+- New developer? Add them to **Developers**. Done - correct access instantly.
+- Developer becomes admin? Move them to **Admins**.
+- No more editing five policies on one user and forgetting the sixth.
+
+<Callout type="warn">
+Attaching policies directly to individual users is the road to chaos. Six months in, nobody knows who can do what. **Grant permissions to groups; put users in groups.** Direct user policies should be the rare exception.
+</Callout>
+
+## Roles: identity you assume, not credentials you keep
+
+This is the concept beginners find slippery, so slow down here.
+
+A **role** is a set of permissions that *isn't tied to one person* and has **no permanent password or keys**. Instead, a trusted entity **assumes** the role and receives **temporary credentials** that expire automatically.
+
+Roles are how you answer: *"How does my EC2 server get permission to read an S3 bucket - without me hard-coding access keys on the server?"*
+
+### The killer example: EC2 reading from S3
+
+The wrong way (don't do this):
+
+```text
+      Put your access key + secret in a file on the EC2 server
+      → if the server is compromised, the keys leak
+      → keys are long-lived, so the damage lasts
+```
+
+The right way - a role:
+
+```text
+   1. Create a role "ec2-s3-reader" with S3 read permissions
+   2. Attach the role to the EC2 instance
+   3. The instance automatically gets TEMPORARY credentials
+   4. They rotate on their own; nothing is stored or leaked
+```
+
+No keys on disk, credentials that expire, and you can change the role's permissions without touching the server.
+
+### Who assumes roles?
+
+| Assumed by | Example use |
+|------------|-------------|
+| **AWS services** | EC2 reading S3, Lambda writing to a database |
+| **IAM users** | Temporarily elevating to admin, switching accounts |
+| **External / federated identities** | Logging in via your company's SSO, cross-account access |
+
+## Users vs. Roles - the distinction that finally sticks
+
+| | IAM User | IAM Role |
+|---|----------|----------|
+| **Credentials** | Permanent (password / access keys) | Temporary, auto-expiring |
+| **Tied to** | One specific person | Anyone/anything trusted to assume it |
+| **Best for** | Humans who log in regularly | Apps, AWS services, temporary access |
+| **Keys on disk?** | Sometimes (a risk) | Never - that's the whole point |
+
+The mental model: a **user** is *who you are*; a **role** is a *hat you temporarily put on* to do a job, then take off.
+
+## How it all fits together
+
+```text
+   Policy  ── the JSON rules ("allowed to read S3")
+     │ attached to
+     ▼
+   Group   ── bundles users that need the same rules
+     │ contains
+     ▼
+   User    ── a human identity with permanent login
+   
+   Role    ── permissions assumed temporarily by apps/services
+              (gets its own policies, no permanent credentials)
+```
+
+- **Policies** define permissions.
+- **Groups** apply policies to many users at once.
+- **Users** are people.
+- **Roles** give temporary permissions to apps, services, and cross-account access.
+
+Next: how this looks in a real company, where "just give it admin" is how accounts end up dangerously over-permissioned.

@@ -1,0 +1,10 @@
+{
+    "title": "Cloud & AWS Fundamentals",
+    "pages": [
+        "what-is-cloud-computing.mdx",
+        "cloud-service-models.mdx",
+        "regions-availability-zones-and-core-services.mdx",
+        "creating-an-aws-account.mdx",
+        "aws-management-console-overview.mdx"
+    ]
+}

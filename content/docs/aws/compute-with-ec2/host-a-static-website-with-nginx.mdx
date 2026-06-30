@@ -1,0 +1,125 @@
+---
+title: "Host a Static Website with Nginx"
+---
+
+This is the payoff page for everything in the EC2 section. You'll take a blank instance and turn it into a real, public web server - using the security groups, IPs, and Nginx pieces you've met along the way. By the end, you type your instance's address into a browser and your own page loads.
+
+## What we're building
+
+```text
+   Browser  ──HTTP (port 80)──►  Security Group (allows 80)
+                                       │
+                                       ▼
+                                 EC2 instance
+                                 └── Nginx serving /usr/share/nginx/html
+```
+
+**Nginx** is a fast, lightweight web server. Its job here is simple: listen on port 80 and hand back HTML files from a folder on disk.
+
+## The prerequisites checklist
+
+Before the website can work, three things must be true - and each maps to a page you've already read:
+
+| Requirement | Comes from |
+|-------------|------------|
+| An instance is running | [Introduction to EC2](/docs/aws/compute-with-ec2/introduction-to-ec2) |
+| Port 80 is open inbound | [Security Groups](/docs/aws/compute-with-ec2/ec2-networking-and-security-groups) |
+| You can reach its public IP | [Public vs Elastic IP](/docs/aws/compute-with-ec2/ip-addresses-private-public-elastic) |
+
+If port 80 isn't open, the site is invisible no matter how perfectly Nginx is configured. This is the #1 reason "it works locally on the server with `curl` but not in my browser."
+
+## Step by step
+
+<Steps>
+<Step>
+### Launch an instance with port 80 open
+
+Launch a `t2.micro` (Amazon Linux). In its security group, add an inbound rule: **HTTP, port 80, source `0.0.0.0/0`** (a public site is meant for everyone). Keep SSH (22) limited to your IP.
+</Step>
+
+<Step>
+### SSH in and install Nginx
+
+```bash
+ssh -i my-key.pem ec2-user@<public-ip>
+sudo yum update -y
+sudo yum install -y nginx        # AL2023: sudo dnf install -y nginx
+```
+</Step>
+
+<Step>
+### Start Nginx and enable it on boot
+
+```bash
+sudo systemctl start nginx
+sudo systemctl enable nginx      # so it survives reboots
+sudo systemctl status nginx      # should say "active (running)"
+```
+</Step>
+
+<Step>
+### Test it in the browser
+
+Open `http://<public-ip>` in your browser. You should see the default Nginx welcome page. **If you see it, the hard part is done** - networking, firewall, and server are all working.
+</Step>
+
+<Step>
+### Replace the default page with your own
+
+Nginx serves files from `/usr/share/nginx/html`. Put your HTML there:
+
+```bash
+echo "<h1>My first AWS-hosted site</h1>" | sudo tee /usr/share/nginx/html/index.html
+```
+
+Refresh the browser - your page replaces the welcome screen. To deploy a real site, copy your HTML/CSS/JS into that folder (via `scp`, `git clone`, or an S3 download).
+</Step>
+</Steps>
+
+## Do it all automatically with user data
+
+Everything above can be the instance's [user-data script](/docs/aws/compute-with-ec2/ec2-user-data-scripts), so a fresh instance comes up already serving your site - no SSH at all:
+
+```bash title="user-data.sh"
+#!/bin/bash
+yum update -y
+yum install -y nginx
+systemctl enable nginx
+systemctl start nginx
+echo "<h1>Served automatically on first boot</h1>" > /usr/share/nginx/html/index.html
+```
+
+Paste that into **Advanced details → User data** at launch, open port 80, and the site is live the moment the instance is ready.
+
+## When it doesn't work - the debugging ladder
+
+Connection problems almost always fall into one of these, in order of likelihood:
+
+<Callout type="warn">
+**Page won't load in the browser?** Walk down this list:
+
+1. **Security group** - is port 80 open to `0.0.0.0/0`? (Most common cause.)
+2. **Nginx running?** - `sudo systemctl status nginx` on the instance.
+3. **Right IP?** - using the **public** IP, and `http://` not `https://` (no TLS yet).
+4. **Server-local test** - `curl localhost` *on the instance*. If that works but the browser doesn't, it's networking (#1), not Nginx.
+</Callout>
+
+That `curl localhost` test is the key diagnostic: it splits the problem cleanly into "is Nginx serving?" (server side) versus "can the world reach it?" (network side).
+
+## Where to go from here
+
+A single instance serving HTML is a real website, but it has real limits - and each limit points to a later topic:
+
+| Limitation | The AWS answer |
+|------------|----------------|
+| One server = one point of failure | **Load balancer + multiple instances** |
+| Traffic spikes overwhelm it | **Auto Scaling** |
+| `http://` only, no padlock | **HTTPS** via a load balancer + ACM certificate |
+| Ugly IP address, no domain | **Route 53** DNS |
+| Just static files, no compute needed? | **S3 static hosting** (cheaper, no server) |
+
+<Callout type="info">
+For a purely *static* site (HTML/CSS/JS, no backend), running a whole EC2 instance is overkill - **S3 static hosting** does it cheaper and with zero servers to manage (covered in the storage section). Use EC2 + Nginx when you need a real server: a backend app, custom routing, or software that has to run on the box.
+</Callout>
+
+That wraps up compute. You can launch a server, secure it, give it storage, back it up, bootstrap it, and serve a site from it. Next we stop babying a single instance and make a *fleet* resilient - with load balancing and auto scaling.

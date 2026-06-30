@@ -1,0 +1,91 @@
+---
+title: "EBS Basics & the Root Volume"
+---
+
+An EC2 instance needs a disk to boot from and store files. That disk is almost always **EBS - Elastic Block Store**. It's a virtual hard drive you attach to an instance, and the most important thing to understand about it is that its life and the instance's life are *separate* - unless you tell AWS otherwise.
+
+## What EBS is
+
+**EBS provides block storage volumes** - virtual disks - that attach to EC2 instances over the network but behave like a local drive. You format them, mount them, and read/write files exactly as you would a physical disk.
+
+```text
+   ┌──────────────┐        attached over        ┌──────────────┐
+   │ EC2 instance │◄──── AWS network ──────────►│  EBS volume   │
+   │   (compute)  │      (looks local)           │   (the disk)  │
+   └──────────────┘                              └──────────────┘
+        compute and storage are separate things
+```
+
+Two properties make EBS powerful:
+
+- It **persists independently** of the instance - a volume can outlive the instance it was attached to.
+- It lives in **one Availability Zone** and can only attach to instances in that same AZ.
+
+## The root volume
+
+When you launch an instance, AWS automatically creates and attaches a **root volume** - the disk the OS boots from. This is where your operating system, installed packages, and (unless you add more disks) your files live. By default it's small, often 8 GB.
+
+The detail that surprises people is what happens to the root volume when the instance dies:
+
+<Callout type="warn">
+By default, the root volume has **"Delete on Termination" set to `true`.** Terminate the instance and the root volume - with everything on it - is destroyed too. If you want the OS disk to survive termination, you must uncheck that option at launch (or change the attribute later). For important data, the better answer is to keep it on a *separate* volume.
+</Callout>
+
+```text
+   Terminate instance ──► root volume deleted by default (data gone)
+   vs.
+   Extra data volume   ──► survives termination if you set it to
+                           (its "Delete on Termination" defaults to false)
+```
+
+## EBS volume types
+
+EBS isn't one kind of disk - you pick a type based on the balance of performance and cost you need:
+
+| Type | Family | Good for |
+|------|--------|----------|
+| **gp3 / gp2** | General Purpose SSD | The default - boot volumes, most workloads |
+| **io2 / io1** | Provisioned IOPS SSD | High-performance databases needing guaranteed IOPS |
+| **st1** | Throughput HDD | Big sequential reads - logs, data warehouses |
+| **sc1** | Cold HDD | Infrequently accessed, cheapest |
+
+For almost everything you'll do, **`gp3`** (or `gp2` on older setups) is the right choice: SSD speed at a reasonable price. `gp3` is the modern default and lets you tune IOPS and throughput independently.
+
+## EBS vs. instance store - a crucial distinction
+
+Some instance types come with **instance store** - disks physically attached to the host machine. They're fast, but there's a trap:
+
+| | EBS | Instance Store |
+|---|-----|----------------|
+| **Persistence** | Survives stop/start; can outlive the instance | **Wiped** when the instance stops or terminates |
+| **Attached via** | Network | Physically on the host |
+| **Movable** | Detach and reattach elsewhere (same AZ) | No - tied to that host |
+| **Use for** | Anything you want to keep | Scratch space, caches, temp data only |
+
+<Callout type="warn">
+**Instance store is ephemeral.** Stop the instance and that data is gone forever - no recovery. Never put anything you care about on instance store. When in doubt, you're on EBS (it's the default), and your data is safe across stop/start.
+</Callout>
+
+## Key things to remember about EBS
+
+- It's a **network-attached virtual disk**, separate from the instance's compute.
+- A volume lives in **one AZ** and attaches only to instances in that AZ.
+- The **root volume** boots the OS and, by default, is **deleted when the instance terminates**.
+- One instance can have **many** volumes attached (one root + several data disks).
+- A single volume attaches to **one instance at a time** (with a special exception, Multi-Attach, for certain io volumes - not something beginners need).
+- You can **resize** a volume (grow it) and change its type without recreating it.
+
+## Why separate compute from storage?
+
+Because it gives you flexibility that physical servers can't:
+
+```text
+   Instance broken?      → detach the data volume, attach to a new instance
+   Need a bigger disk?   → grow the volume, no data migration
+   Want a backup?        → snapshot the volume (next page)
+   Moving to new hardware?→ your data isn't bolted to one machine
+```
+
+This separation is why "treat servers as disposable, treat data as precious" is a workable strategy on AWS. The instance can be thrown away and rebuilt; the EBS volume carrying your data persists.
+
+Next, we make this concrete: attaching and mounting an *extra* EBS volume to a running instance.
