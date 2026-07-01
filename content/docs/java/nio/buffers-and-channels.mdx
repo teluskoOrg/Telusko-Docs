@@ -85,7 +85,7 @@ buffer.put(data.getBytes());
 ```java
 buffer.flip();  // Resets position to 0, sets limit to current position
 ```
-The `flip()` method is crucial—it transitions the buffer from write mode to read mode by resetting the position to zero and setting the limit to the current position.
+The `flip()` method is crucial-it transitions the buffer from write mode to read mode by resetting the position to zero and setting the limit to the current position.
 
 3. **`clear()`**: Prepares buffer for new write operations
 ```java
@@ -310,7 +310,7 @@ This generic design allows you to use the same programming model and techniques 
 ## Summary
 
 * Java NIO uses a buffer-and-channel architecture where buffers temporarily store data and channels act as the connection for I/O operations.
-* Data flows in a structured pattern—reading moves data from a channel to a buffer, while writing moves data from a buffer to a channel.
+* Data flows in a structured pattern-reading moves data from a channel to a buffer, while writing moves data from a buffer to a channel.
 * Proper buffer state management using position, limit, capacity, and especially flip() is essential for correct operation.
 * The same architecture works across files, network sockets, and other I/O types, making NIO a generic and reusable framework.
 * Non-blocking support and multi-threading capabilities enable high-performance, scalable applications.

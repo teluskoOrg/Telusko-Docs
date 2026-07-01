@@ -25,7 +25,7 @@
 
   --color-fd-border: hsla(220, 12%, 70%, 45%);
 
-  /* PRIMARY — Blue brand */
+  /* PRIMARY - Blue brand */
   --color-fd-primary: hsl(222, 75%, 55%);
   --color-fd-primary-foreground: hsl(0, 0%, 98%);
 
@@ -54,7 +54,7 @@
 
   --color-fd-border: hsla(220, 10%, 45%, 25%);
 
-  /* PRIMARY — Bright cool blue */
+  /* PRIMARY - Bright cool blue */
   --color-fd-primary: hsl(222, 85%, 65%);
   --color-fd-primary-foreground: hsl(220, 15%, 8%);
 

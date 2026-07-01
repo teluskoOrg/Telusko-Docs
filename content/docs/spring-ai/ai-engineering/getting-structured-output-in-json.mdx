@@ -62,7 +62,7 @@ Do not include any text or explanation.
 <Step>
 ### Define the Schema
 
-Specify the exact properties and structure you need — don't let the AI decide what fields to include.
+Specify the exact properties and structure you need - don't let the AI decide what fields to include.
 
 ```
 Return the data in the following JSON format:
@@ -151,8 +151,8 @@ Rather than accepting whatever the AI returns, define exactly what you need:
 
 | Approach | Result |
 |----------|--------|
-| No schema specified | AI decides properties — unpredictable, may include unnecessary fields |
-| Schema defined in prompt | Only the specified fields are returned — predictable, application-ready |
+| No schema specified | AI decides properties - unpredictable, may include unnecessary fields |
+| Schema defined in prompt | Only the specified fields are returned - predictable, application-ready |
 
 **Define properties based on application requirements:**
 
@@ -201,10 +201,10 @@ Rather than accepting whatever the AI returns, define exactly what you need:
 
 ## Summary
 
-- Getting **structured JSON output** from AI models is essential for real application integration — treat AI responses like any other data source.
+- Getting **structured JSON output** from AI models is essential for real application integration - treat AI responses like any other data source.
 - Always specify: **role** (what the AI acts as), **format** (JSON only), and **schema** (exact fields needed).
 - Use directives like `"respond only with valid JSON"` and `"do not include any text"` to guarantee clean, parseable output.
-- **Define your schema explicitly** — never rely on the AI's default property selection for production applications.
+- **Define your schema explicitly** - never rely on the AI's default property selection for production applications.
 - Add **source specification** to prompts for accurate, verifiable information.
 - Always **validate** the returned JSON in your application code before processing.
 - Structured JSON enables consistent data pipelines suitable for **production environments**.

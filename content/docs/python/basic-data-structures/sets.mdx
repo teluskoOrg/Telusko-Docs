@@ -93,7 +93,7 @@ len(set1)     # 4
 
 Sets support limited but efficient modification operations:
 
-**add()** — Add a single element
+**add()** - Add a single element
 
 ```python
 s = {10, 20}
@@ -101,33 +101,33 @@ s.add(30)
 print(s)   # {10, 20, 30}
 ```
 
-**update()** — Add multiple elements
+**update()** - Add multiple elements
 
 ```python
 s.update([40, 50])
 print(s)   # {10, 20, 30, 40, 50}
 ```
 
-**remove()** — Removes a specific element (error if not found)
+**remove()** - Removes a specific element (error if not found)
 
 ```python
 s.remove(20)
 print(s)   # {10, 30, 40, 50}
 ```
 
-**discard()** — Same as remove but **no error** if element missing
+**discard()** - Same as remove but **no error** if element missing
 
 ```python
 s.discard(100)   # No error
 ```
 
-**pop()** — Removes an arbitrary element
+**pop()** - Removes an arbitrary element
 
 ```python
 s.pop()   # Removes a random element (since no indexing)
 ```
 
-**clear()** — Remove all elements
+**clear()** - Remove all elements
 
 ```python
 s.clear()

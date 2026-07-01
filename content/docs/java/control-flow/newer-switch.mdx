@@ -43,7 +43,7 @@ switch (day) {
 
 * `"Saturday"` and `"Sunday"` share the same logic, so they are stacked.
 * Each case ends with **`break`**, or Java will "fall through" to the next case.
-* The structure works but invites mistakes—if you forget a `break`, an extra case executes.
+* The structure works but invites mistakes-if you forget a `break`, an extra case executes.
 * The overall style tends to get repetitive and long for large switch blocks.
 
 
@@ -78,7 +78,7 @@ switch (day) {
 
 * The arrow (`->`) replaces both the `:` and the need for a `break`.
 * Each case directly maps to its corresponding action.
-* `"Saturday"` and `"Sunday"` are grouped together using comma separation—easy and clean.
+* `"Saturday"` and `"Sunday"` are grouped together using comma separation-easy and clean.
 * No risk of fall-through, because each case is isolated.
 * Improves readability significantly for short, single-statement cases.
 
@@ -100,7 +100,7 @@ System.out.println(result);
 ### Explanation
 
 * The entire switch now **returns a value**, stored in `result`.
-* Each arrow expression returns a value automatically—no `break` needed.
+* Each arrow expression returns a value automatically-no `break` needed.
 * This allows switch to behave like a more structured alternative to the ternary operator.
 * Improving code clarity: instead of printing inside the switch, you return a value and use it later.
 * Excellent for cleaner business logic, such as mapping conditions to outcomes.

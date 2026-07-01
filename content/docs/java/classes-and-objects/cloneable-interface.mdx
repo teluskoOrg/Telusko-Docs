@@ -18,7 +18,7 @@ java.lang.CloneNotSupportedException
 
 ```
 
-Cloneable is a **marker interface**—it contains **no methods**.  
+Cloneable is a **marker interface**-it contains **no methods**.  
 Its purpose is to tell the JVM and the `Object` class that the class has given permission for cloning.
 
 
@@ -59,14 +59,14 @@ Important notes:
 
 ## 4. Enabling Cloning: Steps
 
-### Step 1 — Implement Cloneable interface
+### Step 1 - Implement Cloneable interface
 
 ```java
 class Student implements Cloneable {
 }
 ```
 
-### Step 2 — Override clone() method
+### Step 2 - Override clone() method
 
 ```java
 @Override
@@ -75,7 +75,7 @@ public Object clone() throws CloneNotSupportedException {
 }
 ```
 
-### Step 3 — Clone the object
+### Step 3 - Clone the object
 
 ```java
 Student s2 = (Student) s1.clone();
